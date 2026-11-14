@@ -1,4 +1,4 @@
-import { Crosshair, ExternalLink, Flag, Info } from 'lucide-react'
+import { Crosshair, ExternalLink, Flag } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
@@ -34,6 +34,7 @@ import {
 } from '@/services/contracts'
 
 import { useExplorerPreviews } from '@/features/lunar-explorer/useExplorerPreviews'
+import { EMPTY_BASEMAP } from '@/features/lunar-explorer/polarTiles'
 
 import { resolveSite, useMissionStore } from '@/stores/missionStore'
 
@@ -43,6 +44,7 @@ type MapViewState = {
   halfExtent: number
   halfWidthM: number
   halfHeightM: number
+  resolution?: number
 }
 
 /** Viewport-matched stereo BBOX ≤ backend cap, snapped for stable cache keys. Never CSS-scaled. */
@@ -94,7 +96,9 @@ export default function ExplorerPage() {
   const [picked, setPicked] = useState<{ lat: number; lon: number } | null>(null)
   const [cursor, setCursor] = useState<{ lat: number; lon: number } | null>(null)
   const [layers, setLayers] = useState<MapLayers>(DEFAULT_LAYERS)
-  const [basemapOpacity, setBasemapOpacity] = useState(0.85)
+  const [basemapOpacity, setBasemapOpacity] = useState(1)
+  const [nac, setNac] = useState(false)
+  const [basemapStatus, setBasemapStatus] = useState(EMPTY_BASEMAP)
 
   const reference = useMemo(() => data?.items ?? [], [data])
   const mapSites: MapSite[] = useMemo(
@@ -175,20 +179,12 @@ export default function ExplorerPage() {
     return o
   }, [photoId, hillId, basemapOpacity])
   const bounds = useMemo(() => previewBounds(view), [view])
-  const imagery = useExplorerPreviews(layerList, layers, bounds, caps.has('mapPreview'), photoId, hillId, Boolean(view?.interacted))
-  const { previews, previewStatus, anyRaster } = imagery
-  const enabledIds = Object.keys(layers.rasters).filter((id) => layers.rasters[id])
+  const imagery = useExplorerPreviews(layerList, layers, bounds, caps.has('mapPreview'), photoId, hillId, Boolean(view?.interacted), true)
+  const { previews } = imagery
+  const previewStatus = { ...imagery.previewStatus,
+    ...(photoId ? { [photoId]: basemapStatus.photoCoverage !== 'none' ? 'ready' as const : basemapStatus.detail === 'failed' ? 'error' as const : 'loading' as const } : {}),
+    ...(hillId ? { [hillId]: basemapStatus.overviewReady || basemapStatus.fallback ? 'ready' as const : 'loading' as const } : {}) }
   // Reflect the real requested stereo BBOX (width×height); not a fixed 100 km caption.
-  const shownBounds = imagery.displayedPreviews.at(-1)?.extent
-  const previewWindowSize = shownBounds
-    ? (() => {
-        const w = (shownBounds[2]! - shownBounds[0]!) / 1000
-        const h = (shownBounds[3]! - shownBounds[1]!) / 1000
-        const rw = Math.round(w)
-        const rh = Math.round(h)
-        return rw === rh ? String(rw) : `${rw}×${rh}`
-      })()
-    : null
   const cursorXY = cursor && cursor.lat <= 0 ? lonLatToXY(cursor.lon, cursor.lat) : null
 
   return (
@@ -303,6 +299,8 @@ export default function ExplorerPage() {
           <div className="sel-card relative h-[60vh] min-h-[480px] overflow-hidden sm:min-h-[380px] 2xl:h-[calc(100dvh-230px)] 2xl:min-h-[600px]">
             <LunarMap
               ref={mapRef}
+              basemap={{ choice: basemapChoice, opacity: basemapOpacity, nac }}
+              onBasemapStatus={setBasemapStatus}
               sites={mapSites}
               selectedId={selectedId}
               picked={picked}
@@ -324,39 +322,24 @@ export default function ExplorerPage() {
               }}
               onCursor={setCursor}
             />
-            {anyRaster && previewWindowSize !== null && !imagery.photoFailed && !imagery.fallback && (
-              <div className="pointer-events-none absolute top-3 left-3 max-w-[calc(100%-4rem)] rounded-lg border border-line-strong bg-bg/85 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur sm:max-w-sm">
-                {t('explorer2.previewNote', { size: previewWindowSize })}
-                {basemapChoice === 'photo' && <div className="mt-0.5 text-[10px] text-warning/90"><span className="sm:hidden">{t('lroc.staticShort')}</span><span className="hidden sm:inline">{t('lroc.staticIllumination')}</span></div>}
-                <div className="mt-0.5 truncate text-[10px] text-fg-3">{[...new Set(imagery.displayedPreviews.map((p) => p.attribution.split(';')[0]))].join(' · ')}</div>
-              </div>
-            )}
-            {!anyRaster && enabledIds.length > 0 && Object.values(previewStatus).some((s) => s === 'loading') && (
-              <div className="pointer-events-none absolute top-3 left-3 flex max-w-[calc(100%-4rem)] items-start gap-2 rounded-lg border border-line-strong bg-bg/85 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur sm:max-w-sm">
-                <Info className="mt-px size-3.5 shrink-0 text-cyan" aria-hidden />
-                <span>{t('lroc.loading')}</span>
-              </div>
-            )}
-            {imagery.photoFailed && (
-              <div className="absolute top-3 right-14 z-20 max-w-xs rounded-lg border border-warning/40 bg-bg/95 p-3 text-xs text-fg-2" role="alert">
-                <p>{t('lroc.failedFallback')}</p>
-                <button type="button" className="mt-2 rounded border border-line-strong px-3 py-1 text-cyan" onClick={imagery.retry}>{t('lroc.retry')}</button>
-              </div>
-            )}
-            {imagery.fallback && !imagery.photoFailed && anyRaster && (
-              <div className="pointer-events-none absolute top-3 right-14 max-w-xs rounded-lg border border-line bg-bg/90 px-3 py-2 text-[11px] text-fg-2" role="status">
-                {t('lroc.pendingFallback')}
-              </div>
-            )}
-            {!anyRaster && enabledIds.length === 0 && (
-              <div className="pointer-events-none absolute top-3 left-3 flex max-w-[calc(100%-4rem)] items-start gap-2 rounded-lg border border-line-strong bg-bg/85 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur sm:max-w-sm">
-                <Info className="mt-px size-3.5 shrink-0 text-cyan" aria-hidden />
-                <span>{t('explorer2.noBasemap')}</span>
-              </div>
-            )}
+            <div className="absolute top-3 left-3 max-w-[calc(100%-4rem)] rounded-lg border border-line-strong bg-bg/90 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur sm:max-w-sm" role="status" data-imagery-state={JSON.stringify(basemapStatus)}>
+              {basemapChoice === 'none' ? t('explorer2.noBasemap') : <>
+                <p>{basemapStatus.unavailable ? t('imageryQuality.unavailable')
+                  : basemapStatus.outsideLoaded ? t('imageryQuality.outside')
+                  : basemapStatus.fallback ? t('imageryQuality.fallback')
+                  : basemapStatus.overviewReady ? t('imageryQuality.overview') : t('imageryQuality.starting')}</p>
+                {basemapStatus.detail === 'loading' && <p className="mt-1 text-cyan">{t('imageryQuality.detailLoading')}</p>}
+                {basemapStatus.detail === 'failed' && <p className="mt-1 text-warning">{t('imageryQuality.detailFailed')}</p>}
+                {basemapStatus.detail === 'ready' && !basemapStatus.unavailable && <p className="text-fg-3">{t('imageryQuality.detailReady')} · {basemapStatus.resolutionM} m/px</p>}
+                {basemapChoice === 'photo' && <p className="mt-1 text-[10px] text-warning/90">{t('lroc.staticShort')}</p>}
+                {nac && basemapChoice === 'photo' && <p className="mt-1">{t(`imageryQuality.nac_${basemapStatus.nac}`)}{basemapStatus.nac === 'ready' && <> · {t('imageryQuality.sampled', { resolution: basemapStatus.nacResolutionM })}</>}</p>}
+                <p className="mt-1 text-[9.5px] text-fg-3">{basemapStatus.fallback || basemapChoice === 'hillshade' ? 'NASA GSFC · LOLA / PGDA 90' : 'NASA/GSFC/ASU · LROC'}</p>
+                {(basemapStatus.detail === 'failed' || basemapStatus.nac === 'failed') && <button type="button" className="mt-2 rounded border border-line-strong px-3 py-1 text-cyan" onClick={() => mapRef.current?.retryBasemap()}>{t('lroc.retry')}</button>}
+              </>}
+            </div>
             {caps.has('mapLayers') && (
               <div className="pointer-events-none absolute bottom-10 left-3 z-10">
-                <BasemapControl layers={layerList} choice={basemapChoice} onChoice={chooseBasemap} opacity={basemapOpacity} onOpacity={setBasemapOpacity} />
+                <BasemapControl layers={layerList} choice={basemapChoice} onChoice={chooseBasemap} opacity={basemapOpacity} onOpacity={setBasemapOpacity} nac={nac} onNac={setNac} />
               </div>
             )}
             <div

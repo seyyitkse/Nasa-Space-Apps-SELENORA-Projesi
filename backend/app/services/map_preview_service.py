@@ -25,7 +25,7 @@ def render_preview(layer_id: str, *, latitude_deg: float | None = None,
     if not all(math.isfinite(v) for v in bounds):
         raise MapServiceError("Bounds must be finite.")
     layer = nasa_layer_catalog.get_layer(layer_id)
-    render = imagery_service.render_imagery_preview if layer and layer.access_mode in {
+    render = imagery_service.render_imagery_preview if imagery_service.get_source(layer_id) or layer and layer.access_mode in {
         "wms_allowlisted", "wmts_allowlisted"
     } else raster_preview_service.render_preview_png
     spec = map_preview_cache.cache_spec(layer_id, bounds, max_edge_px)

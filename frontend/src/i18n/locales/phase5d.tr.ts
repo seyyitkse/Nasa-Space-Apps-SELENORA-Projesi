@@ -1,6 +1,18 @@
 import type phase5dEn from './phase5d.en'
 
 const phase5dTr: typeof phase5dEn = {
+  imageryQuality: {
+    sampled: 'Görünüm: {{resolution}} m/px',
+    overview: 'Kutupsal genel görünüm hazır.', starting: 'NASA taban haritası hazırlanıyor.',
+    detailLoading: 'Yüksek çözünürlüklü görüntü hazırlanıyor.', detailReady: 'Görünüm ayrıntısı hazır',
+    detailFailed: 'Ayrıntı alınamadı. Kullanılabilir genel görünüm korunuyor.',
+    outside: 'Bu görünüm yüklü görüntünün dışında. Kullanılabilir kapsam isteniyor.',
+    unavailable: 'Bu görünümde geçerli görüntü yok. Yeniden deneyin veya Kutupsal Genel Görünüm’e dönün.',
+    fallback: 'Yüklü fotoğraf olmayan alanlarda gerçek LOLA hillshade gösteriliyor.',
+    nacOption: 'NAC 2 m · isteğe bağlı ayrıntı', 'nac_zoom-in': 'NAC ayrıntısı için yakınlaştırın.',
+    nac_loading: 'NAC ayrıntısı hazırlanıyor; WAC görünür kalıyor.', nac_ready: 'Ön NAC mozaiği · doğal 2 m/px. NASA/GSFC/ASU.',
+    'nac_no-coverage': 'Burada NAC kapsamı yok; WAC görünür kalıyor.', nac_failed: 'NAC servisine erişilemiyor; WAC görünür kalıyor.', nac_off: '',
+  },
   mode: {
     label: 'Arayüz modu',
     explorer: 'Kaşif',

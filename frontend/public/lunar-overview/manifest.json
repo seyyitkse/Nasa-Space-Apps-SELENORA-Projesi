@@ -1,0 +1,1602 @@
+{
+  "grid": "sps-768km-v1",
+  "crs": "IAU2000:30120",
+  "tiles": {
+    "lroc-wac-south-summer/0/0/0": {
+      "file": "lroc-wac-south-summer-0-0-0.png",
+      "sha256": "ad26be8385261da3716d7742ad6d3880531c01363ae29e9f3e15fd82650cca3d",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -768000.0,
+          0.0,
+          0.0,
+          768000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -768000.0,
+          0.0,
+          0.0,
+          768000.0
+        ],
+        "resolution_m": 3200.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "3112887134893a6861cea37db5eae435747767d7805f52b34ddf957658c4ea23"
+      }
+    },
+    "lroc-wac-south-summer/0/0/1": {
+      "file": "lroc-wac-south-summer-0-0-1.png",
+      "sha256": "b059557a3c98f591f69c87242023b7c7c1300462df0f65411cd0545da6a48bb1",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -768000.0,
+          -768000.0,
+          0.0,
+          0.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -768000.0,
+          -768000.0,
+          0.0,
+          0.0
+        ],
+        "resolution_m": 3200.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "a89732a2f7bbbd7e92584edeba5d2e6820cd6ecf6d1421c03437ca89bae84e3b"
+      }
+    },
+    "lroc-wac-south-summer/0/1/0": {
+      "file": "lroc-wac-south-summer-0-1-0.png",
+      "sha256": "1e937c316fb1a68460d2221b29c51a0e27e2d095b81e089154e986c3d71537bf",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          0.0,
+          0.0,
+          768000.0,
+          768000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          0.0,
+          768000.0,
+          768000.0
+        ],
+        "resolution_m": 3200.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "ebb008a61deb4763c9e9090302ca713fc27a5a972be09681e22a5b885f0dcfdb"
+      }
+    },
+    "lroc-wac-south-summer/0/1/1": {
+      "file": "lroc-wac-south-summer-0-1-1.png",
+      "sha256": "a873f23c79fe2d46c919269030a9f2386e9da2d65e3402c510165b946b33eaca",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          0.0,
+          -768000.0,
+          768000.0,
+          0.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          -768000.0,
+          768000.0,
+          0.0
+        ],
+        "resolution_m": 3200.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "9d5f6890c87215837a6d40346f27d91cf2ee2f396e57e8fab2f85258ddb30124"
+      }
+    },
+    "ldem-80s-80mpp-hill/1/1/1": {
+      "file": "ldem-80s-80mpp-hill-1-1-1.png",
+      "sha256": "7b2b8ecb9d13ab139987a3cc30c9ca148ff9e4934bef8a041a15befd51a961f1",
+      "spec": {
+        "layer": "ldem-80s-80mpp-hill",
+        "bounds_m": [
+          -384000.0,
+          0.0,
+          0.0,
+          384000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "pgda90-hill-fixed-DN-0-255",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "ldem-80s-80mpp-hill",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -384000.0,
+          0.0,
+          0.0,
+          384000.0
+        ],
+        "resolution_m": 1600.0,
+        "source_access": "vsicurl_window",
+        "attribution": "Barker et al., 2021, Planet. Space Sci. 203, 105119; NASA PGDA LOLA topography products. Product page: https://pgda.gsfc.nasa.gov/products/90",
+        "value_min": 71.54385375976562,
+        "value_max": 248.4848175048828,
+        "nodata_fraction": 0.37326388888888884,
+        "cache_status": "HIT",
+        "cache_key": "1e4ac36718b7585df672d8cee1915b2e56f19ccf2a237a391e828f3731185f8c"
+      }
+    },
+    "ldem-80s-80mpp-hill/1/1/2": {
+      "file": "ldem-80s-80mpp-hill-1-1-2.png",
+      "sha256": "edd634455d723ba28f9a880e23bfd40de38abd01b8fef394d39c10d11f2cf7b0",
+      "spec": {
+        "layer": "ldem-80s-80mpp-hill",
+        "bounds_m": [
+          -384000.0,
+          -384000.0,
+          0.0,
+          0.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "pgda90-hill-fixed-DN-0-255",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "ldem-80s-80mpp-hill",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -384000.0,
+          -384000.0,
+          0.0,
+          0.0
+        ],
+        "resolution_m": 1600.0,
+        "source_access": "vsicurl_window",
+        "attribution": "Barker et al., 2021, Planet. Space Sci. 203, 105119; NASA PGDA LOLA topography products. Product page: https://pgda.gsfc.nasa.gov/products/90",
+        "value_min": 65.30200958251953,
+        "value_max": 244.52374267578125,
+        "nodata_fraction": 0.37326388888888884,
+        "cache_status": "HIT",
+        "cache_key": "0e0ba14dbb34d3ebac40e54837fb1c560c0ca6510dc5c7c7e2108a1e6630336d"
+      }
+    },
+    "ldem-80s-80mpp-hill/1/2/1": {
+      "file": "ldem-80s-80mpp-hill-1-2-1.png",
+      "sha256": "cbb95237e53ebc4746f655dacd8a7a51d29f65cba9435edaaad514d75efef6a1",
+      "spec": {
+        "layer": "ldem-80s-80mpp-hill",
+        "bounds_m": [
+          0.0,
+          0.0,
+          384000.0,
+          384000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "pgda90-hill-fixed-DN-0-255",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "ldem-80s-80mpp-hill",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          0.0,
+          384000.0,
+          384000.0
+        ],
+        "resolution_m": 1600.0,
+        "source_access": "vsicurl_window",
+        "attribution": "Barker et al., 2021, Planet. Space Sci. 203, 105119; NASA PGDA LOLA topography products. Product page: https://pgda.gsfc.nasa.gov/products/90",
+        "value_min": 55.29844284057617,
+        "value_max": 249.3275604248047,
+        "nodata_fraction": 0.37326388888888884,
+        "cache_status": "HIT",
+        "cache_key": "b5d546bb75bc827a76bdc13403104bd83fab214012ca5d5f7e0738ee60b65229"
+      }
+    },
+    "ldem-80s-80mpp-hill/1/2/2": {
+      "file": "ldem-80s-80mpp-hill-1-2-2.png",
+      "sha256": "fb90e3082fa2948b7d9c22c6388942c4f22383dca6cfce08d9d7a5a46c113b30",
+      "spec": {
+        "layer": "ldem-80s-80mpp-hill",
+        "bounds_m": [
+          0.0,
+          -384000.0,
+          384000.0,
+          0.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "pgda90-hill-fixed-DN-0-255",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "ldem-80s-80mpp-hill",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          -384000.0,
+          384000.0,
+          0.0
+        ],
+        "resolution_m": 1600.0,
+        "source_access": "vsicurl_window",
+        "attribution": "Barker et al., 2021, Planet. Space Sci. 203, 105119; NASA PGDA LOLA topography products. Product page: https://pgda.gsfc.nasa.gov/products/90",
+        "value_min": 59.51180648803711,
+        "value_max": 250.1117401123047,
+        "nodata_fraction": 0.37326388888888884,
+        "cache_status": "HIT",
+        "cache_key": "e70c8855fb8d7936bf8a8e50c33e1065e0ed7346f7e0a0971c3009d3e4320334"
+      }
+    },
+    "lroc-wac-south-summer/1/1/1": {
+      "file": "lroc-wac-south-summer-1-1-1.png",
+      "sha256": "87152b2723ce9f32f5c3803dbe5941be3159a2d0d20aeafacea406511c729938",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -384000.0,
+          0.0,
+          0.0,
+          384000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -384000.0,
+          0.0,
+          0.0,
+          384000.0
+        ],
+        "resolution_m": 1600.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "c737f4703fbb41038a5d05ef8eb6bb61f661e4c75b9de63326192d68fd848ae1"
+      }
+    },
+    "lroc-wac-south-summer/1/1/2": {
+      "file": "lroc-wac-south-summer-1-1-2.png",
+      "sha256": "a0b3596f20013ad494865cba807127cd939d2f629fe0c97744c5c1b27459732d",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -384000.0,
+          -384000.0,
+          0.0,
+          0.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -384000.0,
+          -384000.0,
+          0.0,
+          0.0
+        ],
+        "resolution_m": 1600.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "ef90088491bc8ec886d28be6d7e1d0a60997c091dcc7acd0072020a9c99347da"
+      }
+    },
+    "lroc-wac-south-summer/1/2/1": {
+      "file": "lroc-wac-south-summer-1-2-1.png",
+      "sha256": "523f6a31c461188d4c117626f84b3a6075a7932b946bde75a2b8df38bc578c02",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          0.0,
+          0.0,
+          384000.0,
+          384000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          0.0,
+          384000.0,
+          384000.0
+        ],
+        "resolution_m": 1600.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "46d43c0428ce28e8253533654bec8c6dddecf0f45c14f06f1671418345bb2f54"
+      }
+    },
+    "lroc-wac-south-summer/1/2/2": {
+      "file": "lroc-wac-south-summer-1-2-2.png",
+      "sha256": "2dcc8496946043fd52fd8270b35f03093795e0a9be41a1a5dcfc242133819b51",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          0.0,
+          -384000.0,
+          384000.0,
+          0.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          -384000.0,
+          384000.0,
+          0.0
+        ],
+        "resolution_m": 1600.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "770ffa23242a649727b601e4d8abbd386b6a6388d4b9cb2ca6fc1107db897692"
+      }
+    },
+    "lroc-wac-south-summer/5/30/30": {
+      "file": "lroc-wac-south-summer-5-30-30.png",
+      "sha256": "4bd7d0d35dedc405ad90ca69caea96992b8d7518c2028a12da0e54847cd72e76",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -48000.0,
+          24000.0,
+          -24000.0,
+          48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -48000.0,
+          24000.0,
+          -24000.0,
+          48000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "9fba4703f3a1ccc3b64693987ce2750a4b421766fa980a1b3a7258d37f980cf9"
+      }
+    },
+    "lroc-wac-south-summer/5/30/31": {
+      "file": "lroc-wac-south-summer-5-30-31.png",
+      "sha256": "b6b4fd8b282b8b8089f81b4c2745e1d92b2023067f554229dd9d2544c20adf3f",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -48000.0,
+          0.0,
+          -24000.0,
+          24000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -48000.0,
+          0.0,
+          -24000.0,
+          24000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "0f65bd375a2370470df83337ad1392e3e1a65461bd4f62a1d201829862b8c6d8"
+      }
+    },
+    "lroc-wac-south-summer/5/30/32": {
+      "file": "lroc-wac-south-summer-5-30-32.png",
+      "sha256": "8d4e9de65386009fb3d8ded6fe674ac5abfefab47e4969b63994bcb14d34fe1b",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -48000.0,
+          -24000.0,
+          -24000.0,
+          0.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -48000.0,
+          -24000.0,
+          -24000.0,
+          0.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "80e76dc4abd5309ff21a2ad159e6957ac286de7206d096d06c6d9c35746750bd"
+      }
+    },
+    "lroc-wac-south-summer/5/30/33": {
+      "file": "lroc-wac-south-summer-5-30-33.png",
+      "sha256": "cb751d0ae0820459a1d177e8f5f62ed19e8f00017b56c82b075483ca947f7e68",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -48000.0,
+          -48000.0,
+          -24000.0,
+          -24000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -48000.0,
+          -48000.0,
+          -24000.0,
+          -24000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "5ad105741b1fc3f26b6cf2b46d840751b2fb4327c196fabd0a7333838c281e1c"
+      }
+    },
+    "lroc-wac-south-summer/5/30/34": {
+      "file": "lroc-wac-south-summer-5-30-34.png",
+      "sha256": "f2588d29e52c776d692b27cc40825077d3991eac9833ac9ae157aaaac19d3ac3",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -48000.0,
+          -72000.0,
+          -24000.0,
+          -48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -48000.0,
+          -72000.0,
+          -24000.0,
+          -48000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "20367dbe2dbf86840c1d250bf907eb118875fda1aa3e000abd81d4daa54fb2e8"
+      }
+    },
+    "lroc-wac-south-summer/5/31/30": {
+      "file": "lroc-wac-south-summer-5-31-30.png",
+      "sha256": "36c280f91d3ee5a49b16e41b5339aecbc1483f2854828d896fa51f9fe8f05c57",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -24000.0,
+          24000.0,
+          0.0,
+          48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -24000.0,
+          24000.0,
+          0.0,
+          48000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "186d074c7eb6f4b0e2cddcd6ab7688d62cc218aea47b4e3b79e974665ffad29f"
+      }
+    },
+    "lroc-wac-south-summer/5/31/31": {
+      "file": "lroc-wac-south-summer-5-31-31.png",
+      "sha256": "1afbac08d1b883fd856620d20300990f936271c99f7dc522e94a9fc269f5c9d7",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -24000.0,
+          0.0,
+          0.0,
+          24000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -24000.0,
+          0.0,
+          0.0,
+          24000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "e42b33d10b4a2e0c9ada5ef858054a6d7fbc19881536802cc893040af22afbaa"
+      }
+    },
+    "lroc-wac-south-summer/5/31/32": {
+      "file": "lroc-wac-south-summer-5-31-32.png",
+      "sha256": "5ab7448a6071469c4811a0ce72c99dda8935bd69508b42d09b3ca4fdf209a642",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -24000.0,
+          -24000.0,
+          0.0,
+          0.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -24000.0,
+          -24000.0,
+          0.0,
+          0.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "e9c710c44e1a8858c476999b89cc59a87a6284e8952fa68d1c581423d2105852"
+      }
+    },
+    "lroc-wac-south-summer/5/31/33": {
+      "file": "lroc-wac-south-summer-5-31-33.png",
+      "sha256": "b97588c899b5e35747f1b1fcf8f4f13d796b00945ce4bf2fb8294480578973a5",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -24000.0,
+          -48000.0,
+          0.0,
+          -24000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -24000.0,
+          -48000.0,
+          0.0,
+          -24000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "2585c3278a361625dc6fd11417977b46561f4baaeec9d27979793a430ad88fa6"
+      }
+    },
+    "lroc-wac-south-summer/5/31/34": {
+      "file": "lroc-wac-south-summer-5-31-34.png",
+      "sha256": "105e0a9686fc7b8b8f988896994a0d423f93e5a5113023609ad1e598a8ca234c",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -24000.0,
+          -72000.0,
+          0.0,
+          -48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -24000.0,
+          -72000.0,
+          0.0,
+          -48000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "d268ed0d82c2c9ebc4dd1389362f3660d75293ff894316ba4085ad3a4a54d00b"
+      }
+    },
+    "lroc-wac-south-summer/5/32/30": {
+      "file": "lroc-wac-south-summer-5-32-30.png",
+      "sha256": "54dbd86190666ab69ec380c7354d0474e639e67b7609edee4b206afd4a0b4d9d",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          0.0,
+          24000.0,
+          24000.0,
+          48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          24000.0,
+          24000.0,
+          48000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "af9cda172d9a232ae9cf60a1408fdc87313e21cc876c15b3d9b8b5dac83ab8d3"
+      }
+    },
+    "lroc-wac-south-summer/5/32/31": {
+      "file": "lroc-wac-south-summer-5-32-31.png",
+      "sha256": "e44f6a573946b862f180db09112e597264fc206cffb07978c3462449e21805f2",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          0.0,
+          0.0,
+          24000.0,
+          24000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          0.0,
+          24000.0,
+          24000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "6d7d6d1ed235f8c2b2391a2c3219370bf882e35ab262549a70ec7524473c85de"
+      }
+    },
+    "lroc-wac-south-summer/5/32/32": {
+      "file": "lroc-wac-south-summer-5-32-32.png",
+      "sha256": "63e9d77d8282709138d3685974426e5fdfc5f3a445ecf36a5f5c063e32b5a52b",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          0.0,
+          -24000.0,
+          24000.0,
+          0.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          -24000.0,
+          24000.0,
+          0.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "740c4bcd6e9e68ef89624bb80453824ad3dc90201887b571a66bf99ea60e8764"
+      }
+    },
+    "lroc-wac-south-summer/5/32/33": {
+      "file": "lroc-wac-south-summer-5-32-33.png",
+      "sha256": "43c80c08b7f62ae34184afccf5aa4cc440329092c71309c07783ab37009a9a6f",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          0.0,
+          -48000.0,
+          24000.0,
+          -24000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          -48000.0,
+          24000.0,
+          -24000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "56ab9d6fcf9d10a7012ef8c2b86125400bcc64ab18868d66027caf1111cf8ec1"
+      }
+    },
+    "lroc-wac-south-summer/5/32/34": {
+      "file": "lroc-wac-south-summer-5-32-34.png",
+      "sha256": "8a0e7aa7b1e08849e7d718052e313fb04807311cf9d4365b1680d8b71be3e1b1",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          0.0,
+          -72000.0,
+          24000.0,
+          -48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          -72000.0,
+          24000.0,
+          -48000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "7977241f2d38cc8622a9f251365eafe26f979c5de202f381fb6990732c824a2f"
+      }
+    },
+    "lroc-wac-south-summer/5/33/30": {
+      "file": "lroc-wac-south-summer-5-33-30.png",
+      "sha256": "05f0a7c22d6446bf450adbaecfae4e0ad5eac5e4fbe0ecf9a9f30610d9c2e5e6",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          24000.0,
+          24000.0,
+          48000.0,
+          48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          24000.0,
+          24000.0,
+          48000.0,
+          48000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "f9477ded639f02606a5fbba587126ca8521517df14f488e2ac9e171090d1243e"
+      }
+    },
+    "lroc-wac-south-summer/5/33/31": {
+      "file": "lroc-wac-south-summer-5-33-31.png",
+      "sha256": "ef8596ed7137073d6dd967ceaef98f4ff26876a78a0677e957c4f75f7f2165f2",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          24000.0,
+          0.0,
+          48000.0,
+          24000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          24000.0,
+          0.0,
+          48000.0,
+          24000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "6b6d383c9c065349ff49106b6f830a3a97b7d116bc3f1c714f6f2315cdc68e84"
+      }
+    },
+    "lroc-wac-south-summer/5/33/32": {
+      "file": "lroc-wac-south-summer-5-33-32.png",
+      "sha256": "fc6b07e58d0f3c70d275acc0d978353e29931fdca39b613b2697d1003f32b0a2",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          24000.0,
+          -24000.0,
+          48000.0,
+          0.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          24000.0,
+          -24000.0,
+          48000.0,
+          0.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "b6b9544fbc65a792e17808ce45c9eb066f81b1106d1ee49491dea8026644c677"
+      }
+    },
+    "lroc-wac-south-summer/5/33/33": {
+      "file": "lroc-wac-south-summer-5-33-33.png",
+      "sha256": "443d551a6b103fc2c07f92689b913ee3f9f23e855f1af5cca7892dff5d799167",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          24000.0,
+          -48000.0,
+          48000.0,
+          -24000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          24000.0,
+          -48000.0,
+          48000.0,
+          -24000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "ce12fea1d4dc161bb675a315d93a664929034a8e7c11e1d892aecebdb06d86f8"
+      }
+    },
+    "lroc-wac-south-summer/5/33/34": {
+      "file": "lroc-wac-south-summer-5-33-34.png",
+      "sha256": "06b0a2ddc35ddff07f3eb3c5d7cdd5d4b70bc34968c90c23691d0be643016681",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          24000.0,
+          -72000.0,
+          48000.0,
+          -48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          24000.0,
+          -72000.0,
+          48000.0,
+          -48000.0
+        ],
+        "resolution_m": 100.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "96346bedb4edc2fe3a654f55a7b5efe042438c997f4215d2312824e6c29038c7"
+      }
+    },
+    "lroc-wac-south-summer/4/15/15": {
+      "file": "lroc-wac-south-summer-4-15-15.png",
+      "sha256": "4c8843aefafbd94cf74f0fb88f48bd557f5ac2b62c2a1bcb7e232c708c7e63fb",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -48000.0,
+          0.0,
+          0.0,
+          48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -48000.0,
+          0.0,
+          0.0,
+          48000.0
+        ],
+        "resolution_m": 200.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "MISS",
+        "cache_key": "8adb490607fab298b525477a9ffa296a2c5f47c7c4d658471efccde37afca3fe"
+      }
+    },
+    "lroc-wac-south-summer/4/15/16": {
+      "file": "lroc-wac-south-summer-4-15-16.png",
+      "sha256": "bf79163eff3463688f6813108469abd31acb7d77158b5061567b70ddd9fc843a",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -48000.0,
+          -48000.0,
+          0.0,
+          0.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -48000.0,
+          -48000.0,
+          0.0,
+          0.0
+        ],
+        "resolution_m": 200.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "MISS",
+        "cache_key": "6fb2a203c20e7e5152a0046902d49d66f3987904a796ce2661bd4de1871d7c59"
+      }
+    },
+    "lroc-wac-south-summer/4/15/17": {
+      "file": "lroc-wac-south-summer-4-15-17.png",
+      "sha256": "f5bfb332fa4fd61ec11cdbbd5b40f0200d3458d753706d431339a3e33e6bbe8b",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          -48000.0,
+          -96000.0,
+          0.0,
+          -48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -48000.0,
+          -96000.0,
+          0.0,
+          -48000.0
+        ],
+        "resolution_m": 200.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "MISS",
+        "cache_key": "b0979f29772a5b765f3cf5b712f74dd08f1f9cdffa4e9d151df7efb8edd90188"
+      }
+    },
+    "lroc-wac-south-summer/4/16/15": {
+      "file": "lroc-wac-south-summer-4-16-15.png",
+      "sha256": "1ee01d8cf0c912e2af9d854d78c5cd3c06c340b739378eea44501f612afb8f79",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          0.0,
+          0.0,
+          48000.0,
+          48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          0.0,
+          48000.0,
+          48000.0
+        ],
+        "resolution_m": 200.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "MISS",
+        "cache_key": "e5908193a6cca016445783f82d7e5c0915d5a8fbf8dbc808883c52e9109e99d1"
+      }
+    },
+    "lroc-wac-south-summer/4/16/16": {
+      "file": "lroc-wac-south-summer-4-16-16.png",
+      "sha256": "7a2437206eaa7a237f0b369d3b482a1eb04a93be4a7602b40464a561306b3586",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          0.0,
+          -48000.0,
+          48000.0,
+          0.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          -48000.0,
+          48000.0,
+          0.0
+        ],
+        "resolution_m": 200.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "MISS",
+        "cache_key": "79e87883bbb75e55ab637357a27149632357fa36bee613604234149d9ff5d8fb"
+      }
+    },
+    "lroc-wac-south-summer/4/16/17": {
+      "file": "lroc-wac-south-summer-4-16-17.png",
+      "sha256": "ac1da8d231e2de1b1c5dae2e2f6c7a340a12ba487f6553b8051c967f6fe54e61",
+      "spec": {
+        "layer": "lroc-wac-south-summer",
+        "bounds_m": [
+          0.0,
+          -96000.0,
+          48000.0,
+          -48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "lunaserv-IAU2000:30120",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "lroc-wac-south-summer",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          -96000.0,
+          48000.0,
+          -48000.0
+        ],
+        "resolution_m": 200.0,
+        "source_access": "wms_allowlisted",
+        "attribution": "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). NASA/GSFC/Arizona State University.",
+        "value_min": 0.0,
+        "value_max": 255.0,
+        "nodata_fraction": 0.0,
+        "cache_status": "MISS",
+        "cache_key": "537a4c404f457cc1b9f473eafa2e1a47fd8c18882155a96cbd3bdd2cabdf6099"
+      }
+    }
+  }
+}

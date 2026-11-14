@@ -46,7 +46,7 @@ def cache_spec(layer_id: str, bounds: tuple[float, float, float, float], edge: i
         "crs": MAP_CRS,
         "max_edge_px": edge,
         "output_dimensions": output_dimensions(bounds, edge),
-        "source": "lunaserv-IAU2000:30120" if layer_id == "lroc-wac-south-summer" else "nasa-layer-catalog-v1",
+        "source": "lunaserv-IAU2000:30120" if layer_id in {"lroc-wac-south-summer", "lroc-nac-2m-south-pole"} else "nasa-layer-catalog-v1",
         "processing_version": PROCESSING_VERSION,
     }
 
@@ -101,15 +101,26 @@ def _write(spec: dict, png: bytes, meta: PreviewMeta) -> None:
         json_tmp.unlink(missing_ok=True)
     # Bound derived storage, keeping the two prepared startup overviews pinned.
     records = list(root.glob("*.json"))
-    if len(records) > 256:
+    # Both count and byte quota; small, shipped overview tiles remain pinned.
+    total_bytes = sum(p.stat().st_size for p in root.glob("*.png"))
+    if len(records) > 256 or total_bytes > 64 * 1024 * 1024:
         candidates = sorted(records, key=lambda path: path.stat().st_mtime)
         for path in candidates:
-            if len(records) <= 256:
+            if len(records) <= 256 and total_bytes <= 64 * 1024 * 1024:
                 break
             try:
                 old = json.loads(path.read_text(encoding="utf-8"))["spec"]
                 if old["bounds_m"] == [-64000.0, -64000.0, 64000.0, 64000.0] and old["max_edge_px"] == 768:
                     continue
+                if old.get("grid") == "sps-768km-v1" and old["max_edge_px"] == 240 and max(old["bounds_m"][2] - old["bounds_m"][0], old["bounds_m"][3] - old["bounds_m"][1]) >= 384000:
+                    continue
+                if old.get("grid") == "sps-768km-v1" and old["layer"] == "lroc-wac-south-summer" and old["max_edge_px"] == 240:
+                    l, b, r, t = old["bounds_m"]
+                    if r - l == 24000 and -48000 <= l < r <= 48000 and -72000 <= b < t <= 48000:
+                        continue
+                    if r - l == 48000 and -48000 <= l < r <= 48000 and -96000 <= b < t <= 48000:
+                        continue
+                total_bytes -= path.with_suffix(".png").stat().st_size
                 path.with_suffix(".png").unlink(missing_ok=True)
                 path.unlink(missing_ok=True)
                 records.pop()

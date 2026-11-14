@@ -8,6 +8,8 @@ from fastapi import APIRouter, Query, Response
 
 from app.schemas.common import ApiModel
 from app.services import imagery_service, map_preview_service, nasa_layer_catalog, raster_preview_service
+from app.services import polar_tile_service
+from app.services.map_runtime import PROVENANCE
 from app.services.raster_preview_service import (
     LayerNotFoundError,
     LayerUnavailableError,
@@ -149,7 +151,7 @@ def list_imagery_sources() -> ImagerySourceList:
     return ImagerySourceList(
         items=imagery_service.list_imagery_sources(),
         scientific_note=(
-            "Only sources with alignment_status=AVAILABLE_WARPED_STEREO and "
+            "Only sources with alignment_status=AVAILABLE_NATIVE_STEREO and "
             "preview_enabled=true may be requested via /maps/preview. "
             "SELENORA never proxies arbitrary external URLs."
         ),
@@ -192,7 +194,7 @@ def map_preview(
         "X-SELENORA-Layer-Role": meta.role,
         "X-SELENORA-Bounds-M": ",".join(f"{v:.3f}" for v in meta.bounds_m),
         "X-SELENORA-Size-Px": f"{meta.width_px}x{meta.height_px}",
-        "X-SELENORA-Attribution": meta.attribution[:500],
+        "X-SELENORA-Attribution": meta.attribution[:500].encode("latin-1", "replace").decode("latin-1"),
         "X-SELENORA-CRS": "IAU2000:30120",
         "X-SELENORA-Cache": meta.cache_status,
         "X-SELENORA-Cache-Key": meta.cache_key,
@@ -200,6 +202,32 @@ def map_preview(
         "Cache-Control": "public, max-age=300",
     }
     return Response(content=png, media_type="image/png", headers=headers)
+
+
+@router.get("/tiles/{layer_id}/{z}/{x}/{y}.png", summary="Fixed south-polar visualization tile")
+def polar_tile(layer_id: str, z: int, x: int, y: int) -> Response:
+    try:
+        png, meta = polar_tile_service.render_tile(layer_id, z, x, y)
+    except (MapServiceError, LayerNotFoundError, LayerUnavailableError):
+        raise
+    except Exception as exc:
+        raise LayerUnavailableError(f"Polar tile unavailable: {type(exc).__name__}: {exc}") from exc
+    return Response(png, media_type="image/png", headers={
+        "X-SELENORA-Bounds-M": ",".join(str(v) for v in meta.bounds_m),
+        "X-SELENORA-CRS": "IAU2000:30120", "X-SELENORA-Cache": meta.cache_status,
+        "X-SELENORA-Cache-Key": meta.cache_key,
+        "X-SELENORA-NoData": str(meta.nodata_fraction),
+        "X-SELENORA-Resolution-M": str(meta.resolution_m),
+        # HTTP header values are latin-1. Full Unicode attribution remains in the
+        # source catalogue; a product's punctuation must never break its PNG.
+        "X-SELENORA-Attribution": meta.attribution.encode("latin-1", "replace").decode("latin-1"),
+        "ETag": f'"{meta.cache_key}"', "Cache-Control": "public, max-age=86400",
+    })
+
+
+@router.get("/runtime", summary="Map runtime provenance (no credentials)")
+def map_runtime() -> dict:
+    return PROVENANCE
 
 
 @router.get("/elevation", response_model=ElevationSample, summary="Sample a raster at lon/lat")

@@ -36,12 +36,16 @@ export function BasemapControl({
   onChoice,
   opacity,
   onOpacity,
+  nac = false,
+  onNac,
 }: {
   layers: MapLayer[]
   choice: BasemapChoice
   onChoice: (c: BasemapChoice) => void
   opacity: number
   onOpacity: (v: number) => void
+  nac?: boolean
+  onNac?: (value: boolean) => void
 }) {
   const { t } = useTranslation()
   const { photo, hillshade } = pickBasemapLayers(layers)
@@ -86,6 +90,12 @@ export function BasemapControl({
           <span className="sm:hidden">{t('lroc.staticShort')}</span>
           <span className="hidden sm:inline">{t('lroc.staticIllumination')}</span>
         </p>
+      )}
+      {choice === 'photo' && onNac && (
+        <label className="flex items-center gap-2 text-[10.5px] text-fg-2">
+          <input type="checkbox" checked={nac} onChange={(event) => onNac(event.target.checked)} />
+          {t('imageryQuality.nacOption')}
+        </label>
       )}
       {choice === 'photo' && photo?.attribution && (
         <p className="truncate text-[9.5px] leading-snug text-fg-3" title={photo.attribution}>

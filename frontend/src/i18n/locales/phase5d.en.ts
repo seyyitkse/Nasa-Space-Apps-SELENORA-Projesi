@@ -1,5 +1,17 @@
 /** Phase 5D strings (Explorer/Scientist modes, guided mission, 3D terrain, LROC). */
 const phase5dEn = {
+  imageryQuality: {
+    sampled: 'Display: {{resolution}} m/px',
+    overview: 'Polar overview ready.', starting: 'Preparing the NASA basemap.',
+    detailLoading: 'Preparing higher-resolution imagery.', detailReady: 'Viewport detail ready',
+    detailFailed: 'Detail could not be acquired. Available overview imagery is retained.',
+    outside: 'This viewport is outside loaded imagery. Available coverage is being requested.',
+    unavailable: 'No valid imagery is available in this viewport. Retry or return to Polar Overview.',
+    fallback: 'Genuine LOLA hillshade is filling areas without loaded photography.',
+    nacOption: 'NAC 2 m · optional close-up', 'nac_zoom-in': 'Zoom in to request NAC detail.',
+    nac_loading: 'Preparing NAC detail; WAC remains visible.', nac_ready: 'Preliminary NAC mosaic · native 2 m/px. NASA/GSFC/ASU.',
+    'nac_no-coverage': 'No NAC coverage here; WAC remains visible.', nac_failed: 'NAC service unavailable; WAC remains visible.', nac_off: '',
+  },
   mode: {
     label: 'Interface mode',
     explorer: 'Explorer',

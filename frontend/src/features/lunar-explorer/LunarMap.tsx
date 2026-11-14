@@ -19,6 +19,8 @@ import { type Ref, useEffect, useImperativeHandle, useLayoutEffect, useRef } fro
 import type { DemTileInfo, RasterPreview } from '@/services/contracts'
 
 import { RasterSourceSlot } from './RasterSourceSlot'
+import { PolarBasemap } from './PolarBasemap'
+import { WORLD_HALF, type BasemapStatus } from './polarTiles'
 import { START_VIEW_EXTENT, type RasterDisplayEvent } from './useExplorerPreviews'
 
 import { isInMapRegion, lonLatToXY, MAP_LAT_BOUND, mapHalfExtent, PROJECTION_CODE, xyToLonLat } from './projection'
@@ -53,9 +55,12 @@ export const DEFAULT_LAYERS: MapLayers = {
 export interface LunarMapHandle {
   fitPolar: () => void
   fitExtent: (extent: [number, number, number, number]) => void
+  retryBasemap: () => void
 }
 
 interface Props {
+  basemap?: { choice: string; opacity: number; nac: boolean }
+  onBasemapStatus?: (status: BasemapStatus) => void
   sites: MapSite[]
   selectedId: string | null
   picked?: { lat: number; lon: number } | null
@@ -166,6 +171,8 @@ export function tilesExtent(tiles: DemTileInfo[], padM = 4000): [number, number,
 }
 
 export function LunarMap({
+  basemap,
+  onBasemapStatus,
   sites,
   selectedId,
   picked = null,
@@ -186,6 +193,7 @@ export function LunarMap({
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<OlMap | null>(null)
+  const basemapRef = useRef<PolarBasemap | null>(null)
   const siteSource = useRef(new VectorSource())
   const pickSource = useRef(new VectorSource())
   const tileSource = useRef(new VectorSource())
@@ -197,15 +205,16 @@ export function LunarMap({
   const startedAt = useRef(0)
   const displayEvents = useRef<Record<string, object>>({})
   // Latest props for OpenLayers callbacks (registered once).
-  const state = useRef({ selectedId, layers, marks, onSelect, onPick, onCursor, onView, onRasterStatus })
+  const state = useRef({ selectedId, layers, marks, onSelect, onPick, onCursor, onView, onRasterStatus, onBasemapStatus })
   useLayoutEffect(() => {
-    state.current = { selectedId, layers, marks, onSelect, onPick, onCursor, onView, onRasterStatus }
+    state.current = { selectedId, layers, marks, onSelect, onPick, onCursor, onView, onRasterStatus, onBasemapStatus }
   })
 
   useImperativeHandle(ref, () => ({
+    retryBasemap: () => basemapRef.current?.retry(),
     fitPolar: () => {
       interacted.current = true
-      const f = mapHalfExtent(focusLat)
+      const f = HALF
       mapRef.current?.getView().fit([-f, -f, f, f], { padding: [16, 16, 16, 16], duration: 400 })
     },
     fitExtent: (extent) => {
@@ -319,6 +328,9 @@ export function LunarMap({
     })
 
     const map = new OlMap({
+      // Our loader limits HTTP concurrency. Let coarse prepared parents enter its
+      // priority queue without waiting behind OL's default 16 detailed loads.
+      maxTilesLoading: 128,
       target: containerRef.current,
       layers: [region, grat, coverage, siteLayer, pickLayer],
       controls: interactive
@@ -329,10 +341,10 @@ export function LunarMap({
         projection: lunarProjection,
         center: [0, 0],
         zoom: 1,
-        extent: [-HALF, -HALF, HALF, HALF],
-        constrainOnlyCenter: true,
+        extent: [-WORLD_HALF, -WORLD_HALF, WORLD_HALF, WORLD_HALF],
+        constrainOnlyCenter: false,
         enableRotation: false,
-        showFullExtent: true,
+        showFullExtent: false,
       }),
     })
     // Min zoom = full 80°S disc; start zoomed to focusLat (~88°S ridge/Shackleton scale).
@@ -372,8 +384,11 @@ export function LunarMap({
       const size = map.getSize()
       const res = v.getResolution()
       if (!c || !size || !res) return
+      const worldResolution = 2 * WORLD_HALF / Math.max(size[0]!, size[1]!)
+      v.setMinZoom(Math.max(fitZoom - 0.5, v.getZoomForResolution(worldResolution) ?? fitZoom))
       const halfWidthM = (size[0]! * res) / 2
       const halfHeightM = (size[1]! * res) / 2
+      el.dataset.view = JSON.stringify({ center: c, resolution: res, bounds: [c[0]! - halfWidthM, c[1]! - halfHeightM, c[0]! + halfWidthM, c[1]! + halfHeightM], size })
       state.current.onView?.({
         center: [c[0]!, c[1]!],
         halfExtent: Math.max(halfWidthM, halfHeightM),
@@ -395,6 +410,19 @@ export function LunarMap({
     el.addEventListener('mouseleave', leave)
 
     mapRef.current = map
+    const polar = new PolarBasemap(map, lunarProjection,
+      (status) => state.current.onBasemapStatus?.(status),
+      (metrics) => {
+        const el = containerRef.current
+        if (!el) return
+        el.dataset.basemap = JSON.stringify(metrics)
+        const m = metrics as { status: BasemapStatus; painted: boolean }
+        if (!el.dataset.firstRasterMs && m.painted && m.status.overviewReady) {
+          el.dataset.firstRasterMs = (performance.now() - startedAt.current).toFixed(1)
+          el.dataset.firstRasterNavMs = performance.now().toFixed(1)
+        }
+      })
+    basemapRef.current = polar
     const resize = new ResizeObserver(() => { map.updateSize(); emitView() })
     resize.observe(el)
     const rasterMap = rasterLayers.current
@@ -405,12 +433,18 @@ export function LunarMap({
       el.removeEventListener('pointerdown', beginInteraction)
       el.removeEventListener('wheel', beginInteraction)
       el.removeEventListener('keydown', beginInteraction)
+      polar.dispose()
+      basemapRef.current = null
       map.setTarget(undefined)
       mapRef.current = null
       for (const entry of rasterMap.values()) entry.slot.dispose()
       rasterMap.clear()
     }
   }, [interactive, focusLat])
+
+  useEffect(() => {
+    basemapRef.current?.setMode(basemap?.choice ?? 'none', basemap?.opacity ?? 1, basemap?.nac ?? false)
+  }, [basemap?.choice, basemap?.opacity, basemap?.nac, interactive, focusLat])
 
   // Sites
   useEffect(() => {
@@ -506,6 +540,7 @@ export function LunarMap({
       ref={containerRef}
       role="application"
       aria-label={ariaLabel}
+      data-build={JSON.stringify(__SELENORA_BUILD__)}
       className="absolute inset-0 cursor-crosshair bg-[radial-gradient(circle_at_50%_50%,#0c1424_0%,#070b16_70%)]"
     />
   )

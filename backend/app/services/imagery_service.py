@@ -63,6 +63,16 @@ class ImagerySource:
 
 SOURCES: tuple[ImagerySource, ...] = (
     ImagerySource(
+        layer_id="lroc-nac-2m-south-pole", title="LROC NAC 2 m South Pole Mosaic (preliminary)",
+        provider="ASU LROC / Lunaserv", protocol="WMS", endpoint=LUNASERV_WMS,
+        remote_layer_name="luna_nac_2m_south_pole", crs_native="IAU2000:30120",
+        tile_format="image/png", attribution="NASA/GSFC/Arizona State University — preliminary LROC NAC 2 m mosaic via ASU Lunaserv",
+        product_page=LUNASERV_WMS + "?SERVICE=WMS&REQUEST=GetCapabilities&VERSION=1.1.1",
+        alignment_status="AVAILABLE_NATIVE_STEREO", preview_enabled=True,
+        notes="2009–2010 preliminary 2 m mosaic; estimated absolute accuracy 10–20 m in service metadata. Not the controlled NAC_POLE_SOUTH_CM_AVG 1 m RDR. Alpha defines actual coverage.",
+        polar_coverage="Discontinuous Shackleton / de Gerlache ridge coverage. Service advertises an uninformative global bbox; no global NAC coverage is implied.",
+    ),
+    ImagerySource(
         layer_id="lroc-wac-south-summer",
         title="LROC WAC South Pole Summer Mosaic (Lunaserv WMS)",
         provider="ASU LROC / Lunaserv",
@@ -201,6 +211,7 @@ def render_imagery_preview(
     half_extent_m: float = 8_000.0,
     bounds_m: tuple[float, float, float, float] | None = None,
     max_edge_px: int = 512,
+    allow_empty: bool = False,
 ) -> tuple[bytes, PreviewMeta]:
     source = get_source(layer_id)
     if source is None:
@@ -251,7 +262,7 @@ def render_imagery_preview(
         # Black is valid lunar shadow. Only the source alpha denotes missing data.
         alpha = np.asarray(image.convert("RGBA"))[:, :, 3]
         nodata_fraction = float(np.mean(alpha == 0))
-        if nodata_fraction == 1.0:
+        if nodata_fraction == 1.0 and not allow_empty:
             raise LayerUnavailableError("LROC has no photographic coverage in this window.")
     meta = PreviewMeta(
         layer_id=layer_id, role="MAP_VISUALIZATION_ONLY",

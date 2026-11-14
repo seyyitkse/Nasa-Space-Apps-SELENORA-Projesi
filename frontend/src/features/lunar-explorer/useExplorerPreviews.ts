@@ -13,7 +13,7 @@ export type RasterDisplayEvent = { key: string; preview: RasterPreview; status: 
 
 export function useExplorerPreviews(
   catalog: MapLayer[], layers: MapLayers, bounds: [number, number, number, number] | null,
-  enabled: boolean, photoId?: string, hillId?: string, detailEnabled = true,
+  enabled: boolean, photoId?: string, hillId?: string, detailEnabled = true, tiledBasemap = false,
 ) {
   const [display, setDisplay] = useState<Record<string, RasterDisplayEvent>>({})
   const onRasterStatus = useCallback((event: RasterDisplayEvent) => {
@@ -30,7 +30,7 @@ export function useExplorerPreviews(
       // Genuine hillshade also loads for a new viewport while LROC is pending.
       on: detailEnabled && (Boolean(layers.rasters[layer.id]) || (photoOn && layer.id === hillId)),
     })),
-  ].filter((request) => request.id && !(request.key.startsWith('detail:')
+  ].filter((request) => request.id && !(tiledBasemap && (request.id === photoId || request.id === hillId)) && !(request.key.startsWith('detail:')
     && (request.id === photoId || request.id === hillId)
     && request.bounds?.every((value, index) => value === STARTUP_BOUNDS[index])))
   const combined = useQueries({
