@@ -9,11 +9,18 @@ const ep = (iso: string, sun: EpochState['sun']): EpochState => ({
   iso,
   sunElevation: 1,
   earthElevation: 1,
+  sunAzimuth: null,
+  earthAzimuth: null,
   sun,
   earth: 'VISIBLE',
   sunGeometric: 'VISIBLE',
   earthGeometric: 'VISIBLE',
   joint: sun === 'VISIBLE' ? 'VISIBLE' : sun === 'UNRESOLVED' || sun === 'UNKNOWN' ? 'UNKNOWN' : 'NOT_VISIBLE',
+  sunTerrainHorizonDeg: null,
+  earthTerrainHorizonDeg: null,
+  holdHours: 0.5,
+  contributesDuration: true,
+  authoritative: false,
 })
 
 describe('mission window heatmap', () => {

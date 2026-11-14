@@ -22,11 +22,18 @@ const epoch = (i: number, sun: EpochState['sun']): EpochState => ({
   iso: new Date(T0 + i * H).toISOString(),
   sunElevation: sun === 'UNKNOWN' ? null : 1,
   earthElevation: -1,
+  sunAzimuth: null,
+  earthAzimuth: null,
   sun,
   earth: 'BELOW_HORIZON',
   sunGeometric: sun === 'UNKNOWN' ? 'UNKNOWN' : 'VISIBLE',
   earthGeometric: 'BELOW_HORIZON',
   joint: sun === 'UNKNOWN' ? 'UNKNOWN' : 'NOT_VISIBLE',
+  sunTerrainHorizonDeg: null,
+  earthTerrainHorizonDeg: null,
+  holdHours: 1,
+  contributesDuration: true,
+  authoritative: false,
 })
 const epochs = [epoch(0, 'VISIBLE'), epoch(1, 'BLOCKED'), epoch(2, 'UNKNOWN'), epoch(3, 'UNRESOLVED')]
 

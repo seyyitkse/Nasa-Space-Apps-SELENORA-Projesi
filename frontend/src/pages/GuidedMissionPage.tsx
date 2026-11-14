@@ -30,7 +30,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input, Label } from '@/components/ui/input'
 import { Skeleton, Switch } from '@/components/ui/misc'
-import { buildEpochs } from '@/features/analysis-data/adapter'
+import { resolveSiteEpochs } from '@/features/analysis-data/adapter'
 import { StateLanes, StateLegend } from '@/features/analysis-data/StateLanes'
 import { useAnalysisCatalog } from '@/features/analysis-data/useWorkspaceAnalysis'
 import { matchingExamples } from '@/features/guided/examples'
@@ -39,6 +39,7 @@ import { type Objective, OBJECTIVE_WEIGHTS } from '@/features/guided/presets'
 import { useAnalysis, useSites, useTimeline } from '@/hooks/useApi'
 import { formatCoord, formatUtc, formatUtcDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { useAnalysisEpochs, useCapabilities } from '@/services/contracts'
 import { selenoraApi } from '@/services/selenoraApi'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import type { LandingSite } from '@/types/api'
@@ -77,18 +78,23 @@ function GuidedResults({ id, objective }: { id: string; objective: Objective | n
   const analysis = useAnalysis(id)
   const done = analysis.data?.status === 'COMPLETED'
   const timeline = useTimeline(id, done)
+  const caps = useCapabilities()
+  const epochsQ = useAnalysisEpochs(id, done && caps.has('analysisEpochs'))
   const setAnalysis = useWorkspaceStore((s) => s.setAnalysis)
   const r = analysis.data
   const sites = useMemo(
     () =>
-      r && timeline.data
-        ? r.sites.map((s, index) => ({
-            label: s.label,
-            index,
-            epochs: buildEpochs(r, s, (timeline.data.sites.find((x) => x.label === s.label) ?? timeline.data.sites[index])?.points ?? []),
-          }))
+      r
+        ? r.sites.map((s, index) => {
+            const tl = timeline.data?.sites.find((x) => x.label === s.label) ?? timeline.data?.sites[index]
+            return {
+              label: s.label,
+              index,
+              epochs: resolveSiteEpochs(r, s, tl?.points, epochsQ.data),
+            }
+          })
         : [],
-    [r, timeline.data],
+    [r, timeline.data, epochsQ.data],
   )
 
   if (analysis.error) return <ErrorState error={analysis.error} onRetry={() => void analysis.refetch()} />

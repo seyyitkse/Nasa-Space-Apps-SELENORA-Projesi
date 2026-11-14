@@ -312,3 +312,18 @@ layer with `kind: "imagery"` whose `role` is not `REFERENCE_DOC` and whose `acce
   (photos show illumination at image time, not at the analysis epoch).
 
 Until then the Photo option is disabled with the reason. No decorative image is substituted.
+
+---
+
+## Phase 5F consumption (2026-11-14)
+
+On `feature/phase5f-immersive-integration` (5E + 5D merge):
+
+| Route | Frontend use | Status |
+|---|---|---|
+| `GET /api/v1/analyses/{id}/epochs` | Simulator, Windows, Comparison, Guided lanes — authoritative VISIBLE/BLOCKED/UNKNOWN | ✅ consumed |
+| `GET /api/v1/maps/preview?layer_id=lroc-wac-south-summer` | Explorer Photo basemap (warped stereo PNG) | ✅ consumed |
+| `GET /api/v1/maps/imagery/sources` | Capability / documentation (allow-list metadata) | available |
+| `GET /api/v1/artemis/regions` | Explorer: 2024 shortlist + 2022 historical lists | ✅ consumed |
+
+Static LROC illumination disclaimer is shown whenever Photo is active. Live Horizons observer-series is skipped when `/epochs` supplies Az/El.

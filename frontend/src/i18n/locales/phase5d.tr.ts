@@ -241,9 +241,25 @@ const phase5dTr: typeof phase5dEn = {
     photoShort: 'Fotoğraf: henüz doğrulanmış LROC katmanı yok.',
     photoUnavailable:
       'Fotoğraf kullanılamıyor: sunucu henüz koordinatlandırılmış bir LROC görüntü katmanı yayınlamıyor. Yerine dekoratif görüntü konmaz.',
-    helpAvailable: 'Fotoğraf: sunucunun güney kutup harita projeksiyonunda ürettiği gerçek LROC görüntüsü. Opaklıkla gölgeli kabartmayla karşılaştırın.',
+    helpAvailable:
+      'Fotoğraf: ASU Lunaserv LROC WAC güney kutup mozaiği; sunucu SELENORA stereografik haritasına yeniden projekte eder. Opaklıkla LOLA gölgeli kabartmayla karşılaştırın. Aydınlatma görüntü alındığı andadır — görev tarihinize göre değişmez.',
     helpUnavailable:
       'Gölgeli kabartma NASA LOLA yüksekliklerinden hesaplanır. LROC fotoğrafı, sunucu doğrulanmış bir görüntü katmanı sağladığında burada görünecek.',
+    staticIllumination:
+      'Sabit LROC referans mozaiği — aydınlatma 2026/2027 görev zaman çizelgesiyle değişmez.',
+    loading: 'Bu harita penceresi için LROC fotoğrafı yükleniyor…',
+  },
+  artemis5e: {
+    historical: '2022 tarihsel set (13)',
+    current: '2024 Artemis III kısa listesi (9)',
+    note: 'Yalnızca adlar ve tarihler — çokgen yok. 2022 listesi tarihsel bağlamdır; güncel iniş planı değildir.',
+  },
+  sim5f: {
+    storedTitle: 'Örnek yönleri (kayıtlı analiz)',
+    storedNote:
+      'GET /analyses/{id}/epochs üzerinden yetkili Güneş/Dünya azimut, yükseklik ve VISIBLE/BLOCKED/UNKNOWN durumları — yeni Horizons isteği yok.',
+    authoritativeNote:
+      'Arazi ve geometrik durumlar yetkili /epochs uç noktasından gelir (VISIBLE / BLOCKED / UNKNOWN). Eksik DEM kapsamı UNKNOWN kalır; açık gökyüzü çıkarılmaz.',
   },
 }
 

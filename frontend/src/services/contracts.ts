@@ -17,9 +17,10 @@ export const ROUTES = {
   observerSeries: '/api/v1/ephemeris/observer-series', // Phase 5B (live Horizons, ≤ 72 h)
   mapLayers: '/api/v1/maps/layers', // Phase 5B
   mapPreview: '/api/v1/maps/preview', // Phase 5B (PNG + X-SELENORA-Bounds-M)
-  mapMesh: '/api/v1/maps/mesh', // Phase 5B (3D, not yet consumed)
-  artemisRegions: '/api/v1/artemis/regions', // Phase 5B
-  analysisEpochs: '/api/v1/analyses/{analysis_id}/epochs', // still REQUESTED (R1)
+  mapMesh: '/api/v1/maps/mesh', // Phase 5B / 5E schema
+  artemisRegions: '/api/v1/artemis/regions', // Phase 5B / 5E provenance
+  analysisEpochs: '/api/v1/analyses/{analysis_id}/epochs', // Phase 5E R1
+  imagerySources: '/api/v1/maps/imagery/sources', // Phase 5E allow-list
 } as const
 
 export type RouteKey = keyof typeof ROUTES
@@ -203,15 +204,94 @@ export function parseBoundsHeader(v: string | undefined | null): [number, number
 export interface MeshResponse {
   layer_id: string
   role: string
+  kind?: string
   crs_summary: string
+  crs_proj4?: string
   attribution: string
+  source_url?: string | null
+  access_mode?: string
+  origin_lonlat_deg?: [number, number]
   origin_stereo_m: [number, number]
+  extent_m?: { left: number; bottom: number; right: number; top: number }
+  grid?: { nx: number; ny: number; n_cells: number }
   x_m: number[]
   y_m: number[]
   z_m: (number | null)[][]
+  nodata_mask?: boolean[][]
+  nodata_fraction?: number
+  elevation_units?: string
+  reference_elevation_m?: number | null
+  z_min_m?: number | null
+  z_max_m?: number | null
+  sampling_resolution_m?: number
   step_m: number
   half_extent_m: number
   warning: string
+}
+
+/** Authoritative per-epoch states from GET /analyses/{id}/epochs (Phase 5E). */
+export type AuthoritativeBodyState = 'VISIBLE' | 'BLOCKED' | 'UNKNOWN'
+export type AuthoritativeJointState = 'VISIBLE' | 'NOT_VISIBLE' | 'UNKNOWN'
+
+export interface AuthoritativeEpochSample {
+  t: string
+  sun_azimuth_deg: number | null
+  sun_elevation_deg: number | null
+  earth_azimuth_deg: number | null
+  earth_elevation_deg: number | null
+  sun_state: AuthoritativeBodyState
+  earth_state: AuthoritativeBodyState
+  joint_state: AuthoritativeJointState
+  sun_terrain_horizon_deg?: number | null
+  earth_terrain_horizon_deg?: number | null
+  sun_geometric_state?: AuthoritativeBodyState | null
+  earth_geometric_state?: AuthoritativeBodyState | null
+  hold_hours: number
+  contributes_duration: boolean
+}
+
+export interface AuthoritativeSiteEpochs {
+  label: string
+  latitude_deg: number
+  longitude_deg: number
+  landing_site_id?: string | null
+  dem_site_id?: string | null
+  terrain_complete_coverage_fraction?: number | null
+  true_north_grid_azimuth_deg?: number | null
+  samples: AuthoritativeEpochSample[]
+}
+
+export interface EpochsResponse {
+  analysis_id: string
+  mission_name: string
+  horizon_model: string
+  data_quality: string
+  algorithm_version: string
+  start_utc: string
+  end_utc: string
+  time_step_minutes: number
+  sample_count_per_site: number
+  duration_semantics: string
+  sites: AuthoritativeSiteEpochs[]
+  provenance: { source_id: string; description: string; version?: string | null }[]
+  limitations: string[]
+}
+
+export interface ImagerySource {
+  layer_id: string
+  title: string
+  provider: string
+  protocol: string
+  endpoint: string
+  remote_layer_name: string | null
+  crs_native: string
+  tile_format: string
+  attribution: string
+  product_page: string
+  alignment_status: string
+  preview_enabled: boolean
+  notes: string
+  polar_coverage: string
 }
 
 /** Index of the horizon-profile bin nearest to a true azimuth (bins are evenly spaced from 0°). */
@@ -222,13 +302,24 @@ export function nearestBin(p: Pick<HorizonProfile, 'azimuth_deg'>, azDeg: number
   return ((Math.round((((azDeg % 360) + 360) % 360) / step) % n) + n) % n
 }
 
+export interface ArtemisRegionMeta {
+  id: string
+  name: string
+  notes?: string
+  classification?: string
+  source_date?: string
+  polygon?: null
+}
+
 export interface ArtemisRegions {
   title: string
   disclaimer: string
   geometry: null
   geometry_status: string
   official_sources: { id: string; url: string }[]
-  regions: { id: string; name: string; notes?: string }[]
+  regions: ArtemisRegionMeta[]
+  historical_2022_regions?: ArtemisRegionMeta[]
+  current_2024_shortlist?: ArtemisRegionMeta[]
 }
 
 /* ----------------------------------------------------------- capability */
@@ -292,6 +383,10 @@ export const contractApi = {
         timeout: 120_000,
       })
       .then((r) => r.data),
+  analysisEpochs: (analysisId: string) =>
+    api.get<EpochsResponse>(`/api/v1/analyses/${analysisId}/epochs`, { timeout: 60_000 }).then((r) => r.data),
+  imagerySources: () =>
+    api.get<{ items: ImagerySource[]; scientific_note: string }>(ROUTES.imagerySources).then((r) => r.data),
 }
 
 export function useTerrainCatalog(enabled: boolean) {
@@ -345,6 +440,26 @@ export function useMapMesh(p: { lat: number; lon: number; halfExtentM: number; s
     queryKey: ['map-mesh', p],
     queryFn: () => contractApi.mapMesh(p!),
     enabled: enabled && p !== null,
+    staleTime: 30 * 60_000,
+    retry: 0,
+  })
+}
+
+export function useAnalysisEpochs(analysisId: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: ['analysis-epochs', analysisId],
+    queryFn: () => contractApi.analysisEpochs(analysisId!),
+    enabled: enabled && Boolean(analysisId),
+    staleTime: 5 * 60_000,
+    retry: 0,
+  })
+}
+
+export function useImagerySources(enabled: boolean) {
+  return useQuery({
+    queryKey: ['imagery-sources'],
+    queryFn: contractApi.imagerySources,
+    enabled,
     staleTime: 30 * 60_000,
     retry: 0,
   })

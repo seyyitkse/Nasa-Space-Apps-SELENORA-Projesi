@@ -16,10 +16,16 @@ export type BasemapChoice = 'photo' | 'hillshade' | 'none'
  * the same georeferenced /maps/preview contract). No decorative substitute is ever
  * shown; until then the option is disabled with the reason.
  */
+/** Prefer allow-listed polar WMS imagery (Phase 5E `lroc-wac-south-summer`); never pick REFERENCE_DOC. */
 export function pickBasemapLayers(layers: MapLayer[]) {
   const renderable = layers.filter(isRenderable)
+  const imagery = renderable.filter((l) => l.kind === 'imagery')
   return {
-    photo: renderable.find((l) => l.kind === 'imagery') ?? null,
+    photo:
+      imagery.find((l) => l.id === 'lroc-wac-south-summer') ??
+      imagery.find((l) => l.access_mode === 'wms_allowlisted') ??
+      imagery[0] ??
+      null,
     hillshade: renderable.find((l) => l.kind === 'hillshade') ?? null,
   }
 }
@@ -75,6 +81,16 @@ export function BasemapControl({
         })}
       </div>
       {!photo && <p className="text-[10.5px] leading-snug text-fg-3">{t('lroc.photoShort')}</p>}
+      {choice === 'photo' && photo && (
+        <p className="text-[10.5px] leading-snug text-warning/90" role="note">
+          {t('lroc.staticIllumination')}
+        </p>
+      )}
+      {choice === 'photo' && photo?.attribution && (
+        <p className="truncate text-[9.5px] leading-snug text-fg-3" title={photo.attribution}>
+          {photo.attribution}
+        </p>
+      )}
       {choice !== 'none' && (
         <div>
           <div className="mb-1 flex justify-between text-[10.5px] text-fg-3">

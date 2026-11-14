@@ -242,9 +242,25 @@ const phase5dEn = {
     photoShort: 'Photo: no verified LROC layer yet.',
     photoUnavailable:
       'Photography is unavailable: the server does not yet publish a georeferenced LROC imagery layer. No decorative image is substituted.',
-    helpAvailable: 'Photography: real LROC imagery rendered by the server in the south-polar map projection. Compare it with the hillshade using opacity.',
+    helpAvailable:
+      'Photography: real LROC WAC south-polar mosaic from ASU Lunaserv, warped by the server into SELENORA’s stereographic map. Compare with LOLA hillshade using opacity. Illumination is fixed at image acquisition — not your mission date.',
     helpUnavailable:
       'Hillshade is shaded relief computed from NASA LOLA heights. LROC photography will appear here once the server provides a verified imagery layer.',
+    staticIllumination:
+      'Static LROC reference mosaic — lighting does not change with the 2026/2027 mission timeline.',
+    loading: 'Loading LROC photography for this map window…',
+  },
+  artemis5e: {
+    historical: '2022 historical set (13)',
+    current: '2024 Artemis III shortlist (9)',
+    note: 'Names and dates only — no polygons. The 2022 list is historical context, not the current landing plan.',
+  },
+  sim5f: {
+    storedTitle: 'Per-epoch directions (stored analysis)',
+    storedNote:
+      'Authoritative Sun/Earth azimuth, elevation and VISIBLE/BLOCKED/UNKNOWN states from GET /analyses/{id}/epochs — no new Horizons request.',
+    authoritativeNote:
+      'Terrain and geometric states come from the authoritative /epochs endpoint (VISIBLE / BLOCKED / UNKNOWN). Incomplete DEM coverage stays UNKNOWN; clear sky is never inferred.',
   },
 }
 

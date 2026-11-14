@@ -68,21 +68,49 @@ export default function SimulatorPage() {
   const catalog = useTerrainCatalog(caps.has('terrainCatalog'))
   const chunk =
     result && epoch ? observerChunk(epoch.t, Date.parse(result.start_utc), Date.parse(result.end_utc), result.time_step_minutes) : null
+  // Skip live Horizons when authoritative /epochs already supplies Az/El + states.
+  const needLiveSeries = caps.has('observerSeries') && !ws.epochsAuthoritative
   const series = useObserverSeries(
     chunk && site && result
       ? { lat: site.latitude_deg, lon: site.longitude_deg, start: chunk.start, end: chunk.end, step: result.time_step_minutes, terrain: terrainMode }
       : null,
-    caps.has('observerSeries'),
+    needLiveSeries,
   )
-  const sample = useMemo(
+  const liveSample = useMemo(
     () => (epoch ? series.data?.points.find((p) => Date.parse(p.t) === epoch.t) : undefined),
     [series.data, epoch],
   )
+  // Prefer stored /epochs Az/El + states; live observer-series is a cross-check only.
+  const sample = useMemo(() => {
+    if (!epoch) return undefined
+    if (epoch.authoritative && (epoch.sunAzimuth != null || epoch.earthAzimuth != null)) {
+      return {
+        t: epoch.iso,
+        sun_azimuth_deg: epoch.sunAzimuth,
+        sun_elevation_deg: epoch.sunElevation,
+        earth_azimuth_deg: epoch.earthAzimuth,
+        earth_elevation_deg: epoch.earthElevation,
+        sun_state: (epoch.sun === 'VISIBLE' || epoch.sun === 'BLOCKED' || epoch.sun === 'UNKNOWN' ? epoch.sun : null) as
+          | 'VISIBLE'
+          | 'BLOCKED'
+          | 'UNKNOWN'
+          | null,
+        earth_state: (epoch.earth === 'VISIBLE' || epoch.earth === 'BLOCKED' || epoch.earth === 'UNKNOWN' ? epoch.earth : null) as
+          | 'VISIBLE'
+          | 'BLOCKED'
+          | 'UNKNOWN'
+          | null,
+        sun_terrain_horizon_deg: epoch.sunTerrainHorizonDeg,
+        earth_terrain_horizon_deg: epoch.earthTerrainHorizonDeg,
+      }
+    }
+    return liveSample
+  }, [epoch, liveSample])
   const delta =
-    sample && epoch
+    liveSample && epoch
       ? {
-          sun: sample.sun_elevation_deg != null && epoch.sunElevation != null ? Math.abs(sample.sun_elevation_deg - epoch.sunElevation) : null,
-          earth: sample.earth_elevation_deg != null && epoch.earthElevation != null ? Math.abs(sample.earth_elevation_deg - epoch.earthElevation) : null,
+          sun: liveSample.sun_elevation_deg != null && epoch.sunElevation != null ? Math.abs(liveSample.sun_elevation_deg - epoch.sunElevation) : null,
+          earth: liveSample.earth_elevation_deg != null && epoch.earthElevation != null ? Math.abs(liveSample.earth_elevation_deg - epoch.earthElevation) : null,
         }
       : null
   // Stored timeline elevations are rounded to 4 decimals.
@@ -179,8 +207,22 @@ export default function SimulatorPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="grid grid-cols-2 gap-4">
-                    <ElevationGauge body="sun" epochs={epochs} index={index} terrainMode={terrainMode} terrainHorizonDeg={sample?.sun_terrain_horizon_deg} liveState={sample?.sun_state} />
-                    <ElevationGauge body="earth" epochs={epochs} index={index} terrainMode={terrainMode} terrainHorizonDeg={sample?.earth_terrain_horizon_deg} liveState={sample?.earth_state} />
+                    <ElevationGauge
+                      body="sun"
+                      epochs={epochs}
+                      index={index}
+                      terrainMode={terrainMode}
+                      terrainHorizonDeg={epoch?.sunTerrainHorizonDeg ?? sample?.sun_terrain_horizon_deg}
+                      liveState={epoch?.authoritative ? undefined : sample?.sun_state}
+                    />
+                    <ElevationGauge
+                      body="earth"
+                      epochs={epochs}
+                      index={index}
+                      terrainMode={terrainMode}
+                      terrainHorizonDeg={epoch?.earthTerrainHorizonDeg ?? sample?.earth_terrain_horizon_deg}
+                      liveState={epoch?.authoritative ? undefined : sample?.earth_state}
+                    />
                   </div>
                   {epoch && (
                     <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
@@ -239,11 +281,53 @@ export default function SimulatorPage() {
                 </Card>
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-[14px]">{t('sim.liveTitle')}</CardTitle>
-                    <CardDescription>{t('sim.liveNote')}</CardDescription>
+                    <CardTitle className="text-[14px]">
+                      {ws.epochsAuthoritative ? t('sim5f.storedTitle') : t('sim.liveTitle')}
+                    </CardTitle>
+                    <CardDescription>{ws.epochsAuthoritative ? t('sim5f.storedNote') : t('sim.liveNote')}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2 text-[12.5px]">
-                    {!caps.has('observerSeries') ? (
+                    {ws.epochsAuthoritative && sample ? (
+                      <>
+                        <dl className="grid grid-cols-2 gap-2 font-mono text-[11px]">
+                          <div className="rounded-lg border border-line bg-bg-2/50 p-2">
+                            <dt className="text-fg-3">☉ az / el</dt>
+                            <dd className="text-fg">
+                              {sample.sun_azimuth_deg?.toFixed(2)}° / {sample.sun_elevation_deg?.toFixed(3)}°
+                            </dd>
+                            {sample.sun_terrain_horizon_deg != null && (
+                              <dd className="text-[#6EE7B7]">
+                                {t('sim.terrainHorizon')} {sample.sun_terrain_horizon_deg.toFixed(2)}°
+                              </dd>
+                            )}
+                            {sample.sun_state && (
+                              <dd>
+                                <Badge tone={STATE_TONE[sample.sun_state]}>{t(`lab.state.${sample.sun_state}`)}</Badge>
+                              </dd>
+                            )}
+                          </div>
+                          <div className="rounded-lg border border-line bg-bg-2/50 p-2">
+                            <dt className="text-fg-3">⊕ az / el</dt>
+                            <dd className="text-fg">
+                              {sample.earth_azimuth_deg?.toFixed(2)}° / {sample.earth_elevation_deg?.toFixed(3)}°
+                            </dd>
+                            {sample.earth_terrain_horizon_deg != null && (
+                              <dd className="text-[#6EE7B7]">
+                                {t('sim.terrainHorizon')} {sample.earth_terrain_horizon_deg.toFixed(2)}°
+                              </dd>
+                            )}
+                            {sample.earth_state && (
+                              <dd>
+                                <Badge tone={STATE_TONE[sample.earth_state]}>{t(`lab.state.${sample.earth_state}`)}</Badge>
+                              </dd>
+                            )}
+                          </div>
+                        </dl>
+                        <p className="font-mono text-[10.5px] text-fg-3">
+                          GET /analyses/…/epochs · {ws.epochs?.duration_semantics} · {ws.epochs?.algorithm_version}
+                        </p>
+                      </>
+                    ) : !caps.has('observerSeries') ? (
                       <p className="text-fg-3">{t('sim.liveUnavailable')}</p>
                     ) : !chunk ? (
                       <p className="text-fg-3">{t('sim.liveStepTooFine')}</p>
@@ -377,7 +461,11 @@ export default function SimulatorPage() {
               <CardContent className="space-y-3">
                 <ul className="list-disc space-y-1 pl-4 text-[12.5px] leading-relaxed text-fg-2 marker:text-fg-3">
                   <li>{t('sim.noInterpolation')}</li>
-                  {terrainMode && <li>{t('sim.terrainDerivation')}</li>}
+                  {ws.epochsAuthoritative ? (
+                    <li>{t('sim5f.authoritativeNote')}</li>
+                  ) : (
+                    terrainMode && <li>{t('sim.terrainDerivation')}</li>
+                  )}
                   {ws.timeline?.downsampled && <li>{t('comparison.downsampled', { n: ws.timeline.step_minutes })}</li>}
                 </ul>
                 <ProvenanceList

@@ -21,7 +21,7 @@ import { CumulativeJointChart, ElevationChart, VisibilityBarChart } from '@/feat
 import { GeometricTerrainCompare } from '@/features/site-comparison/GeometricTerrainCompare'
 import { ScienceTransparencyPanel } from '@/features/site-comparison/ScienceTransparencyPanel'
 import { ScoreBreakdown } from '@/features/site-comparison/ScoreBreakdown'
-import { buildEpochs } from '@/features/analysis-data/adapter'
+import { resolveSiteEpochs } from '@/features/analysis-data/adapter'
 import { StateLanes, StateLegend } from '@/features/analysis-data/StateLanes'
 import type { SiteEpochs } from '@/features/analysis-data/useWorkspaceAnalysis'
 import { ConfidencePanel, RecommendationBanner, WeightLab } from '@/features/site-comparison/LabPanels'
@@ -30,6 +30,7 @@ import { PlainSummary } from '@/features/guided/PlainSummary'
 import { useIsScientist } from '@/stores/modeStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useAnalysis, useTimeline } from '@/hooks/useApi'
+import { useAnalysisEpochs, useCapabilities } from '@/services/contracts'
 import { useMissionStore } from '@/stores/missionStore'
 import type { AnalysisCreate, AnalysisResult, DemoAnalysisResponse, TimelineResponse } from '@/types/api'
 
@@ -102,6 +103,8 @@ function ComparisonDashboard({
   allowSyntheticRecompute?: boolean
 }) {
   const { t } = useTranslation()
+  const caps = useCapabilities()
+  const epochsQ = useAnalysisEpochs(result.id, caps.has('analysisEpochs'))
   const [weights, setWeights] = useState(result.weights)
   useEffect(() => {
     setWeights(result.weights)
@@ -116,9 +119,9 @@ function ComparisonDashboard({
     () =>
       result.sites.map((s, index) => {
         const tl = timeline.sites.find((x) => x.label === s.label) ?? timeline.sites[index]
-        return { label: s.label, index, epochs: tl ? buildEpochs(result, s, tl.points) : [] }
+        return { label: s.label, index, epochs: resolveSiteEpochs(result, s, tl?.points, epochsQ.data) }
       }),
-    [result, timeline],
+    [result, timeline, epochsQ.data],
   )
 
   const details = (

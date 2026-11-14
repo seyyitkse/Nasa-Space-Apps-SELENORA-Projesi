@@ -57,7 +57,12 @@ export default function ExplorerPage() {
   const catalog = useTerrainCatalog(caps.has('terrainCatalog'))
   const mapLayers = useMapLayers(caps.has('mapLayers'))
   const artemis = useArtemisRegions(caps.has('artemisRegions'))
-  const [view, setView] = useState<{ center: [number, number]; halfExtent: number } | null>(null)
+  // Seed a polar window so basemap previews can fetch before the first OpenLayers moveend
+  // (mobile browsers sometimes delay rendercomplete until after the first interaction).
+  const [view, setView] = useState<{ center: [number, number]; halfExtent: number } | null>({
+    center: [0, 0],
+    halfExtent: PREVIEW_MAX_HALF_EXTENT_M,
+  })
   const mapRef = useRef<LunarMapHandle>(null)
 
   const [params, setParams] = useSearchParams()
@@ -218,15 +223,48 @@ export default function ExplorerPage() {
                   <Flag className="size-4 text-gold" aria-hidden /> {t('explorer2.artemisTitle')}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <ul className="flex flex-wrap gap-1.5">
-                  {artemis.data.regions.map((r) => (
-                    <li key={r.id}>
-                      <Badge tone="neutral" className="normal-case">{r.name}</Badge>
-                    </li>
-                  ))}
-                </ul>
-                <p className="text-[11px] leading-relaxed text-fg-3">{t('explorer2.artemisNote')}</p>
+              <CardContent className="space-y-3">
+                {(artemis.data.current_2024_shortlist?.length ?? 0) > 0 && (
+                  <div>
+                    <div className="sel-eyebrow mb-1.5 text-[10px]">{t('artemis5e.current')}</div>
+                    <ul className="flex flex-wrap gap-1.5">
+                      {artemis.data.current_2024_shortlist!.map((r) => (
+                        <li key={r.id}>
+                          <Badge tone="cyan" className="normal-case">
+                            {r.name}
+                          </Badge>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {(artemis.data.historical_2022_regions?.length ?? 0) > 0 && (
+                  <div>
+                    <div className="sel-eyebrow mb-1.5 text-[10px]">{t('artemis5e.historical')}</div>
+                    <ul className="flex flex-wrap gap-1.5">
+                      {artemis.data.historical_2022_regions!.map((r) => (
+                        <li key={r.id}>
+                          <Badge tone="neutral" className="normal-case">
+                            {r.name}
+                          </Badge>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {!artemis.data.current_2024_shortlist?.length && !artemis.data.historical_2022_regions?.length && (
+                  <ul className="flex flex-wrap gap-1.5">
+                    {artemis.data.regions.map((r) => (
+                      <li key={r.id}>
+                        <Badge tone="neutral" className="normal-case">
+                          {r.name}
+                        </Badge>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                <p className="text-[11px] leading-relaxed text-fg-3">{t('artemis5e.note')}</p>
+                <p className="text-[11px] leading-relaxed text-fg-3">{artemis.data.disclaimer || t('explorer2.artemisNote')}</p>
                 {artemis.data.official_sources.map((src) => (
                   <a key={src.id} href={src.url} target="_blank" rel="noreferrer noopener" className="flex items-start gap-1.5 text-[11px] text-fg-2 hover:text-cyan">
                     <ExternalLink className="mt-0.5 size-3 shrink-0" aria-hidden />
@@ -265,10 +303,23 @@ export default function ExplorerPage() {
             {anyRaster && previewWindowKm !== null && (
               <div className="pointer-events-none absolute top-3 left-3 max-w-[calc(100%-4rem)] rounded-lg border border-line-strong bg-bg/85 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur sm:max-w-sm">
                 {t('explorer2.previewNote', { km: previewWindowKm.toFixed(0) })}
+                {basemapChoice === 'photo' && <div className="mt-0.5 text-[10px] text-warning/90">{t('lroc.staticIllumination')}</div>}
                 <div className="mt-0.5 truncate text-[10px] text-fg-3">{previews.map((p) => p.attribution.split(';')[0]).join(' · ')}</div>
               </div>
             )}
-            {!anyRaster && (
+            {!anyRaster && enabledIds.length > 0 && Object.values(previewStatus).some((s) => s === 'loading') && (
+              <div className="pointer-events-none absolute top-3 left-3 flex max-w-[calc(100%-4rem)] items-start gap-2 rounded-lg border border-line-strong bg-bg/85 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur sm:max-w-sm">
+                <Info className="mt-px size-3.5 shrink-0 text-cyan" aria-hidden />
+                <span>{t('lroc.loading')}</span>
+              </div>
+            )}
+            {!anyRaster && enabledIds.length > 0 && Object.values(previewStatus).some((s) => s === 'error') && (
+              <div className="pointer-events-none absolute top-3 left-3 flex max-w-[calc(100%-4rem)] items-start gap-2 rounded-lg border border-danger/40 bg-bg/85 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur sm:max-w-sm">
+                <Info className="mt-px size-3.5 shrink-0 text-danger" aria-hidden />
+                <span>{t('explorer2.previewFailed')}</span>
+              </div>
+            )}
+            {!anyRaster && enabledIds.length === 0 && (
               <div className="pointer-events-none absolute top-3 left-3 flex max-w-[calc(100%-4rem)] items-start gap-2 rounded-lg border border-line-strong bg-bg/85 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur sm:max-w-sm">
                 <Info className="mt-px size-3.5 shrink-0 text-cyan" aria-hidden />
                 <span>{t('explorer2.noBasemap')}</span>
