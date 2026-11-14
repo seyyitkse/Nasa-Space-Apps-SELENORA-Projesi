@@ -11,16 +11,17 @@ Sun visibility, Earth visibility (direct-to-Earth geometry) and joint
 visibility, with an explainable, user-weighted ranking. It is a research and
 education tool — **not** a certified landing-safety or flight-operations system.
 
-## Status — Phase 1 (Premium Foundation) ✅
+## Status — Phase 2 (Scientific MVP) ✅
 
 | Area | State |
 |---|---|
 | React + TS + Vite frontend, 6 pages, EN/TR, responsive | Done |
-| FastAPI backend: `/health`, `/api/v1/sites`, `/api/v1/data-sources` | Live |
-| Analysis API contract (`/api/v1/analyses…`) | Validates input, returns **501** (Phase 2) |
-| JPL Horizons client | Built, **verified against the live API** |
-| Visibility + scoring engine (NumPy) | Built & unit-tested; not yet fed by ephemeris |
-| SYNTHETIC_DEMO pipeline | Live, always labelled `SYNTHETIC_DEMO` |
+| FastAPI: health, sites, data-sources, analyses, demo | Live |
+| **Real JPL Horizons analysis** (`POST /api/v1/analyses`) | Live — geometric horizon |
+| Visibility + deterministic scoring | Live on ephemeris + synthetic demo |
+| Persistence + cache of analyses | Live (SQLite) |
+| Science Transparency panel | Live |
+| SYNTHETIC_DEMO pipeline | Live, always labelled separately |
 | DeepSeek client | Built (needs `DEEPSEEK_API_KEY`); briefings in Phase 3 |
 | LOLA terrain | Planned (Phase 4) |
 
@@ -84,7 +85,7 @@ data/      Reserved for downloaded datasets / caches (git-ignored subfolders)
 
 - [Architecture](docs/ARCHITECTURE.md) · [Design system](docs/DESIGN_SYSTEM.md) · [API contract](docs/API_CONTRACT.md)
 - [Data sources & scientific assumptions](docs/DATA_SOURCES.md) · [Decisions](docs/DECISIONS.md)
-- [Progress](docs/PROGRESS.md) · [Test results](docs/TEST_RESULTS.md) · [Next steps (Cursor handoff)](docs/NEXT_STEPS.md)
+- [Progress](docs/PROGRESS.md) · [Test results](docs/TEST_RESULTS.md) · [Next steps](docs/NEXT_STEPS.md)
 - [Project brief](docs/PROJECT_BRIEF.md)
 
 ## Security

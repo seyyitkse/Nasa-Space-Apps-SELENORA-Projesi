@@ -1,11 +1,14 @@
 # Data Sources, Data Quality & Scientific Assumptions
 
-## 1. JPL Horizons (NASA/JPL Solar System Dynamics) — `CLIENT_READY`
+## 1. JPL Horizons (NASA/JPL Solar System Dynamics) — `INTEGRATED` (Phase 2)
 
 - API: `https://ssd.jpl.nasa.gov/api/horizons.api` · Docs: https://ssd-api.jpl.nasa.gov/doc/horizons.html
 - Client: `backend/app/integrations/nasa/horizons.py`
-- **Verified against the live API on 2026-11-14** (API version 1.2, ephemeris DE441). Real responses are
-  stored in `backend/tests/fixtures/` and parsed by unit tests.
+- Orchestration: `backend/app/services/analysis_service.py` (`POST /api/v1/analyses`)
+- **Verified against the live API on 2026-11-14** (fixture capture reported API signature 1.2 and DE441
+  in the response header — these are recorded from live responses, not hard-coded as assumptions).
+  Real responses are stored in `backend/tests/fixtures/` and parsed by unit tests.
+- Live Phase 2 e2e: 2 south-polar sites × 2 days starting **2027-03-01** (non-December window) passed.
 
 ### Observer definition used
 

@@ -82,7 +82,7 @@ const en = {
     notAssigned: 'Not assigned',
     plannerAccess: 'Mission Planner',
     plannerAccessText:
-      'Define sites, mission dates, time resolution and decision weights. Requests are validated by the API.',
+      'Define sites, mission dates, time resolution and decision weights. Ephemeris analyses call NASA/JPL Horizons.',
     openPlanner: 'Open planner',
     dataSources: 'NASA Data Sources',
     dataSourcesText: 'Integration status reported live by the backend.',

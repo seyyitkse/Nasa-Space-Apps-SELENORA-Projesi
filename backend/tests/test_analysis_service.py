@@ -315,6 +315,38 @@ def test_terrain_horizon_still_501(client: TestClient) -> None:
     assert r.json()["error"]["details"]["phase"] == 4
 
 
+@pytest.mark.live
+def test_live_two_site_analysis_end_to_end(client: TestClient) -> None:
+    """Calls the real JPL Horizons API for two south-polar sites × 2 days.
+
+    Uses a non-December window to prove the pipeline is not date-locked.
+    Run explicitly: pytest -m live -o addopts=
+    """
+    body = {
+        "mission_name": "Live Phase 2",
+        "sites": [
+            {"label": "Shackleton A", "latitude_deg": -89.68, "longitude_deg": -166.0},
+            {"label": "Point B", "latitude_deg": -89.44, "longitude_deg": -141.8},
+        ],
+        "start_utc": "2027-03-01T00:00:00Z",
+        "end_utc": "2027-03-03T00:00:00Z",
+        "time_step_minutes": 360,
+        "horizon_model": "GEOMETRIC",
+        "weights": {"sun_visibility": 40, "earth_visibility": 40, "joint_visibility": 20},
+    }
+    r = client.post("/api/v1/analyses", json=body)
+    assert r.status_code == 202, r.text
+    status = r.json()
+    assert status["status"] == "COMPLETED"
+    assert status["data_quality"] in {"EPHEMERIS_GEOMETRIC", "PARTIAL"}
+    detail = client.get(f"/api/v1/analyses/{status['id']}").json()
+    assert detail["data_quality"] != "SYNTHETIC_DEMO"
+    assert len(detail["sites"]) == 2
+    assert detail["provenance"][0]["source_id"] == "jpl-horizons"
+    tl = client.get(f"/api/v1/analyses/{status['id']}/timeline").json()
+    assert len(tl["sites"][0]["points"]) >= 2
+
+
 def test_cache_key_includes_data_source_contract() -> None:
     key = analysis_cache_key(
         sites=[(-89.68, -166.0), (-85.0, 0.0)],

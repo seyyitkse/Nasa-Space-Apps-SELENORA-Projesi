@@ -33,18 +33,19 @@ Browser (React SPA) ──HTTP/JSON──▶ FastAPI ──▶ services ──�
 | `integrations/nasa/horizons.py` | Query builder, retry/back-off client, CSV table parser (verified against live API) |
 | `integrations/nasa/lola.py` | `HorizonProfileProvider` protocol + `GeometricHorizon` placeholder |
 | `integrations/deepseek/` | OpenAI-compatible client, system prompt, JSON-schema-validated output |
-| `services/` | Use-cases: sites, data sources, health, demo analysis, cache keys, AI number guard |
+| `services/` | Use-cases: sites, data sources, health, **analysis** (Horizons orchestration), demo analysis, result builder, cache keys, AI number guard |
 
-### Data flow (Phase 2 target)
+### Data flow (Phase 2 — implemented)
 
 1. `POST /api/v1/analyses` validates `AnalysisCreate` (2–10 sites, ≤30 days, step 10–1440 min, weights = 100).
-2. Service computes `analysis_cache_key` (coords, range, step, horizon, algorithm + data-source version) → returns cached result if present.
-3. For each site × {Sun, Earth}: `HorizonsClient.observer_ephemeris` (bounded concurrency, retries) → elevation arrays.
-4. `visibility.summarize` → metrics + windows; `scoring.score_site` + `scoring.rank` → deterministic recommendation.
-5. Persist `MissionAnalysis`, `AnalysisSite`, `VisibilityTimeline`, `DataProvenance` (Horizons version, retrieval time).
-6. `POST …/explain` sends **only the computed result** to DeepSeek → `AIMissionReport` validated by Pydantic → `find_unsupported_numbers` flags invented numbers → stored as `AIReport`. Failure never affects step 4/5 results.
+2. Service computes `analysis_cache_key` (coords, range, step, horizon, algorithm + `horizons-observer-azel-v1` contract) → returns cached analysis id if present.
+3. For each site × {Sun, Earth}: `HorizonsClient.observer_ephemeris` (semaphore=4, retries) → elevation arrays.
+4. Align by timestamp (missing → NaN); `visibility.summarize` → metrics + windows; `scoring.score_site` + `scoring.rank` → deterministic recommendation (`PARTIAL` refuses ranking if missing > 5%).
+5. Persist `MissionAnalysis` (`result_json` / `timeline_json`), `AnalysisSite`, `VisibilityTimeline`, `DataProvenance`, `CachedResult`.
+6. `GET /analyses/{id}` and `/timeline` reconstruct from stored JSON payloads.
+7. `POST …/explain` (Phase 3) will send **only the computed result** to DeepSeek — not implemented yet (501).
 
-The `SYNTHETIC_DEMO` endpoint already runs steps 4 (and the response shape of 5) on synthetic elevations, so the frontend is built against the final contract.
+`POST /demo/synthetic-analysis` remains a separate path labelled `SYNTHETIC_DEMO` and never writes to the analysis tables.
 
 ## Frontend (`frontend/src`)
 
@@ -77,4 +78,4 @@ polar-stereographic CRS should be matched (likely needs `proj4` registration).
 - Single process; rate limiter and caches are in-process. Before running more than one worker, move rate limiting and cache to Redis/PostgreSQL.
 - `CachedResult` table + deterministic cache keys are in place for Phase 2.
 - 10 sites × 30 days × hourly (7 210 samples/body) runs the synthetic pipeline in ~115 ms p50 locally (see TEST_RESULTS).
-- Horizons fetches (2 bodies × N sites) dominate latency; Phase 2 must add bounded concurrency + caching.
+- Horizons fetches (2 bodies × N sites) dominate latency; Phase 2 uses bounded concurrency + SQLite `CachedResult`.

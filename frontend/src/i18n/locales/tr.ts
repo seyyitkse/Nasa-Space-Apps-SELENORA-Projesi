@@ -84,7 +84,7 @@ const tr: Messages = {
     notAssigned: 'Atanmadı',
     plannerAccess: 'Görev Planlayıcı',
     plannerAccessText:
-      'Konumları, görev tarihlerini, zaman çözünürlüğünü ve karar ağırlıklarını tanımlayın. İstekler API tarafından doğrulanır.',
+      'Konumları, görev tarihlerini, zaman çözünürlüğünü ve karar ağırlıklarını tanımlayın. Efemeris analizleri NASA/JPL Horizons’u çağırır.',
     openPlanner: 'Planlayıcıyı aç',
     dataSources: 'NASA Veri Kaynakları',
     dataSourcesText: 'Entegrasyon durumu backend tarafından canlı raporlanır.',

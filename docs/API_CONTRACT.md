@@ -19,16 +19,16 @@ Source of truth: `backend/app/schemas/*.py`; TS mirror: `frontend/src/types/api.
 Codes: `VALIDATION_ERROR` (422), `NOT_FOUND` (404), `NOT_IMPLEMENTED` (501), `RATE_LIMITED` (429),
 `SERVICE_NOT_CONFIGURED` (503), `EXTERNAL_SERVICE_ERROR` / `HORIZONS_ERROR` / `AI_PROVIDER_ERROR` (502), `INTERNAL_ERROR` (500).
 
-## Live endpoints (Phase 1)
+## Live endpoints (Phase 2)
 
 ### `GET /health` → `HealthResponse`
 ```json
 { "status": "ok", "service": "SELENORA API", "version": "0.1.0", "api_version": "v1",
-  "algorithm_version": "0.1.0-phase1", "environment": "development",
+  "algorithm_version": "0.2.0-phase2", "environment": "development",
   "server_time_utc": "2026-11-14T06:40:00Z", "uptime_seconds": 42.1,
   "components": [ { "name": "database", "status": "OK", "detail": "SQLite reachable" },
                   { "name": "horizons_client", "status": "READY", "detail": "…not probed…" },
-                  { "name": "scientific_engine", "status": "NOT_IMPLEMENTED", "detail": "…" },
+                  { "name": "scientific_engine", "status": "READY", "detail": "Horizons → visibility → scoring" },
                   { "name": "terrain_model", "status": "NOT_IMPLEMENTED", "detail": "…" },
                   { "name": "ai_analyst", "status": "NOT_CONFIGURED", "detail": "DEEPSEEK_API_KEY not set." } ] }
 ```
@@ -50,18 +50,23 @@ Body: `AnalysisCreate` (below). Runs the real visibility + scoring code on the
 with `data_quality = "SYNTHETIC_DEMO"`. Nothing is persisted. Timeline is downsampled to ≤ 720 points/site.
 
 ### `GET /api/v1/analyses` → `AnalysisStatus[]`
-Lists persisted analyses (empty until Phase 2).
+Lists persisted analyses (newest first).
 
-## Contracted endpoints (implemented in later phases)
+### `POST /api/v1/analyses` → `AnalysisStatus` (**202**)
+Runs the real Horizons → visibility → scoring pipeline (or returns a cache hit).
+- Success: `{ id, status: "COMPLETED", data_quality: "EPHEMERIS_GEOMETRIC"|"PARTIAL" }`
+- Horizons failure: **502** `HORIZONS_ERROR` (row stored as `FAILED`)
+- `horizon_model=TERRAIN`: **501** (Phase 4)
+- Identical inputs: cache hit returns the previous analysis id (no new Horizons calls)
 
-| Endpoint | Phase | Current behaviour |
-|---|---|---|
-| `POST /api/v1/analyses` | 2 | Validates `AnalysisCreate`; returns **501** with `details: { validated: true, sites, sample_count_per_site, phase }` |
-| `GET /api/v1/analyses/{id}` → `AnalysisResult` | 2 | 404 for unknown id (no analyses exist yet) |
-| `GET /api/v1/analyses/{id}/timeline` → `TimelineResponse` | 2 | 404 |
-| `POST /api/v1/analyses/{id}/explain` (`{language: "en"|"tr"}`) → `ExplainResponse` | 3 | 404 |
+### `GET /api/v1/analyses/{id}` → `AnalysisResult`
+Full stored result. `PENDING`/`RUNNING` return a minimal payload; clients may poll.
 
-Planned success code for `POST /analyses`: **202 Accepted** + `AnalysisStatus` (`PENDING|RUNNING|COMPLETED|FAILED`); clients poll `GET /analyses/{id}`.
+### `GET /api/v1/analyses/{id}/timeline` → `TimelineResponse`
+Downsampled elevation series (≤ 720 points/site). **404** until `COMPLETED`.
+
+### `POST /api/v1/analyses/{id}/explain` → `ExplainResponse`
+Phase 3 — currently **501** (or **404** if id unknown).
 
 ## Models
 

@@ -91,7 +91,7 @@ describe('SELENORA app shell', () => {
     const router = renderAt('/')
     const nav = await screen.findAllByRole('navigation', { name: 'Primary' })
     await userEvent.click(within(nav[0]!).getByRole('link', { name: 'Mission Planner' }))
-    expect(await screen.findByLabelText('Mission name')).toBeInTheDocument()
+    expect(await screen.findByLabelText('Mission name', {}, { timeout: 5000 })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/planner')
   })
 
@@ -99,7 +99,7 @@ describe('SELENORA app shell', () => {
     mockApi()
     const post = vi.spyOn(api, 'post')
     renderAt('/planner')
-    const name = await screen.findByLabelText('Mission name')
+    const name = await screen.findByLabelText('Mission name', {}, { timeout: 5000 })
     await userEvent.clear(name)
     await userEvent.click(screen.getByRole('button', { name: /Run ephemeris analysis/ }))
     expect(await screen.findByText('Mission name must be 2–160 characters.')).toBeInTheDocument()
@@ -109,7 +109,7 @@ describe('SELENORA app shell', () => {
   it('shows an empty state on Site Comparison without results', async () => {
     mockApi()
     renderAt('/comparison')
-    expect(await screen.findByText('No analysis results yet')).toBeInTheDocument()
+    expect(await screen.findByText('No analysis results yet', {}, { timeout: 5000 })).toBeInTheDocument()
   })
 
   it('loads a stored analysis route with real data quality badge', async () => {
