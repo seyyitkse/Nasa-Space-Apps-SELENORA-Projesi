@@ -14,22 +14,21 @@ from app.core.config import ALGORITHM_VERSION
 from app.schemas.analysis import (
     AnalysisCreate,
     AnalysisResult,
-    Interval,
     Provenance,
-    ScoreContribution,
-    SiteResult,
-    SiteTimeline,
-    TimelinePoint,
     TimelineResponse,
-    VisibilityMetrics,
 )
 from app.schemas.common import ApiModel
-from app.science import scoring, visibility
 from app.science.synthetic import synthetic_elevations, time_grid
 from app.services.cache_keys import analysis_cache_key
+from app.services.result_builder import (
+    apply_ranks,
+    build_site_result,
+    build_site_timeline,
+    timeline_stride,
+    to_utc,
+)
 
 MAX_TIMELINE_POINTS = 720
-MAX_WINDOWS = 50
 
 
 class DemoAnalysisResponse(ApiModel):
@@ -37,24 +36,13 @@ class DemoAnalysisResponse(ApiModel):
     timeline: TimelineResponse
 
 
-def _to_dt(t: np.datetime64) -> datetime:
-    return datetime.fromisoformat(str(np.datetime_as_string(t, unit="m"))).replace(tzinfo=UTC)
-
-
-def _intervals(times: np.ndarray, mask: np.ndarray, step: int, value: bool) -> list[Interval]:
-    spans = visibility.runs(mask, value)
-    spans.sort(key=lambda se: se[1] - se[0], reverse=True)
-    out = []
-    for s, e in spans[:MAX_WINDOWS]:
-        start = _to_dt(times[s])
-        end = _to_dt(times[e - 1] + np.timedelta64(step, "m"))
-        out.append(Interval(start_utc=start, end_utc=end, duration_hours=round((e - s) * step / 60, 3)))
-    return sorted(out, key=lambda i: i.start_utc)
-
-
 def build_synthetic_analysis(req: AnalysisCreate) -> DemoAnalysisResponse:
     step = req.time_step_minutes
-    times = time_grid(req.start_utc, req.end_utc, step)
+    times_np = time_grid(req.start_utc, req.end_utc, step)
+    times = [
+        to_utc(datetime.fromisoformat(str(np.datetime_as_string(t, unit="m"))))
+        for t in times_np
+    ]
     weights = req.weights.model_dump()
     key = analysis_cache_key(
         sites=[(s.latitude_deg, s.longitude_deg) for s in req.sites],
@@ -67,60 +55,30 @@ def build_synthetic_analysis(req: AnalysisCreate) -> DemoAnalysisResponse:
     )
     analysis_id = f"demo-{key[:12]}"
 
-    stride = max(1, int(np.ceil(len(times) / MAX_TIMELINE_POINTS)))
-    site_results: list[SiteResult] = []
-    timelines: list[SiteTimeline] = []
+    stride = timeline_stride(len(times))
+    site_results = []
+    timelines = []
     scores: list[float | None] = []
 
     for site in req.sites:
-        sun, earth = synthetic_elevations(site.latitude_deg, site.longitude_deg, times)
-        summary, sun_vis, earth_vis, joint = visibility.summarize(sun, earth, step)
-        metrics = summary.as_metrics()
-        score, contribs = scoring.score_site(metrics, weights)
+        sun, earth = synthetic_elevations(site.latitude_deg, site.longitude_deg, times_np)
+        site_result, score, *_ = build_site_result(
+            label=site.label,
+            latitude_deg=site.latitude_deg,
+            longitude_deg=site.longitude_deg,
+            landing_site_id=site.landing_site_id,
+            times=times,
+            sun_elevation=sun,
+            earth_elevation=earth,
+            step_minutes=step,
+            weights=weights,
+            data_quality="SYNTHETIC_DEMO",
+        )
         scores.append(score)
-        site_results.append(
-            SiteResult(
-                label=site.label,
-                latitude_deg=site.latitude_deg,
-                longitude_deg=site.longitude_deg,
-                landing_site_id=site.landing_site_id,
-                metrics=VisibilityMetrics(**metrics),
-                score=score,
-                rank=None,
-                contributions=[
-                    ScoreContribution(
-                        metric=c.metric,  # type: ignore[arg-type]
-                        weight_pct=c.weight_pct,
-                        value_pct=c.value_pct,
-                        contribution=c.contribution,
-                    )
-                    for c in contribs
-                ],
-                darkness_windows=_intervals(times, sun_vis, step, False),
-                communication_gaps=_intervals(times, earth_vis, step, False),
-                joint_windows=_intervals(times, joint, step, True),
-            )
-        )
-        timelines.append(
-            SiteTimeline(
-                label=site.label,
-                points=[
-                    TimelinePoint(
-                        t=_to_dt(times[i]),
-                        sun_elevation_deg=round(float(sun[i]), 4),
-                        earth_elevation_deg=round(float(earth[i]), 4),
-                    )
-                    for i in range(0, len(times), stride)
-                ],
-            )
-        )
+        site_results.append(site_result)
+        timelines.append(build_site_timeline(site.label, times, sun, earth, stride))
 
-    ranks = scoring.rank(scores)
-    for result, r in zip(site_results, ranks, strict=True):
-        result.rank = r
-    best = [s.label for s in site_results if s.rank == 1]
-    recommended = best[0] if len(best) == 1 else None
-
+    recommended = apply_ranks(site_results, scores)
     now = datetime.now(UTC)
     result = AnalysisResult(
         id=analysis_id,
@@ -137,7 +95,8 @@ def build_synthetic_analysis(req: AnalysisCreate) -> DemoAnalysisResponse:
         recommended_site_label=recommended,
         assumptions=[
             "Elevations come from a simplified analytic model (SYNTHETIC_DEMO), not JPL Horizons.",
-            "Latitude phases are loosely anchored to two real JPL Horizons samples (2026-12-01); the model drifts from reality away from that date.",
+            "Latitude phases are loosely anchored to two real JPL Horizons samples (2026-12-01); "
+            "the model drifts from reality away from that date.",
             "Geometric (smooth-sphere) horizon at 0°; terrain shadowing is not modelled.",
             "Sun visibility is evaluated at the solar disc centre.",
             "Durations use sample-and-hold with a resolution of ±1 time step.",

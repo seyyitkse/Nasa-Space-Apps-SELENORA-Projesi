@@ -26,6 +26,9 @@ class MissionAnalysis(Base):
     algorithm_version: Mapped[str] = mapped_column(String(32))
     cache_key: Mapped[str] = mapped_column(String(64), index=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Full API payloads for fast GET reconstruction (relational rows remain for listing/audit).
+    result_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    timeline_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
@@ -48,6 +51,7 @@ class AnalysisSite(Base):
     metrics: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     score: Mapped[float | None] = mapped_column(Float, nullable=True)
     rank: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    details: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     analysis: Mapped[MissionAnalysis] = relationship(back_populates="sites")
     timelines: Mapped[list[VisibilityTimeline]] = relationship(cascade="all, delete-orphan")

@@ -27,7 +27,7 @@ def test_health_reports_components(client: TestClient) -> None:
     names = {c["name"]: c["status"] for c in body["components"]}
     assert names["database"] == "OK"
     assert names["ai_analyst"] == "NOT_CONFIGURED"
-    assert names["scientific_engine"] == "NOT_IMPLEMENTED"
+    assert names["scientific_engine"] == "READY"
     assert "X-Request-ID" in r.headers
     assert r.headers["Server-Timing"].startswith("app;dur=")
 
@@ -52,20 +52,28 @@ def test_get_site_and_404_shape(client: TestClient) -> None:
 
 def test_data_sources_status_is_honest(client: TestClient) -> None:
     items = {d["id"]: d for d in client.get("/api/v1/data-sources").json()["items"]}
-    assert items["jpl-horizons"]["integration_status"] == "CLIENT_READY"
+    assert items["jpl-horizons"]["integration_status"] == "INTEGRATED"
     assert items["lro-lola"]["integration_status"] == "PLANNED"
     assert items["deepseek"]["integration_status"] == "NOT_CONFIGURED"
     # Never leak secrets in API responses
     assert "api_key" not in str(items).lower()
 
 
-def test_create_analysis_validates_then_returns_501(client: TestClient) -> None:
+def test_create_analysis_runs_with_mocked_horizons(client: TestClient) -> None:
+    from app.api.deps import horizons_client
+    from tests.test_analysis_service import FakeHorizons
+
+    client.app.dependency_overrides[horizons_client] = lambda: FakeHorizons()
     r = client.post("/api/v1/analyses", json=VALID_ANALYSIS)
-    assert r.status_code == 501
-    err = r.json()["error"]
-    assert err["code"] == "NOT_IMPLEMENTED"
-    assert err["details"]["validated"] is True
-    assert err["details"]["sample_count_per_site"] == 14 * 24 + 1
+    assert r.status_code == 202, r.text
+    body = r.json()
+    assert body["status"] == "COMPLETED"
+    assert body["data_quality"] == "EPHEMERIS_GEOMETRIC"
+    detail = client.get(f"/api/v1/analyses/{body['id']}").json()
+    assert detail["data_quality"] == "EPHEMERIS_GEOMETRIC"
+    assert len(detail["sites"]) == 2
+    assert all(s["score"] is not None for s in detail["sites"])
+    client.app.dependency_overrides.pop(horizons_client, None)
 
 
 def test_create_analysis_rejects_bad_input(client: TestClient) -> None:

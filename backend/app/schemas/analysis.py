@@ -1,8 +1,7 @@
 """API contract for mission analyses.
 
-Phase 1: request validation + response models are final; computation lands in
-Phase 2 (ephemeris) and Phase 3 (AI explanation). Until then the endpoints
-return 501 — they never fabricate a successful analysis.
+Phase 2: POST /analyses runs the real JPL Horizons → visibility → scoring
+pipeline and persists results. Phase 3 adds AI explanation (/explain).
 """
 
 from __future__ import annotations

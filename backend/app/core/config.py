@@ -15,7 +15,7 @@ from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 BACKEND_ROOT = Path(__file__).resolve().parents[2]
 
 # Versions recorded in every result and in cache keys (scientific reproducibility).
-ALGORITHM_VERSION = "0.1.0-phase1"
+ALGORITHM_VERSION = "0.2.0-phase2"
 API_VERSION = "v1"
 
 

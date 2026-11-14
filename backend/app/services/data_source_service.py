@@ -20,12 +20,12 @@ def list_data_sources(settings: Settings) -> DataSourceList:
                 ),
                 url="https://ssd.jpl.nasa.gov/horizons/",
                 documentation_url="https://ssd-api.jpl.nasa.gov/doc/horizons.html",
-                integration_status="CLIENT_READY",
+                integration_status="INTEGRATED",
                 used_for=["Sun elevation timeline", "Earth elevation timeline", "Visibility windows"],
                 phase=2,
                 notes=(
-                    "Async client, query builder and table parser are implemented and unit-tested. "
-                    "Not yet used to produce analyses (Phase 2)."
+                    "POST /api/v1/analyses fetches live observer Az/El for Sun (10) and Earth (399) "
+                    "at lunar GEODETIC sites (coord@301). Geometric horizon only until LOLA (Phase 4)."
                 ),
             ),
             DataSourceOut(
