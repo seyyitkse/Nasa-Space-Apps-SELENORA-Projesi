@@ -10,6 +10,7 @@ dependencies = [
     "pydantic-settings>=2.6",
     "httpx>=0.28",
     "sqlalchemy>=2.0.36",
+    "alembic>=1.14",
     "numpy>=2.1",
     "openai>=1.55",
 ]
@@ -29,6 +30,6 @@ include = ["app*"]
 testpaths = ["tests"]
 addopts = "-q -m 'not live'"
 markers = [
-    "live: tests that call real external services (JPL Horizons). Run with: pytest -m live",
+    "live: tests that call real external services (JPL Horizons or DeepSeek). Run with: pytest -m live",
 ]
 filterwarnings = ["ignore::DeprecationWarning:httpx.*"]

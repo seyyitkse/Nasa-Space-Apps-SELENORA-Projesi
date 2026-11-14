@@ -52,10 +52,13 @@ def list_data_sources(settings: Settings) -> DataSourceList:
                 ),
                 url=settings.deepseek_base_url,
                 documentation_url="https://api-docs.deepseek.com/",
-                integration_status="CLIENT_READY" if settings.deepseek_configured else "NOT_CONFIGURED",
+                integration_status="INTEGRATED" if settings.deepseek_configured else "NOT_CONFIGURED",
                 used_for=["Mission briefing", "Trade-off explanation", "EN/TR summaries"],
                 phase=3,
-                notes=f"Model: {settings.deepseek_model}. Key is read server-side only.",
+                notes=(
+                    f"Model from DEEPSEEK_MODEL ({settings.deepseek_model}). "
+                    "Explains stored analyses only; never computes scores. Key is server-side only."
+                ),
             ),
         ]
     )

@@ -198,6 +198,34 @@ export interface DemoAnalysisResponse {
   timeline: TimelineResponse
 }
 
+export interface ExplainRequest {
+  language: 'en' | 'tr'
+  regenerate?: boolean
+}
+
+export interface AIMissionReport {
+  summary: string
+  key_findings: string[]
+  site_advantages: Record<string, string[]>
+  site_disadvantages: Record<string, string[]>
+  comparison_explanation: string
+  mission_tradeoffs: string[]
+  scientific_limitations: string[]
+  data_quality_notes: string[]
+}
+
+export interface ExplainResponse {
+  analysis_id: string
+  language: 'en' | 'tr'
+  model: string
+  prompt_version: string
+  recommended_site_label: string | null
+  report: AIMissionReport
+  unsupported_numbers: string[]
+  cached: boolean
+  generated_at: string
+}
+
 export interface ApiErrorBody {
   code: string
   message: string

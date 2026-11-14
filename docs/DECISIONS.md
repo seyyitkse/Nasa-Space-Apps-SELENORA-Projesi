@@ -20,7 +20,11 @@
 | D11 | DeepSeek via the **OpenAI Python SDK** behind a small protocol | Matches DeepSeek's OpenAI-compatible API; protocol makes failure modes testable without network. |
 | D12 | AI number guard (`find_unsupported_numbers`) | Enforces "AI may not create new numbers" mechanically, not only by prompt. |
 | D13 | Recommended site decided only by `science/scoring.rank` | AI output schema has no field that can change the recommendation. |
-| D14 | SQLite + SQLAlchemy 2.0 with portable types (JSON, DateTime(tz)) | Zero-ops now; PostgreSQL-ready. Alembic still deferred — recreate local SQLite if schema drifts (`create_all` for fresh DBs/tests). |
+| D14 | SQLite + SQLAlchemy 2.0 with portable types (JSON, DateTime(tz)) | Zero-ops now; PostgreSQL-ready. |
+| D29 | Alembic additive migrations at startup (`create_all` + `upgrade head`) | Upgrade existing Phase 1/2 DBs without deleting rows; backup before Phase 3. |
+| D30 | AI receives only `build_evidence_package` (no timelines) | Token cost + injection surface reduction; numbers stay server-authored. |
+| D31 | Ranking contradiction → reject AI report (502) | Prevents showing briefings that overturn deterministic recommendation. |
+| D32 | Explain cache key = hash(analysis, language, model, prompt_version, evidence) | Avoid duplicate DeepSeek spend. |
 | D15 | In-process rate limiter & caches | Single-instance deployment. Must move to Redis/DB before multi-worker scaling. |
 | D16 | shadcn/ui **conventions** written by hand on `radix-ui` + CVA (`components.json` included) | The shadcn CLI is interactive/network-bound; hand-written components follow the same structure so `npx shadcn add` works later. |
 | D17 | Tailwind **v4** with CSS-variable tokens (`@theme inline`) | Single source of truth for colours; matches the required palette exactly. |

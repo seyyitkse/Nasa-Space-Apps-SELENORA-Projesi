@@ -66,7 +66,15 @@ Full stored result. `PENDING`/`RUNNING` return a minimal payload; clients may po
 Downsampled elevation series (≤ 720 points/site). **404** until `COMPLETED`.
 
 ### `POST /api/v1/analyses/{id}/explain` → `ExplainResponse`
-Phase 3 — currently **501** (or **404** if id unknown).
+Body: `{ language: "en"|"tr", regenerate?: boolean }`.
+- Builds server-side evidence package from stored analysis; calls DeepSeek; validates JSON; persists `AIReport`.
+- Cache hit when same analysis + language + model + prompt version + evidence hash (unless `regenerate`).
+- **503** if `DEEPSEEK_API_KEY` missing; **502** `AI_PROVIDER_ERROR` on provider/validation failure.
+- Scientific analysis rows are never deleted on AI failure.
+- `recommended_site_label` always from the deterministic engine.
+
+### `GET /api/v1/analyses/{id}/explain` → `ExplainResponse`
+Latest stored briefing (optional `?language=en|tr`). **404** if none.
 
 ## Models
 

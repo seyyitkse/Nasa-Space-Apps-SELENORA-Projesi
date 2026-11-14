@@ -165,6 +165,7 @@ class TimelineResponse(ApiModel):
 
 class ExplainRequest(ApiModel):
     language: Literal["en", "tr"] = "en"
+    regenerate: bool = False
 
 
 class AIMissionReport(ApiModel):
@@ -175,6 +176,7 @@ class AIMissionReport(ApiModel):
     site_advantages: dict[str, list[str]] = Field(default_factory=dict)
     site_disadvantages: dict[str, list[str]] = Field(default_factory=dict)
     comparison_explanation: str = Field(default="", max_length=4000)
+    mission_tradeoffs: list[str] = Field(default_factory=list, max_length=12)
     scientific_limitations: list[str] = Field(default_factory=list, max_length=12)
     data_quality_notes: list[str] = Field(default_factory=list, max_length=12)
 
@@ -183,9 +185,13 @@ class ExplainResponse(ApiModel):
     analysis_id: str
     language: Literal["en", "tr"]
     model: str
-    recommended_site_label: str | None
+    prompt_version: str
+    recommended_site_label: str | None = Field(
+        description="From the deterministic engine only — never from the AI text."
+    )
     report: AIMissionReport
     unsupported_numbers: list[str] = Field(
         description="Numbers in the AI text that do not appear in the computed results."
     )
+    cached: bool = False
     generated_at: datetime

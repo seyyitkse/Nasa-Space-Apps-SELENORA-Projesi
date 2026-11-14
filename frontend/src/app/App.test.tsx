@@ -15,7 +15,7 @@ const health = {
   service: 'SELENORA API',
   version: '0.1.0',
   api_version: 'v1',
-  algorithm_version: '0.2.0-phase2',
+  algorithm_version: '0.3.0-phase3',
   environment: 'test',
   server_time_utc: '2026-11-14T00:00:00Z',
   uptime_seconds: 12,
@@ -145,7 +145,7 @@ describe('SELENORA app shell', () => {
       mission_name: 'Test Mission',
       status: 'COMPLETED',
       data_quality: 'EPHEMERIS_GEOMETRIC',
-      algorithm_version: '0.2.0-phase2',
+      algorithm_version: '0.3.0-phase3',
       start_utc: '2027-01-10T00:00:00Z',
       end_utc: '2027-01-12T00:00:00Z',
       time_step_minutes: 360,
@@ -206,5 +206,13 @@ describe('SELENORA app shell', () => {
     mockApi()
     renderAt('/nope')
     expect(await screen.findByText('Off the map')).toBeInTheDocument()
+  })
+
+  it('shows AI analyst not-configured state without crashing science UI', async () => {
+    mockApi()
+    renderAt('/analyst')
+    expect(await screen.findByRole('heading', { name: 'AI Mission Analyst' }, { timeout: 5000 })).toBeInTheDocument()
+    expect(screen.getByText(/DEEPSEEK_API_KEY is not set/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Generate AI briefing/i })).toBeDisabled()
   })
 })

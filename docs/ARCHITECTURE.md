@@ -43,7 +43,8 @@ Browser (React SPA) ──HTTP/JSON──▶ FastAPI ──▶ services ──�
 4. Align by timestamp (missing → NaN); `visibility.summarize` → metrics + windows; `scoring.score_site` + `scoring.rank` → deterministic recommendation (`PARTIAL` refuses ranking if missing > 5%).
 5. Persist `MissionAnalysis` (`result_json` / `timeline_json`), `AnalysisSite`, `VisibilityTimeline`, `DataProvenance`, `CachedResult`.
 6. `GET /analyses/{id}` and `/timeline` reconstruct from stored JSON payloads.
-7. `POST …/explain` (Phase 3) will send **only the computed result** to DeepSeek — not implemented yet (501).
+7. `POST …/explain` builds an allow-listed evidence package from the stored result, calls DeepSeek (JSON mode), runs number/ranking guards, persists `AIReport`. Failure never mutates scientific rows.
+8. Startup runs SQLAlchemy `create_all` then Alembic `upgrade head` (additive migrations).
 
 `POST /demo/synthetic-analysis` remains a separate path labelled `SYNTHETIC_DEMO` and never writes to the analysis tables.
 

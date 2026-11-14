@@ -48,11 +48,12 @@ Earth az 172.67°, el −1.93°.
 ## 3. DeepSeek — AI explanation layer (not a data source)
 
 - OpenAI-compatible API at `DEEPSEEK_BASE_URL` (default `https://api.deepseek.com`), model from `DEEPSEEK_MODEL`
-  (default `deepseek-flash` as specified in the project prompt; alternative `deepseek-v4-pro`).
-- ⚠️ Model identifiers were **not verified** against DeepSeek's live model list in Phase 1 (no key available).
-  Check `GET /models` with your key and adjust `.env` if needed.
-- Receives only computed results; output validated by Pydantic; numbers cross-checked by
-  `services/ai_guard.find_unsupported_numbers`.
+  (default `deepseek-flash`; alternative `deepseek-v4-pro`).
+- Phase 3: `POST /api/v1/analyses/{id}/explain` sends an allow-listed **evidence package** (not raw timelines).
+- Output validated by Pydantic; `find_unsupported_numbers` + ranking contradiction guard.
+- ⚠️ **Live DeepSeek was not tested in Phase 3** (no API key in the build environment). Verify
+  `GET /models` with your key before demos and adjust `DEEPSEEK_MODEL` if needed.
+- Status: `INTEGRATED` when key present, else `NOT_CONFIGURED`.
 
 ## 4. Reference landing sites (seed data)
 

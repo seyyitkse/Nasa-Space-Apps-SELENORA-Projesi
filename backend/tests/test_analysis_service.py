@@ -98,7 +98,7 @@ def test_compute_from_real_fixtures_matches_sample_elevations() -> None:
     result, timeline, rows = compute_from_ephemerides(req, "test-id", site_ephems)
     assert result.data_quality == "EPHEMERIS_GEOMETRIC"
     assert result.status == "COMPLETED"
-    assert result.algorithm_version.endswith("phase2")
+    assert result.algorithm_version.endswith("phase3")
     assert len(result.sites) == 2
     assert all(s.score is not None and s.rank is not None for s in result.sites)
     assert result.provenance[0].source_id == "jpl-horizons"
@@ -202,7 +202,11 @@ class FakeHorizons:
         t = start
         i = 0
         while t <= stop:
-            elev = 5.0 if (target == "SUN") else (2.0 if i % 2 == 0 else -2.0)
+            # Distinct visibility masks per site so ranking is deterministic.
+            if target == "SUN":
+                elev = 8.0 if lat <= -89.0 else (-2.0 if i % 3 == 0 else 4.0)
+            else:
+                elev = (3.0 if i % 2 == 0 else -3.0) if lat <= -89.0 else 5.0
             samples.append(EphemerisSample(t, float(i), elev))
             t += timedelta(minutes=step)
             i += 1
@@ -354,7 +358,7 @@ def test_cache_key_includes_data_source_contract() -> None:
         end_utc=datetime(2026, 12, 2, tzinfo=UTC),
         time_step_minutes=60,
         horizon_model="GEOMETRIC",
-        algorithm_version="0.2.0-phase2",
+        algorithm_version="0.3.0-phase3",
         data_source_version=DATA_SOURCE_CONTRACT,
     )
     other = analysis_cache_key(
@@ -363,7 +367,7 @@ def test_cache_key_includes_data_source_contract() -> None:
         end_utc=datetime(2026, 12, 2, tzinfo=UTC),
         time_step_minutes=60,
         horizon_model="GEOMETRIC",
-        algorithm_version="0.2.0-phase2",
+        algorithm_version="0.3.0-phase3",
         data_source_version="synthetic-v1",
     )
     assert key != other

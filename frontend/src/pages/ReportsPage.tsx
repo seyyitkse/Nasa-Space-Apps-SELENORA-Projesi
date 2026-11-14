@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/misc'
 import { ScienceTransparencyPanel } from '@/features/site-comparison/ScienceTransparencyPanel'
-import { useAnalyses, useAnalysis } from '@/hooks/useApi'
+import { useAnalyses, useAnalysis, useExplanation } from '@/hooks/useApi'
 import { formatCoord, formatHours, formatPct, formatUtc, formatUtcDate } from '@/lib/format'
 import { useMissionStore } from '@/stores/missionStore'
 import type { AnalysisResult } from '@/types/api'
@@ -24,6 +24,43 @@ function ReportSection({ title, children }: { title: string; children: React.Rea
       <h3 className="sel-eyebrow mb-3 text-[10.5px]">{title}</h3>
       {children}
     </section>
+  )
+}
+
+function AiReportBlock({ analysisId }: { analysisId: string }) {
+  const { t } = useTranslation()
+  const explain = useExplanation(analysisId.startsWith('demo-') ? undefined : analysisId)
+  if (analysisId.startsWith('demo-')) {
+    return <p className="text-[13px] text-fg-3">{t('reports.aiNone')}</p>
+  }
+  if (explain.isPending) return <Skeleton className="h-16" />
+  if (explain.error || !explain.data) {
+    return (
+      <p className="text-[13px] text-fg-3">
+        {t('reports.aiNone')}{' '}
+        <Link to="/analyst" className="text-cyan hover:underline">
+          {t('nav.analyst')}
+        </Link>
+      </p>
+    )
+  }
+  const { report, model, generated_at, recommended_site_label } = explain.data
+  return (
+    <div className="space-y-3 text-[13px] text-fg-2">
+      <p className="text-[11.5px] text-fg-3">{t('reports.aiDisclaimer')}</p>
+      <p className="font-mono text-[11px] text-fg-3">
+        {model} · {formatUtc(generated_at)}
+        {recommended_site_label ? ` · #1 ${recommended_site_label}` : ''}
+      </p>
+      <p className="leading-relaxed text-fg">{report.summary}</p>
+      {report.key_findings.length > 0 && (
+        <ul className="list-disc space-y-1 pl-4 marker:text-fg-3">
+          {report.key_findings.map((f) => (
+            <li key={f}>{f}</li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 
@@ -117,7 +154,7 @@ function ReportView({ result }: { result: AnalysisResult }) {
         </ReportSection>
 
         <ReportSection title={t('reports.ai')}>
-          <p className="text-[13px] text-fg-3">{t('reports.aiNone')}</p>
+          <AiReportBlock analysisId={result.id} />
         </ReportSection>
 
         <ReportSection title={t('reports.provenance')}>

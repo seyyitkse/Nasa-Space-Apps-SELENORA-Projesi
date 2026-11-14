@@ -50,3 +50,12 @@ export function useTimeline(id: string | undefined, enabled = true) {
     enabled: Boolean(id) && enabled,
   })
 }
+
+export function useExplanation(id: string | undefined, language?: 'en' | 'tr') {
+  return useQuery({
+    queryKey: queryKeys.explanation(id ?? '', language),
+    queryFn: () => selenoraApi.getExplanation(id!, language),
+    enabled: Boolean(id),
+    retry: false,
+  })
+}

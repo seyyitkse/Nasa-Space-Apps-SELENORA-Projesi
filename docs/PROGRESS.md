@@ -1,46 +1,35 @@
 # Progress
 
-_Last updated: 2026-11-14 — end of Phase 2 Scientific MVP._
+_Last updated: 2026-11-14 — end of Phase 3 AI Mission Analyst._
 
-## Phase 1 — Premium Foundation ✅ complete
+## Phase 1 — Premium Foundation ✅
+## Phase 2 — Scientific MVP ✅
 
-(Unchanged — see git history / prior report.)
+(See git history / `docs/PHASE2_REPORT.md`.)
 
-## Phase 2 — Scientific MVP ✅ complete
+## Phase 3 — DeepSeek AI Mission Analyst ✅ complete (mock-verified)
 
 ### Backend
-- [x] `POST /api/v1/analyses` runs real JPL Horizons observer Az/El for Sun (10) + Earth (399) at lunar GEODETIC sites (`coord@301`)
-- [x] Bounded concurrency (`asyncio.Semaphore(4)`), retries, timeouts retained on Horizons client
-- [x] Align Sun/Earth samples by UTC; missing → NaN (never silent zero); `PARTIAL` if missing > 5%
-- [x] Visibility engine (geometric horizon) + deterministic scoring/ranking on real elevations
-- [x] Persist `MissionAnalysis` (+ `result_json` / `timeline_json`), site rows, timelines, provenance, `CachedResult`
-- [x] Cache key includes coords, range, step, horizon, algorithm version, data-source contract
-- [x] `GET /analyses`, `GET /analyses/{id}`, `GET /analyses/{id}/timeline` return stored real results
-- [x] `SYNTHETIC_DEMO` path kept separate (`POST /demo/synthetic-analysis`)
-- [x] TERRAIN horizon still 501 (Phase 4); `/explain` still 501 (Phase 3)
-- [x] Health: `scientific_engine=READY`; data-sources: `jpl-horizons=INTEGRATED`
-- [x] Algorithm version `0.2.0-phase2`
-- [x] Unit/API tests for pipeline + **2 live Horizons tests passed** (single-body + 2-site analysis)
+- [x] Alembic migrations; existing SQLite upgraded without deleting rows
+- [x] Evidence package builder (allow-listed fields from stored `AnalysisResult`)
+- [x] DeepSeek client: JSON mode, thinking disabled, max_tokens, usage logging
+- [x] `POST /api/v1/analyses/{id}/explain` + `GET …/explain` (cache)
+- [x] AI number guard + ranking contradiction reject
+- [x] AI reports persisted (`prompt_version`, `unsupported_numbers`, `cache_key`, `token_usage`)
+- [x] Missing API key → 503; science endpoints unaffected
+- [ ] Live DeepSeek call — **not tested** (no `DEEPSEEK_API_KEY` in environment)
 
 ### Frontend
-- [x] Mission Planner submits real `POST /analyses` (180 s timeout), navigates to `/comparison/:id`
-- [x] Loading / Horizons-fetch UI; honest API errors (no Phase-2 501 panel)
-- [x] Site Comparison loads stored analyses by id; charts from real timelines
-- [x] Data-quality badges; SyntheticBanner **only** for `SYNTHETIC_DEMO`
-- [x] Science Transparency panel (provenance, coords, horizon, assumptions, limitations)
-- [x] Mission Reports: stored analysis links → `/reports/:id`
-- [x] Routes: `comparison/:analysisId`, `reports/:analysisId`
-- [x] EN/TR strings updated; dashboard capability status marks ephemeris pipeline live
+- [x] AI Analyst: select stored analysis, generate/regenerate, loading/errors
+- [x] Deterministic evidence always visible
+- [x] Mission Reports shows stored AI summary when present
+- [x] EN/TR strings
 
-## Not done / known gaps (by design for Phase 2)
+## Not done / next
+- [ ] Live DeepSeek verification with a real key
+- [ ] LOLA terrain (Phase 4)
+- [ ] Optional background jobs for large Horizons windows
+- [ ] PDF export
 
-- [ ] DeepSeek briefings (Phase 3) — client exists; `/explain` returns 501
-- [ ] LOLA terrain horizon & base raster (Phase 4)
-- [ ] Alembic migrations (SQLite `create_all` still used; new JSON columns added for fresh DBs)
-- [ ] Async background jobs for very large analyses (current path runs synchronously then returns 202 COMPLETED)
-- [ ] PDF export (print only)
-- [ ] Lighthouse & load testing (NOT MEASURED for real Horizons under load)
-- [ ] Official Artemis candidate-region coordinates (seed sites remain `APPROXIMATE_REFERENCE`)
-
-## Phase 3 — AI Mission Briefing ⏳ awaiting approval
+## Phase 4 — Terrain MVP ⏳ awaiting approval
 See `docs/NEXT_STEPS.md`.

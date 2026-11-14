@@ -5,6 +5,8 @@ import type {
   AnalysisStatus,
   DataSourceList,
   DemoAnalysisResponse,
+  ExplainRequest,
+  ExplainResponse,
   HealthResponse,
   LandingSiteList,
   TimelineResponse,
@@ -24,6 +26,16 @@ export const selenoraApi = {
     api.get<AnalysisResult>(`/api/v1/analyses/${id}`).then((r) => r.data),
   getTimeline: (id: string) =>
     api.get<TimelineResponse>(`/api/v1/analyses/${id}/timeline`).then((r) => r.data),
+  explainAnalysis: (id: string, body: ExplainRequest) =>
+    api
+      .post<ExplainResponse>(`/api/v1/analyses/${id}/explain`, body, { timeout: 120_000 })
+      .then((r) => r.data),
+  getExplanation: (id: string, language?: 'en' | 'tr') =>
+    api
+      .get<ExplainResponse>(`/api/v1/analyses/${id}/explain`, {
+        params: language ? { language } : undefined,
+      })
+      .then((r) => r.data),
   /** Deterministic pipeline on SYNTHETIC_DEMO data (clearly labelled, not real ephemeris). */
   syntheticAnalysis: (body: AnalysisCreate) =>
     api
@@ -38,4 +50,5 @@ export const queryKeys = {
   analyses: ['analyses'] as const,
   analysis: (id: string) => ['analysis', id] as const,
   timeline: (id: string) => ['timeline', id] as const,
+  explanation: (id: string, language?: string) => ['explanation', id, language ?? 'any'] as const,
 }

@@ -1,4 +1,4 @@
-"""Mission analysis endpoints — real JPL Horizons pipeline (Phase 2)."""
+"""Mission analysis endpoints — Horizons science + DeepSeek explain (Phase 3)."""
 
 from __future__ import annotations
 
@@ -8,8 +8,9 @@ from fastapi import APIRouter, Depends, Path
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import db_session, horizons_client
-from app.core.errors import NotFoundError, NotImplementedYetError
+from app.api.deps import db_session, deepseek_client, horizons_client
+from app.core.errors import NotFoundError
+from app.integrations.deepseek.client import DeepSeekClient
 from app.integrations.nasa.horizons import HorizonsClient
 from app.models.analysis import MissionAnalysis
 from app.schemas.analysis import (
@@ -21,7 +22,7 @@ from app.schemas.analysis import (
     TimelineResponse,
 )
 from app.schemas.common import ErrorResponse
-from app.services import analysis_service
+from app.services import analysis_service, explain_service
 
 router = APIRouter(prefix="/analyses", tags=["analyses"])
 
@@ -31,6 +32,7 @@ _ERRORS = {
     422: {"model": ErrorResponse},
     501: {"model": ErrorResponse},
     502: {"model": ErrorResponse},
+    503: {"model": ErrorResponse},
 }
 
 
@@ -71,7 +73,6 @@ def get_analysis(
 ) -> AnalysisResult:
     row = _require(session, analysis_id)
     if row.status in {"PENDING", "RUNNING"}:
-        # Minimal in-progress payload — frontend polls until COMPLETED/FAILED.
         return AnalysisResult(
             id=row.id,
             mission_name=row.mission_name,
@@ -124,14 +125,34 @@ def get_timeline(
     return analysis_service.load_timeline(row)
 
 
-@router.post("/{analysis_id}/explain", response_model=ExplainResponse, responses=_ERRORS)
-def explain_analysis(
+@router.post(
+    "/{analysis_id}/explain",
+    response_model=ExplainResponse,
+    responses=_ERRORS,
+    summary="Generate or fetch a DeepSeek AI briefing for a stored analysis",
+)
+async def explain_analysis(
     analysis_id: AnalysisId,
     body: ExplainRequest,
     session: Annotated[Session, Depends(db_session)],
+    deepseek: Annotated[DeepSeekClient, Depends(deepseek_client)],
 ) -> ExplainResponse:
-    _require(session, analysis_id)
-    raise NotImplementedYetError(
-        "AI explanation is scheduled for Phase 3.",
-        details={"language": body.language, "phase": 3},
-    )
+    return await explain_service.explain_analysis(session, deepseek, analysis_id, body)
+
+
+@router.get(
+    "/{analysis_id}/explain",
+    response_model=ExplainResponse,
+    responses=_ERRORS,
+    summary="Fetch the latest stored AI briefing (no new DeepSeek call)",
+)
+def get_explanation(
+    analysis_id: AnalysisId,
+    session: Annotated[Session, Depends(db_session)],
+    language: str | None = None,
+) -> ExplainResponse:
+    lang = language if language in {"en", "tr"} else None
+    out = explain_service.get_latest_explanation(session, analysis_id, lang)  # type: ignore[arg-type]
+    if out is None:
+        raise NotFoundError(f"No AI briefing stored for analysis '{analysis_id}'.")
+    return out

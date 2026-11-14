@@ -84,6 +84,10 @@ class AIReport(Base):
     language: Mapped[str] = mapped_column(String(8))
     model: Mapped[str] = mapped_column(String(64))
     report: Mapped[dict] = mapped_column(JSON)
+    prompt_version: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    unsupported_numbers: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    cache_key: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    token_usage: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

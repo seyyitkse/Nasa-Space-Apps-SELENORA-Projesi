@@ -11,18 +11,18 @@ Sun visibility, Earth visibility (direct-to-Earth geometry) and joint
 visibility, with an explainable, user-weighted ranking. It is a research and
 education tool — **not** a certified landing-safety or flight-operations system.
 
-## Status — Phase 2 (Scientific MVP) ✅
+## Status — Phase 3 (AI Mission Analyst) ✅
 
 | Area | State |
 |---|---|
 | React + TS + Vite frontend, 6 pages, EN/TR, responsive | Done |
-| FastAPI: health, sites, data-sources, analyses, demo | Live |
+| FastAPI: health, sites, data-sources, analyses, demo, explain | Live |
 | **Real JPL Horizons analysis** (`POST /api/v1/analyses`) | Live — geometric horizon |
 | Visibility + deterministic scoring | Live on ephemeris + synthetic demo |
-| Persistence + cache of analyses | Live (SQLite) |
+| Persistence + Alembic migrations + analysis cache | Live (SQLite) |
 | Science Transparency panel | Live |
+| **DeepSeek AI briefings** (`POST …/explain`) | Live when `DEEPSEEK_API_KEY` set (mock-tested; live call not run in CI) |
 | SYNTHETIC_DEMO pipeline | Live, always labelled separately |
-| DeepSeek client | Built (needs `DEEPSEEK_API_KEY`); briefings in Phase 3 |
 | LOLA terrain | Planned (Phase 4) |
 
 See [docs/PROGRESS.md](docs/PROGRESS.md) and [docs/NEXT_STEPS.md](docs/NEXT_STEPS.md).
@@ -44,8 +44,28 @@ uvicorn app.main:app --reload --port 8000
 
 API docs: http://127.0.0.1:8000/docs · Health: http://127.0.0.1:8000/health
 
+One-click (Windows): double-click `start-selenora.bat` at the repo root.
+
 > If script execution is blocked: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`,
 > or skip activation and call `.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload`.
+
+### DeepSeek API key (optional, PowerShell)
+
+Never put the key in the frontend or commit it.
+
+```powershell
+# Option A — persist in backend\.env (recommended for local demos)
+cd backend
+Copy-Item .env.example .env -ErrorAction SilentlyContinue
+# Edit backend\.env and set:  DEEPSEEK_API_KEY=sk-...
+# Optional: DEEPSEEK_MODEL=deepseek-flash   DEEPSEEK_BASE_URL=https://api.deepseek.com
+
+# Option B — current PowerShell session only
+$env:DEEPSEEK_API_KEY = "sk-..."   # do not share / screenshot this
+$env:DEEPSEEK_MODEL = "deepseek-flash"
+```
+
+Without a key the API stays up; `POST /analyses/{id}/explain` returns **503** and all scientific results remain available.
 
 ### 2. Frontend (Vite, port 5173)
 
