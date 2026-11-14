@@ -1,6 +1,6 @@
 import { Archive, FileText, Printer } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
+import { Link, useParams } from 'react-router'
 
 import { DataQualityBadge } from '@/components/shared/badges'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/misc'
-import { useAnalyses } from '@/hooks/useApi'
+import { ScienceTransparencyPanel } from '@/features/site-comparison/ScienceTransparencyPanel'
+import { useAnalyses, useAnalysis } from '@/hooks/useApi'
 import { formatCoord, formatHours, formatPct, formatUtc, formatUtcDate } from '@/lib/format'
 import { useMissionStore } from '@/stores/missionStore'
 import type { AnalysisResult } from '@/types/api'
@@ -139,13 +140,29 @@ function ReportView({ result }: { result: AnalysisResult }) {
             <li>{t('common.researchOnly')}</li>
           </ul>
         </ReportSection>
+
+        <div className="mt-5">
+          <ScienceTransparencyPanel result={result} />
+        </div>
       </CardContent>
     </Card>
   )
 }
 
+function StoredReport({ id }: { id: string }) {
+  const { t } = useTranslation()
+  const analysis = useAnalysis(id)
+  if (analysis.isPending) return <Skeleton className="h-96" />
+  if (analysis.error) return <ErrorState error={analysis.error} onRetry={() => void analysis.refetch()} />
+  if (!analysis.data || analysis.data.status !== 'COMPLETED') {
+    return <EmptyState icon={FileText} title={t('reports.title')} body={t('comparison.timelineMissing')} />
+  }
+  return <ReportView result={analysis.data} />
+}
+
 export default function ReportsPage() {
   const { t } = useTranslation()
+  const { analysisId } = useParams<{ analysisId?: string }>()
   const demo = useMissionStore((s) => s.demo)
   const stored = useAnalyses()
 
@@ -170,8 +187,14 @@ export default function ReportsPage() {
               ) : (
                 <ul className="space-y-1.5">
                   {stored.data.map((a) => (
-                    <li key={a.id} className="flex items-center justify-between font-mono text-xs">
-                      {a.id} <DataQualityBadge quality={a.data_quality} />
+                    <li key={a.id}>
+                      <Link
+                        to={`/reports/${a.id}`}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-line px-2 py-1.5 font-mono text-xs hover:border-cyan/40"
+                      >
+                        <span className="truncate">{a.id.slice(0, 8)}…</span>
+                        <DataQualityBadge quality={a.data_quality} />
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -186,10 +209,10 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               {demo ? (
-                <div className="rounded-lg border border-gold/30 bg-gold/[0.05] p-3">
+                <Link to="/reports" className="block rounded-lg border border-gold/30 bg-gold/[0.05] p-3">
                   <div className="truncate text-[13px] font-medium">{demo.result.mission_name}</div>
                   <div className="mt-1 font-mono text-[10.5px] text-fg-3">{demo.result.id}</div>
-                </div>
+                </Link>
               ) : (
                 <p className="text-[12.5px] text-fg-3">{t('reports.sessionNone')}</p>
               )}
@@ -197,7 +220,9 @@ export default function ReportsPage() {
           </Card>
         </aside>
         <div>
-          {demo ? (
+          {analysisId ? (
+            <StoredReport id={analysisId} />
+          ) : demo ? (
             <ReportView result={demo.result} />
           ) : (
             <EmptyState

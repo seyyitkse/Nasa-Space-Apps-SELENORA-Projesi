@@ -1,6 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { queryKeys, selenoraApi } from '@/services/selenoraApi'
+import type { AnalysisLifecycle } from '@/types/api'
+
+const IN_FLIGHT: AnalysisLifecycle[] = ['PENDING', 'RUNNING']
 
 export function useHealth() {
   return useQuery({
@@ -25,4 +28,25 @@ export function useDataSources() {
 
 export function useAnalyses() {
   return useQuery({ queryKey: queryKeys.analyses, queryFn: selenoraApi.analyses })
+}
+
+/** Load a stored analysis; poll while PENDING/RUNNING. */
+export function useAnalysis(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.analysis(id ?? ''),
+    queryFn: () => selenoraApi.getAnalysis(id!),
+    enabled: Boolean(id),
+    refetchInterval: (q) => {
+      const status = q.state.data?.status
+      return status && IN_FLIGHT.includes(status) ? 2_000 : false
+    },
+  })
+}
+
+export function useTimeline(id: string | undefined, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.timeline(id ?? ''),
+    queryFn: () => selenoraApi.getTimeline(id!),
+    enabled: Boolean(id) && enabled,
+  })
 }

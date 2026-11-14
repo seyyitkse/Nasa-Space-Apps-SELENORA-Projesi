@@ -1,11 +1,13 @@
 import { api } from '@/services/apiClient'
 import type {
   AnalysisCreate,
+  AnalysisResult,
   AnalysisStatus,
   DataSourceList,
   DemoAnalysisResponse,
   HealthResponse,
   LandingSiteList,
+  TimelineResponse,
 } from '@/types/api'
 
 export const selenoraApi = {
@@ -13,9 +15,15 @@ export const selenoraApi = {
   sites: () => api.get<LandingSiteList>('/api/v1/sites').then((r) => r.data),
   dataSources: () => api.get<DataSourceList>('/api/v1/data-sources').then((r) => r.data),
   analyses: () => api.get<AnalysisStatus[]>('/api/v1/analyses').then((r) => r.data),
-  /** Phase 2 endpoint — currently validates and returns 501 NOT_IMPLEMENTED. */
+  /** Real JPL Horizons analysis — may take tens of seconds for multi-day windows. */
   createAnalysis: (body: AnalysisCreate) =>
-    api.post<AnalysisStatus>('/api/v1/analyses', body).then((r) => r.data),
+    api
+      .post<AnalysisStatus>('/api/v1/analyses', body, { timeout: 180_000 })
+      .then((r) => r.data),
+  getAnalysis: (id: string) =>
+    api.get<AnalysisResult>(`/api/v1/analyses/${id}`).then((r) => r.data),
+  getTimeline: (id: string) =>
+    api.get<TimelineResponse>(`/api/v1/analyses/${id}/timeline`).then((r) => r.data),
   /** Deterministic pipeline on SYNTHETIC_DEMO data (clearly labelled, not real ephemeris). */
   syntheticAnalysis: (body: AnalysisCreate) =>
     api
@@ -28,4 +36,6 @@ export const queryKeys = {
   sites: ['sites'] as const,
   dataSources: ['data-sources'] as const,
   analyses: ['analyses'] as const,
+  analysis: (id: string) => ['analysis', id] as const,
+  timeline: (id: string) => ['timeline', id] as const,
 }

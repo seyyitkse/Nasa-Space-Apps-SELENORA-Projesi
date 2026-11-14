@@ -5,6 +5,7 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { api } from '@/services/apiClient'
+import { selenoraApi } from '@/services/selenoraApi'
 
 import { AppProviders, makeQueryClient } from './providers'
 import { routes } from './router'
@@ -14,7 +15,7 @@ const health = {
   service: 'SELENORA API',
   version: '0.1.0',
   api_version: 'v1',
-  algorithm_version: '0.1.0-phase1',
+  algorithm_version: '0.2.0-phase2',
   environment: 'test',
   server_time_utc: '2026-11-14T00:00:00Z',
   uptime_seconds: 12,
@@ -109,6 +110,89 @@ describe('SELENORA app shell', () => {
     mockApi()
     renderAt('/comparison')
     expect(await screen.findByText('No analysis results yet')).toBeInTheDocument()
+  })
+
+  it('loads a stored analysis route with real data quality badge', async () => {
+    mockApi()
+    const site = (label: string, score: number, rank: number) => ({
+      label,
+      latitude_deg: -89.68,
+      longitude_deg: -166,
+      landing_site_id: null,
+      metrics: {
+        sun_visibility_pct: 80,
+        earth_visibility_pct: 50,
+        joint_visibility_pct: 40,
+        longest_sunlight_hours: 10,
+        longest_darkness_hours: 2,
+        longest_earth_visibility_hours: 8,
+        longest_communication_gap_hours: 4,
+        longest_joint_visibility_hours: 3,
+      },
+      score,
+      rank,
+      contributions: [
+        { metric: 'sun_visibility' as const, weight_pct: 40, value_pct: 80, contribution: 32 },
+        { metric: 'earth_visibility' as const, weight_pct: 40, value_pct: 50, contribution: 20 },
+        { metric: 'joint_visibility' as const, weight_pct: 20, value_pct: 40, contribution: 8 },
+      ],
+      darkness_windows: [],
+      communication_gaps: [],
+      joint_windows: [],
+    })
+    vi.spyOn(selenoraApi, 'getAnalysis').mockResolvedValue({
+      id: 'abc-123',
+      mission_name: 'Test Mission',
+      status: 'COMPLETED',
+      data_quality: 'EPHEMERIS_GEOMETRIC',
+      algorithm_version: '0.2.0-phase2',
+      start_utc: '2027-01-10T00:00:00Z',
+      end_utc: '2027-01-12T00:00:00Z',
+      time_step_minutes: 360,
+      horizon_model: 'GEOMETRIC',
+      weights: { sun_visibility: 40, earth_visibility: 40, joint_visibility: 20 },
+      sites: [site('A', 60, 1), site('B', 52, 2)],
+      recommended_site_label: 'A',
+      assumptions: ['Geometric horizon'],
+      limitations: ['No LOLA'],
+      provenance: [
+        {
+          source_id: 'jpl-horizons',
+          description: 'NASA/JPL Horizons',
+          retrieved_at: '2026-11-14T00:00:00Z',
+          version: '1.2',
+        },
+      ],
+      created_at: '2026-11-14T00:00:00Z',
+    })
+    vi.spyOn(selenoraApi, 'getTimeline').mockResolvedValue({
+      analysis_id: 'abc-123',
+      data_quality: 'EPHEMERIS_GEOMETRIC',
+      downsampled: false,
+      step_minutes: 360,
+      sites: [
+        {
+          label: 'A',
+          points: [
+            { t: '2027-01-10T00:00:00Z', sun_elevation_deg: 2, earth_elevation_deg: -1 },
+            { t: '2027-01-10T06:00:00Z', sun_elevation_deg: 3, earth_elevation_deg: 1 },
+          ],
+        },
+        {
+          label: 'B',
+          points: [
+            { t: '2027-01-10T00:00:00Z', sun_elevation_deg: 1, earth_elevation_deg: 0 },
+            { t: '2027-01-10T06:00:00Z', sun_elevation_deg: 2, earth_elevation_deg: 2 },
+          ],
+        },
+      ],
+    })
+    renderAt('/comparison/abc-123')
+    expect(await screen.findByText('Test Mission', {}, { timeout: 5000 })).toBeInTheDocument()
+    expect(await screen.findByText('Science Transparency')).toBeInTheDocument()
+    expect(screen.getAllByText(/jpl-horizons/i).length).toBeGreaterThan(0)
+    expect(screen.getByText(/REAL EPHEMERIS/i)).toBeInTheDocument()
+    expect(screen.queryByText(/Synthetic demonstration/)).not.toBeInTheDocument()
   })
 
   it('switches language to Turkish', async () => {

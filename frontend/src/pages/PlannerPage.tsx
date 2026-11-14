@@ -1,9 +1,9 @@
-import { useMutation } from '@tanstack/react-query'
-import { ArrowRight, CalendarRange, CheckCircle2, Clock4, FlaskConical, Loader2, MapPin, Play, RotateCcw, ServerCog } from 'lucide-react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { ArrowRight, CalendarRange, CheckCircle2, Clock4, FlaskConical, Loader2, MapPin, Play, RotateCcw } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PageTransition } from '@/components/shared/PageTransition'
@@ -40,6 +40,8 @@ function decodeRef(v: string): SiteRef | null {
 
 export default function PlannerPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const draft = useMissionStore((s) => s.draft)
   const update = useMissionStore((s) => s.updateDraft)
   const reset = useMissionStore((s) => s.resetDraft)
@@ -49,7 +51,15 @@ export default function PlannerPage() {
   const [touched, setTouched] = useState(false)
   const errors: PlannerErrors = touched ? validatePlanner(input) : {}
 
-  const analysis = useMutation({ mutationFn: selenoraApi.createAnalysis })
+  const analysis = useMutation({
+    mutationFn: selenoraApi.createAnalysis,
+    onSuccess: (status) => {
+      void queryClient.invalidateQueries({ queryKey: ['analyses'] })
+      if (status.status === 'COMPLETED' || status.status === 'PENDING' || status.status === 'RUNNING') {
+        void navigate(`/comparison/${status.id}`)
+      }
+    },
+  })
   const demo = useSyntheticDemo()
 
   const errText = (key?: string) =>
@@ -76,8 +86,6 @@ export default function PlannerPage() {
 
   const samples = sampleCount(input)
   const apiErr = analysis.error instanceof ApiError ? analysis.error : null
-  const notImplemented = apiErr?.isNotImplemented
-  const details = (apiErr?.details ?? {}) as { sample_count_per_site?: number }
 
   const siteOptions = (
     <>
@@ -104,7 +112,7 @@ export default function PlannerPage() {
   return (
     <PageTransition>
       <PageHeader
-        eyebrow={t('common.phase', { n: 1 })}
+        eyebrow={t('common.phase', { n: 2 })}
         title={t('planner.title')}
         description={t('planner.description')}
         actions={
@@ -254,32 +262,30 @@ export default function PlannerPage() {
               </Button>
 
               <AnimatePresence mode="wait">
-                {notImplemented && (
+                {analysis.isPending && (
                   <motion.div
-                    key="ni"
+                    key="running"
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
                     role="status"
-                    className="rounded-xl border border-violet/30 bg-violet/[0.07] p-4 text-sm"
+                    className="rounded-xl border border-cyan/30 bg-cyan/[0.07] p-4 text-sm"
                   >
                     <div className="flex items-center gap-2 font-medium text-fg">
-                      <ServerCog className="size-4 text-violet" aria-hidden />
-                      {t('planner.notImplementedTitle')}
+                      <Loader2 className="size-4 animate-spin text-cyan" aria-hidden />
+                      {t('planner.fetchingHorizons')}
                     </div>
-                    <p className="mt-1.5 text-xs leading-relaxed text-fg-2">{t('planner.notImplementedBody')}</p>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      <Badge tone="violet">HTTP 501</Badge>
-                      <Badge tone="neutral">{t('common.phase', { n: 2 })}</Badge>
-                      {details.sample_count_per_site && (
-                        <Badge tone="neutral">{t('planner.samples', { n: details.sample_count_per_site })}</Badge>
-                      )}
-                    </div>
+                    <p className="mt-1.5 text-xs leading-relaxed text-fg-2">{t('planner.fetchingHorizonsBody')}</p>
+                    {samples !== null && (
+                      <div className="mt-2">
+                        <Badge tone="neutral">{t('planner.samples', { n: samples })}</Badge>
+                      </div>
+                    )}
                   </motion.div>
                 )}
-                {analysis.error && !notImplemented && (
+                {analysis.error && (
                   <motion.div key="err" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    <ErrorState error={analysis.error} />
+                    <ErrorState error={apiErr ?? analysis.error} />
                   </motion.div>
                 )}
                 {demo.isSuccess && (
