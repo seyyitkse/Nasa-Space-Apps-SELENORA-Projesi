@@ -1,0 +1,106 @@
+# API Contract (v1)
+
+Base URL (dev): `http://127.0.0.1:8000` — the frontend calls it through the Vite proxy.
+Interactive docs: `/docs` (Swagger) and `/openapi.json`.
+Source of truth: `backend/app/schemas/*.py`; TS mirror: `frontend/src/types/api.ts`.
+
+## Conventions
+
+- JSON only. Timestamps ISO-8601 **with timezone** (UTC, `Z`). Naive timestamps are rejected.
+- Coordinates: planetocentric latitude −90..90°, **east-positive** longitude −180..180°.
+- Every response carries `X-Request-ID` and `Server-Timing: app;dur=<ms>`.
+- Rate limit: 120 requests/min/IP (configurable). `/health` and docs are exempt. 429 includes `Retry-After`.
+- Error shape (all 4xx/5xx):
+
+```json
+{ "error": { "code": "VALIDATION_ERROR", "message": "…", "details": [...], "request_id": "a1b2…" } }
+```
+
+Codes: `VALIDATION_ERROR` (422), `NOT_FOUND` (404), `NOT_IMPLEMENTED` (501), `RATE_LIMITED` (429),
+`SERVICE_NOT_CONFIGURED` (503), `EXTERNAL_SERVICE_ERROR` / `HORIZONS_ERROR` / `AI_PROVIDER_ERROR` (502), `INTERNAL_ERROR` (500).
+
+## Live endpoints (Phase 1)
+
+### `GET /health` → `HealthResponse`
+```json
+{ "status": "ok", "service": "SELENORA API", "version": "0.1.0", "api_version": "v1",
+  "algorithm_version": "0.1.0-phase1", "environment": "development",
+  "server_time_utc": "2026-11-14T06:40:00Z", "uptime_seconds": 42.1,
+  "components": [ { "name": "database", "status": "OK", "detail": "SQLite reachable" },
+                  { "name": "horizons_client", "status": "READY", "detail": "…not probed…" },
+                  { "name": "scientific_engine", "status": "NOT_IMPLEMENTED", "detail": "…" },
+                  { "name": "terrain_model", "status": "NOT_IMPLEMENTED", "detail": "…" },
+                  { "name": "ai_analyst", "status": "NOT_CONFIGURED", "detail": "DEEPSEEK_API_KEY not set." } ] }
+```
+`status` is `degraded` if any component is `DOWN`. Component states: `OK | READY | DEGRADED | DOWN | NOT_CONFIGURED | NOT_IMPLEMENTED`.
+
+### `GET /api/v1/sites` → `LandingSiteList`
+`{ items: LandingSite[], total, coordinate_frame, longitude_convention, disclaimer }`
+`LandingSite = { id, name, latitude_deg, longitude_deg, region, description, coordinate_source, coordinate_status }`.
+All seeded sites have `coordinate_status = "APPROXIMATE_REFERENCE"`.
+
+### `GET /api/v1/sites/{site_id}` → `LandingSite` | 404
+
+### `GET /api/v1/data-sources` → `{ items: DataSource[] }`
+`DataSource = { id, name, provider, category: EPHEMERIS|TOPOGRAPHY|AI_EXPLANATION, description, url, documentation_url, integration_status: CLIENT_READY|INTEGRATED|PLANNED|NOT_CONFIGURED, used_for[], phase, notes }`.
+
+### `POST /api/v1/demo/synthetic-analysis` → `DemoAnalysisResponse`
+Body: `AnalysisCreate` (below). Runs the real visibility + scoring code on the
+**SYNTHETIC_DEMO** elevation model. Returns `{ result: AnalysisResult, timeline: TimelineResponse }`
+with `data_quality = "SYNTHETIC_DEMO"`. Nothing is persisted. Timeline is downsampled to ≤ 720 points/site.
+
+### `GET /api/v1/analyses` → `AnalysisStatus[]`
+Lists persisted analyses (empty until Phase 2).
+
+## Contracted endpoints (implemented in later phases)
+
+| Endpoint | Phase | Current behaviour |
+|---|---|---|
+| `POST /api/v1/analyses` | 2 | Validates `AnalysisCreate`; returns **501** with `details: { validated: true, sites, sample_count_per_site, phase }` |
+| `GET /api/v1/analyses/{id}` → `AnalysisResult` | 2 | 404 for unknown id (no analyses exist yet) |
+| `GET /api/v1/analyses/{id}/timeline` → `TimelineResponse` | 2 | 404 |
+| `POST /api/v1/analyses/{id}/explain` (`{language: "en"|"tr"}`) → `ExplainResponse` | 3 | 404 |
+
+Planned success code for `POST /analyses`: **202 Accepted** + `AnalysisStatus` (`PENDING|RUNNING|COMPLETED|FAILED`); clients poll `GET /analyses/{id}`.
+
+## Models
+
+```text
+AnalysisCreate {
+  mission_name: str (2..160)
+  sites: SiteInput[2..10]           # distinct coordinates
+  start_utc, end_utc: datetime(tz)  # end > start, span ≤ 30 days
+  time_step_minutes: int 10..1440 = 60
+  horizon_model: "GEOMETRIC" | "TERRAIN" = "GEOMETRIC"
+  weights: { sun_visibility, earth_visibility, joint_visibility }  # percent, each 0..100, sum = 100 (±0.01)
+}
+SiteInput { label: str(1..160), latitude_deg, longitude_deg, landing_site_id?: str }
+
+AnalysisResult {
+  id, mission_name, status, data_quality, algorithm_version,
+  start_utc, end_utc, time_step_minutes, horizon_model, weights,
+  sites: SiteResult[], recommended_site_label: str|null,   # decided by the deterministic engine only
+  assumptions: str[], limitations: str[], provenance: Provenance[], created_at
+}
+SiteResult {
+  label, latitude_deg, longitude_deg, landing_site_id,
+  metrics: VisibilityMetrics, score: float|null, rank: int|null,
+  contributions: ScoreContribution[],                        # explainable ranking
+  darkness_windows, communication_gaps, joint_windows: Interval[]   # ≤ 50 longest each, sorted by start
+}
+VisibilityMetrics { sun_visibility_pct, earth_visibility_pct, joint_visibility_pct,
+  longest_sunlight_hours, longest_darkness_hours, longest_earth_visibility_hours,
+  longest_communication_gap_hours, longest_joint_visibility_hours }
+ScoreContribution { metric, weight_pct, value_pct, contribution }   # contribution = weight_pct/100 × value_pct
+Interval { start_utc, end_utc, duration_hours }
+Provenance { source_id, description, retrieved_at, version }
+TimelineResponse { analysis_id, data_quality, downsampled, step_minutes, sites: [{ label, points: [{ t, sun_elevation_deg, earth_elevation_deg }] }] }
+
+AIMissionReport { summary, key_findings[], site_advantages{label: str[]}, site_disadvantages{label: str[]},
+  comparison_explanation, scientific_limitations[], data_quality_notes[] }
+ExplainResponse { analysis_id, language, model, recommended_site_label, report: AIMissionReport,
+  unsupported_numbers: str[], generated_at }
+```
+
+`data_quality ∈ EPHEMERIS_GEOMETRIC | EPHEMERIS_TERRAIN | SYNTHETIC_DEMO | PARTIAL | UNAVAILABLE`.
+Scores are only produced for `EPHEMERIS_*` / `SYNTHETIC_DEMO` with ≤ 5 % missing samples; otherwise `score = rank = null`.
