@@ -1,6 +1,6 @@
 import { Archive, FileText, Printer } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
+import { Link, useParams } from 'react-router'
 
 import { DataQualityBadge } from '@/components/shared/badges'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/misc'
-import { useAnalyses } from '@/hooks/useApi'
+import { ScienceTransparencyPanel } from '@/features/site-comparison/ScienceTransparencyPanel'
+import { useAnalyses, useAnalysis, useExplanation } from '@/hooks/useApi'
 import { formatCoord, formatHours, formatPct, formatUtc, formatUtcDate } from '@/lib/format'
 import { useMissionStore } from '@/stores/missionStore'
 import type { AnalysisResult } from '@/types/api'
@@ -23,6 +24,43 @@ function ReportSection({ title, children }: { title: string; children: React.Rea
       <h3 className="sel-eyebrow mb-3 text-[10.5px]">{title}</h3>
       {children}
     </section>
+  )
+}
+
+function AiReportBlock({ analysisId }: { analysisId: string }) {
+  const { t } = useTranslation()
+  const explain = useExplanation(analysisId.startsWith('demo-') ? undefined : analysisId)
+  if (analysisId.startsWith('demo-')) {
+    return <p className="text-[13px] text-fg-3">{t('reports.aiNone')}</p>
+  }
+  if (explain.isPending) return <Skeleton className="h-16" />
+  if (explain.error || !explain.data) {
+    return (
+      <p className="text-[13px] text-fg-3">
+        {t('reports.aiNone')}{' '}
+        <Link to="/analyst" className="text-cyan hover:underline">
+          {t('nav.analyst')}
+        </Link>
+      </p>
+    )
+  }
+  const { report, model, generated_at, recommended_site_label } = explain.data
+  return (
+    <div className="space-y-3 text-[13px] text-fg-2">
+      <p className="text-[11.5px] text-fg-3">{t('reports.aiDisclaimer')}</p>
+      <p className="font-mono text-[11px] text-fg-3">
+        {model} · {formatUtc(generated_at)}
+        {recommended_site_label ? ` · #1 ${recommended_site_label}` : ''}
+      </p>
+      <p className="leading-relaxed text-fg">{report.summary}</p>
+      {report.key_findings.length > 0 && (
+        <ul className="list-disc space-y-1 pl-4 marker:text-fg-3">
+          {report.key_findings.map((f) => (
+            <li key={f}>{f}</li>
+          ))}
+        </ul>
+      )}
+    </div>
   )
 }
 
@@ -116,7 +154,7 @@ function ReportView({ result }: { result: AnalysisResult }) {
         </ReportSection>
 
         <ReportSection title={t('reports.ai')}>
-          <p className="text-[13px] text-fg-3">{t('reports.aiNone')}</p>
+          <AiReportBlock analysisId={result.id} />
         </ReportSection>
 
         <ReportSection title={t('reports.provenance')}>
@@ -139,13 +177,29 @@ function ReportView({ result }: { result: AnalysisResult }) {
             <li>{t('common.researchOnly')}</li>
           </ul>
         </ReportSection>
+
+        <div className="mt-5">
+          <ScienceTransparencyPanel result={result} />
+        </div>
       </CardContent>
     </Card>
   )
 }
 
+function StoredReport({ id }: { id: string }) {
+  const { t } = useTranslation()
+  const analysis = useAnalysis(id)
+  if (analysis.isPending) return <Skeleton className="h-96" />
+  if (analysis.error) return <ErrorState error={analysis.error} onRetry={() => void analysis.refetch()} />
+  if (!analysis.data || analysis.data.status !== 'COMPLETED') {
+    return <EmptyState icon={FileText} title={t('reports.title')} body={t('comparison.timelineMissing')} />
+  }
+  return <ReportView result={analysis.data} />
+}
+
 export default function ReportsPage() {
   const { t } = useTranslation()
+  const { analysisId } = useParams<{ analysisId?: string }>()
   const demo = useMissionStore((s) => s.demo)
   const stored = useAnalyses()
 
@@ -170,8 +224,14 @@ export default function ReportsPage() {
               ) : (
                 <ul className="space-y-1.5">
                   {stored.data.map((a) => (
-                    <li key={a.id} className="flex items-center justify-between font-mono text-xs">
-                      {a.id} <DataQualityBadge quality={a.data_quality} />
+                    <li key={a.id}>
+                      <Link
+                        to={`/reports/${a.id}`}
+                        className="flex items-center justify-between gap-2 rounded-lg border border-line px-2 py-1.5 font-mono text-xs hover:border-cyan/40"
+                      >
+                        <span className="truncate">{a.id.slice(0, 8)}…</span>
+                        <DataQualityBadge quality={a.data_quality} />
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -186,10 +246,10 @@ export default function ReportsPage() {
             </CardHeader>
             <CardContent>
               {demo ? (
-                <div className="rounded-lg border border-gold/30 bg-gold/[0.05] p-3">
+                <Link to="/reports" className="block rounded-lg border border-gold/30 bg-gold/[0.05] p-3">
                   <div className="truncate text-[13px] font-medium">{demo.result.mission_name}</div>
                   <div className="mt-1 font-mono text-[10.5px] text-fg-3">{demo.result.id}</div>
-                </div>
+                </Link>
               ) : (
                 <p className="text-[12.5px] text-fg-3">{t('reports.sessionNone')}</p>
               )}
@@ -197,7 +257,9 @@ export default function ReportsPage() {
           </Card>
         </aside>
         <div>
-          {demo ? (
+          {analysisId ? (
+            <StoredReport id={analysisId} />
+          ) : demo ? (
             <ReportView result={demo.result} />
           ) : (
             <EmptyState

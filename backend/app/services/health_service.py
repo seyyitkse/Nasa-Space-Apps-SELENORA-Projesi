@@ -31,8 +31,8 @@ def check_health(settings: Settings, session: Session) -> HealthResponse:
         ),
         ComponentStatus(
             name="scientific_engine",
-            status="NOT_IMPLEMENTED",
-            detail="Visibility & scoring primitives exist; ephemeris pipeline arrives in Phase 2.",
+            status="READY",
+            detail="Horizons ephemeris → geometric visibility → deterministic scoring (Phase 2).",
         ),
         ComponentStatus(
             name="terrain_model",

@@ -183,7 +183,7 @@ def test_deepseek_valid_json_is_validated() -> None:
     report = {"summary": "Site A has more sunlight.", "key_findings": ["Sun 62.5%"]}
     fake = FakeCompletions(json.dumps(report))
     out = run(DeepSeekClient(_settings(), completions=fake).generate_report({"x": 62.5}, "tr"))
-    assert out.summary.startswith("Site A")
+    assert out.report.summary.startswith("Site A")
     assert fake.kwargs["response_format"] == {"type": "json_object"}
     assert "Türkçe" in fake.kwargs["messages"][1]["content"]
 
@@ -192,6 +192,11 @@ def test_deepseek_valid_json_is_validated() -> None:
 def test_deepseek_failures_are_normalised(content: str | Exception) -> None:
     with pytest.raises(DeepSeekError):
         run(DeepSeekClient(_settings(), completions=FakeCompletions(content)).generate_report({}, "en"))
+
+
+def test_deepseek_empty_content_is_rejected() -> None:
+    with pytest.raises(DeepSeekError):
+        run(DeepSeekClient(_settings(), completions=FakeCompletions("")).generate_report({}, "en"))
 
 
 def test_ai_guard_flags_invented_numbers() -> None:

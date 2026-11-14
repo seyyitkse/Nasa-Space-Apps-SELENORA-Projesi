@@ -4,7 +4,12 @@
 |---|---|---|
 | D1 | **Modular monolith** (one FastAPI app, one SPA) | Competition timeline; boundaries via modules (`api → services → science/integrations`); splittable later. |
 | D2 | Project root = repository root (`backend/`, `frontend/`, `docs/`, `data/`) instead of an extra `selenora/` folder | The workspace folder already is the project; avoids a redundant nesting level. |
-| D3 | **Analysis endpoints return 501** until Phase 2, but validate input fully | Never fabricate success (prompt §5.2); lets the UI exercise real validation now. |
+| D3 | ~~Analysis endpoints return 501 until Phase 2~~ **Superseded by D24** | Phase 1 honesty rule; Phase 2 implements real analyses. |
+| D24 | Real analyses via `analysis_service` + persist `result_json`/`timeline_json` | Fast GET reconstruction without complex relational joins; relational rows kept for audit/listing. |
+| D25 | Cache data-source token = `horizons-observer-azel-v1` (query contract), not live DE441/API version | Cache key must be known *before* fetch; live signature/ephemeris recorded in provenance after response. |
+| D26 | Synchronous Horizons fetch inside `POST /analyses`, still returns **202** | Demo-scale windows finish in-request; frontend already polls; background jobs deferred. |
+| D27 | `PARTIAL` if any site missing-fraction > 5%; refuse score/rank | Avoid false confidence from incomplete ephemeris. |
+| D28 | Science Transparency panel on Comparison + Reports | Jury-facing provenance; separates REAL EPHEMERIS vs SYNTHETIC_DEMO. |
 | D4 | Added `POST /api/v1/demo/synthetic-analysis` | Lets the comparison dashboard be built and demoed against the *final* response contract with the *real* visibility/scoring code, while the data is unmistakably labelled `SYNTHETIC_DEMO`. Separate path so it can never be confused with `/analyses`. |
 | D5 | Synthetic latitude phases anchored to two real Horizons samples (2026-12-01) | An arbitrary phase put the Sun below the horizon for the whole demo window (degenerate, misleading demo). Anchoring keeps it plausible; documented + unit-tested. |
 | D6 | Seed sites flagged `APPROXIMATE_REFERENCE` | Exact official Artemis region polygons were not available offline; honest labelling over false precision. |
@@ -15,7 +20,11 @@
 | D11 | DeepSeek via the **OpenAI Python SDK** behind a small protocol | Matches DeepSeek's OpenAI-compatible API; protocol makes failure modes testable without network. |
 | D12 | AI number guard (`find_unsupported_numbers`) | Enforces "AI may not create new numbers" mechanically, not only by prompt. |
 | D13 | Recommended site decided only by `science/scoring.rank` | AI output schema has no field that can change the recommendation. |
-| D14 | SQLite + SQLAlchemy 2.0 with portable types (JSON, DateTime(tz)) | Zero-ops now; `SELENORA_DATABASE_URL` switch to PostgreSQL later. No Alembic yet (schema still moving) — add before Phase 2 persistence. |
+| D14 | SQLite + SQLAlchemy 2.0 with portable types (JSON, DateTime(tz)) | Zero-ops now; PostgreSQL-ready. |
+| D29 | Alembic additive migrations at startup (`create_all` + `upgrade head`) | Upgrade existing Phase 1/2 DBs without deleting rows; backup before Phase 3. |
+| D30 | AI receives only `build_evidence_package` (no timelines) | Token cost + injection surface reduction; numbers stay server-authored. |
+| D31 | Ranking contradiction → reject AI report (502) | Prevents showing briefings that overturn deterministic recommendation. |
+| D32 | Explain cache key = hash(analysis, language, model, prompt_version, evidence) | Avoid duplicate DeepSeek spend. |
 | D15 | In-process rate limiter & caches | Single-instance deployment. Must move to Redis/DB before multi-worker scaling. |
 | D16 | shadcn/ui **conventions** written by hand on `radix-ui` + CVA (`components.json` included) | The shadcn CLI is interactive/network-bound; hand-written components follow the same structure so `npx shadcn add` works later. |
 | D17 | Tailwind **v4** with CSS-variable tokens (`@theme inline`) | Single source of truth for colours; matches the required palette exactly. |

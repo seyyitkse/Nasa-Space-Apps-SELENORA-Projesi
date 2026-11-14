@@ -18,6 +18,7 @@ from app.core.config import Settings, get_settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging
 from app.core.middleware import RateLimitMiddleware, RequestContextMiddleware
+from app.db.migrate import run_migrations
 from app.db.seed import seed_landing_sites
 from app.db.session import Database
 from app.integrations.deepseek.client import DeepSeekClient
@@ -33,7 +34,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         database = Database(settings.database_url)
+        # create_all keeps brand-new installs working; Alembic upgrades existing DBs
+        # without deleting rows (adds Phase 2/3 columns safely).
         database.create_all()
+        try:
+            run_migrations(settings.database_url)
+        except Exception:
+            logger.exception("migration_failed")
+            raise
         with database.session_factory() as session:
             added = seed_landing_sites(session)
         http = httpx.AsyncClient(

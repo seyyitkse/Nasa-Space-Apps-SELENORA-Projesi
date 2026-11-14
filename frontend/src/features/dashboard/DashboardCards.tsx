@@ -271,9 +271,9 @@ export function AnalysisStatusCard() {
   const { t } = useTranslation()
   const items: { key: CapabilityKey; state: 'live' | 'built' | 'planned'; phase: number }[] = [
     { key: 'foundation', state: 'live', phase: 1 },
-    { key: 'horizonsClient', state: 'built', phase: 1 },
-    { key: 'visibilityEngine', state: 'built', phase: 1 },
-    { key: 'ephemerisPipeline', state: 'planned', phase: 2 },
+    { key: 'horizonsClient', state: 'live', phase: 2 },
+    { key: 'visibilityEngine', state: 'live', phase: 2 },
+    { key: 'ephemerisPipeline', state: 'live', phase: 2 },
     { key: 'aiBriefing', state: 'planned', phase: 3 },
     { key: 'terrain', state: 'planned', phase: 4 },
   ]
