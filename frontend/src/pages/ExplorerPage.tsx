@@ -10,6 +10,7 @@ import { ErrorState } from '@/components/shared/States'
 import { Badge } from '@/components/ui/badge'
 import { MissionTimelineDock } from '@/features/analysis-data/MissionTimelineDock'
 import { CoordinateForm, SiteList } from '@/features/lunar-explorer/ExplorerPanels'
+import { BasemapControl, type BasemapChoice, pickBasemapLayers } from '@/features/lunar-explorer/BasemapControl'
 import { isRenderable, LayerDock, type PreviewStatus } from '@/features/lunar-explorer/LayerDock'
 import {
   DEFAULT_LAYERS,
@@ -76,6 +77,7 @@ export default function ExplorerPage() {
   const [picked, setPicked] = useState<{ lat: number; lon: number } | null>(null)
   const [cursor, setCursor] = useState<{ lat: number; lon: number } | null>(null)
   const [layers, setLayers] = useState<MapLayers>(DEFAULT_LAYERS)
+  const [basemapOpacity, setBasemapOpacity] = useState(0.85)
 
   const reference = useMemo(() => data?.items ?? [], [data])
   const mapSites: MapSite[] = useMemo(
@@ -120,6 +122,24 @@ export default function ExplorerPage() {
 
   const tiles = catalog.data?.tiles ?? []
   const layerList = mapLayers.data?.items ?? []
+  const basemaps = pickBasemapLayers(layerList)
+  const basemapChoice: BasemapChoice =
+    basemaps.photo && layers.rasters[basemaps.photo.id] ? 'photo' : basemaps.hillshade && layers.rasters[basemaps.hillshade.id] ? 'hillshade' : 'none'
+  const chooseBasemap = (c: BasemapChoice) => {
+    const r = { ...layers.rasters }
+    if (basemaps.photo) r[basemaps.photo.id] = c === 'photo'
+    if (basemaps.hillshade) r[basemaps.hillshade.id] = c === 'hillshade'
+    setLayers({ ...layers, rasters: r })
+  }
+  const photoId = basemaps.photo?.id
+  const hillId = basemaps.hillshade?.id
+  // Memoised so the map does not restyle on every render.
+  const rasterOpacity = useMemo(() => {
+    const o: Record<string, number> = {}
+    if (photoId) o[photoId] = basemapOpacity
+    if (hillId) o[hillId] = basemapOpacity
+    return o
+  }, [photoId, hillId, basemapOpacity])
   const bounds = previewBounds(view)
   const enabledIds = layerList.filter((l) => isRenderable(l) && layers.rasters[l.id] && caps.has('mapPreview')).map((l) => l.id)
   const previewQueries = useQueries({
@@ -228,6 +248,7 @@ export default function ExplorerPage() {
               layers={layers}
               tiles={tiles}
               previews={previews}
+              rasterOpacity={rasterOpacity}
               onView={setView}
               marks={marks}
               ariaLabel={t('explorer.projectionValue')}
@@ -251,6 +272,11 @@ export default function ExplorerPage() {
               <div className="pointer-events-none absolute top-3 left-3 flex max-w-[calc(100%-4rem)] items-start gap-2 rounded-lg border border-line-strong bg-bg/85 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur sm:max-w-sm">
                 <Info className="mt-px size-3.5 shrink-0 text-cyan" aria-hidden />
                 <span>{t('explorer2.noBasemap')}</span>
+              </div>
+            )}
+            {caps.has('mapLayers') && (
+              <div className="pointer-events-none absolute bottom-10 left-3 z-10">
+                <BasemapControl layers={layerList} choice={basemapChoice} onChoice={chooseBasemap} opacity={basemapOpacity} onOpacity={setBasemapOpacity} />
               </div>
             )}
             <div

@@ -76,6 +76,8 @@ export interface HorizonProfile {
   horizon_elevation_deg: (number | null)[]
   /** false where the ray did not reach max_range_m (partial: a far ridge could be missed). */
   complete: boolean[]
+  /** Distance (m) to the terrain point that sets the horizon in each bin (null if none). */
+  blocker_m: (number | null)[]
   max_range_m: number
   complete_coverage_fraction: number
   quality_label: string
@@ -93,6 +95,7 @@ export function normalizeHorizonProfile(p: HorizonProfileApi): HorizonProfile {
     azimuth_deg: p.bins.map((b) => b.azimuth_deg),
     horizon_elevation_deg: p.bins.map((b) => (b.has_any_data ? b.horizon_elevation_deg : null)),
     complete: p.bins.map((b) => b.complete_coverage),
+    blocker_m: p.bins.map((b) => (b.has_any_data ? b.distance_to_blocker_m : null)),
     max_range_m: p.max_range_m,
     complete_coverage_fraction: p.complete_coverage_fraction,
     quality_label: p.quality_label,
@@ -197,6 +200,28 @@ export function parseBoundsHeader(v: string | undefined | null): [number, number
   return parts as [number, number, number, number]
 }
 
+export interface MeshResponse {
+  layer_id: string
+  role: string
+  crs_summary: string
+  attribution: string
+  origin_stereo_m: [number, number]
+  x_m: number[]
+  y_m: number[]
+  z_m: (number | null)[][]
+  step_m: number
+  half_extent_m: number
+  warning: string
+}
+
+/** Index of the horizon-profile bin nearest to a true azimuth (bins are evenly spaced from 0°). */
+export function nearestBin(p: Pick<HorizonProfile, 'azimuth_deg'>, azDeg: number): number {
+  const n = p.azimuth_deg.length
+  if (n === 0) return -1
+  const step = 360 / n
+  return ((Math.round((((azDeg % 360) + 360) % 360) / step) % n) + n) % n
+}
+
 export interface ArtemisRegions {
   title: string
   disclaimer: string
@@ -260,6 +285,13 @@ export const contractApi = {
     }
   },
   artemisRegions: () => api.get<ArtemisRegions>(ROUTES.artemisRegions).then((r) => r.data),
+  mapMesh: (p: { lat: number; lon: number; halfExtentM: number; stepM: number; layerId: string }) =>
+    api
+      .get<MeshResponse>(ROUTES.mapMesh, {
+        params: { latitude_deg: p.lat, longitude_deg: p.lon, half_extent_m: p.halfExtentM, step_m: p.stepM, layer_id: p.layerId },
+        timeout: 120_000,
+      })
+      .then((r) => r.data),
 }
 
 export function useTerrainCatalog(enabled: boolean) {
@@ -304,6 +336,16 @@ export function useMapPreview(layerId: string, bounds: [number, number, number, 
     enabled: enabled && bounds !== null,
     staleTime: 10 * 60_000,
     gcTime: 10 * 60_000,
+    retry: 0,
+  })
+}
+
+export function useMapMesh(p: { lat: number; lon: number; halfExtentM: number; stepM: number; layerId: string } | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ['map-mesh', p],
+    queryFn: () => contractApi.mapMesh(p!),
+    enabled: enabled && p !== null,
+    staleTime: 30 * 60_000,
     retry: 0,
   })
 }

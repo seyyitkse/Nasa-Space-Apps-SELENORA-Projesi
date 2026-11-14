@@ -1,8 +1,10 @@
 import type { Messages } from './en'
 import phase5a from './phase5a.tr'
+import phase5d from './phase5d.tr'
 
 const tr: Messages = {
   ...phase5a,
+  ...phase5d,
   common: {
     appName: 'SELENORA',
     subtitle: 'Yapay Zekâ Destekli Ay Görevi İstihbaratı',
@@ -24,6 +26,7 @@ const tr: Messages = {
     requestId: 'İstek kimliği',
   },
   nav: {
+    guided: 'Rehberli görev',
     simulator: 'Ufuk Simülatörü',
     windows: 'Görev Pencereleri',
     mission: 'Görev',

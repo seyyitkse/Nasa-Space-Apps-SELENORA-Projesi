@@ -60,6 +60,8 @@ interface Props {
   tiles?: DemTileInfo[]
   /** Backend-rendered PNG previews placed at their returned stereographic bounds. */
   previews?: RasterPreview[]
+  /** Per-layer opacity (0..1) for previews; default 0.85. */
+  rasterOpacity?: Record<string, number>
   /** Fires after pan/zoom with the view centre and half-extent (metres). */
   onView?: (v: { center: [number, number]; halfExtent: number; resolution: number }) => void
   /** Badge letters drawn on markers (e.g. mission Site A / B). */
@@ -157,6 +159,7 @@ export function LunarMap({
   layers,
   tiles = [],
   previews = [],
+  rasterOpacity = {},
   onView,
   marks = {},
   onSelect,
@@ -411,8 +414,11 @@ export function LunarMap({
     siteSource.current.changed()
     graticuleLayer.current?.setVisible(layers.graticule)
     tileLayer.current?.setVisible(layers.coverage)
-    for (const [id, layer] of rasterLayers.current) layer.setVisible(Boolean(layers.rasters[id]))
-  }, [selectedId, layers, marks, previews])
+    for (const [id, layer] of rasterLayers.current) {
+      layer.setVisible(Boolean(layers.rasters[id]))
+      layer.setOpacity(rasterOpacity[id] ?? 0.85)
+    }
+  }, [selectedId, layers, marks, previews, rasterOpacity])
 
   useEffect(() => {
     pickSource.current.clear()
