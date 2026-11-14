@@ -62,18 +62,30 @@ GEOMETRIC_ASSUMPTIONS = [
     "Sun visibility is evaluated at the solar disc centre (~0.27° angular radius not modelled).",
     "Earth above the geometric horizon is Direct-to-Earth visibility *potential* only — "
     "not a link budget, antenna mask, or DSN schedule.",
-    "Durations use sample-and-hold over the configured time step (±1 step uncertainty).",
+    "Durations use sample-and-hold over [start_utc, end_utc): each sample at t "
+    "covers min(step, end - t); a Horizons STOP sample exactly at end contributes 0 h.",
+    "Visibility percentages are time-weighted over samples with both Sun and Earth data.",
 ]
 
 GEOMETRIC_LIMITATIONS = [
     "Results are NOT a NASA-endorsed landing-safety or flight-operations score.",
     "Without LOLA topography, local ridges can hide the Sun or Earth even when "
     "geometric elevation is positive.",
-    "Hourly (or coarser) samples do not yield second-precision event times.",
+    "Hourly or multi-hour samples are coarse estimates (±1 step); not second-precision event times.",
     "Ties in score produce no single recommendation.",
     "Partial ephemeris coverage downgrades data quality and refuses ranking when "
     f"missing samples exceed {MISSING_FRACTION_PARTIAL:.0%}.",
+    "Missing ephemeris samples are excluded from duration/percentage denominators "
+    "(neither counted as visible nor invisible).",
 ]
+
+# Analyses computed before the [start, end) duration clamp must not be treated as current.
+DURATION_SEMANTICS_SINCE = "0.3.1-phase3.3"
+
+
+def analysis_metrics_superseded(algorithm_version: str) -> bool:
+    """True when stored metrics may predate the Phase 3.3 duration clamp."""
+    return algorithm_version != ALGORITHM_VERSION
 
 
 def _cache_key_for(req: AnalysisCreate) -> str:
@@ -191,6 +203,7 @@ def compute_from_ephemerides(
             step_minutes=step,
             weights=weights,
             data_quality=site_quality,
+            analysis_end_utc=req.end_utc,
         )
         site_results.append(site_result)
         scores.append(score)
@@ -412,7 +425,18 @@ def find_cached_analysis(session: Session, cache_key: str) -> MissionAnalysis | 
 def load_result(row: MissionAnalysis) -> AnalysisResult:
     if not row.result_json:
         raise NotImplementedYetError("Analysis result payload is missing.")
-    return AnalysisResult.model_validate(row.result_json)
+    result = AnalysisResult.model_validate(row.result_json)
+    # Do not mutate the database row — surface a read-time warning for old metrics.
+    if analysis_metrics_superseded(row.algorithm_version or result.algorithm_version):
+        note = (
+            f"SUPERSEDED metrics: stored algorithm_version="
+            f"{row.algorithm_version or result.algorithm_version} predates "
+            f"{DURATION_SEMANTICS_SINCE}. Longest visibility/gap hours may exceed "
+            "the analysis window; re-run the analysis for corrected durations."
+        )
+        if note not in result.limitations:
+            result.limitations = [*result.limitations, note]
+    return result
 
 
 def load_timeline(row: MissionAnalysis) -> TimelineResponse:

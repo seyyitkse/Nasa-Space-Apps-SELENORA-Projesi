@@ -132,6 +132,7 @@ def main() -> int:
         out = {
             "analysis_id": aid,
             "mission_name": detail["mission_name"],
+            "algorithm_version": detail.get("algorithm_version"),
             "start_utc": detail["start_utc"],
             "end_utc": detail["end_utc"],
             "data_quality": detail["data_quality"],

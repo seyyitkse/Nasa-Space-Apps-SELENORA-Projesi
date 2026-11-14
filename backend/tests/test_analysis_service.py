@@ -98,7 +98,7 @@ def test_compute_from_real_fixtures_matches_sample_elevations() -> None:
     result, timeline, rows = compute_from_ephemerides(req, "test-id", site_ephems)
     assert result.data_quality == "EPHEMERIS_GEOMETRIC"
     assert result.status == "COMPLETED"
-    assert result.algorithm_version.endswith("phase3")
+    assert "phase3" in result.algorithm_version
     assert len(result.sites) == 2
     assert all(s.score is not None and s.rank is not None for s in result.sites)
     assert result.provenance[0].source_id == "jpl-horizons"
@@ -172,9 +172,12 @@ def test_joint_visibility_is_intersection() -> None:
     }
     result, _, _ = compute_from_ephemerides(req, "joint-id", [bodies, bodies])
     m = result.sites[0].metrics
-    assert m.sun_visibility_pct == pytest.approx(50.0)
-    assert m.earth_visibility_pct == pytest.approx(50.0)
-    assert m.joint_visibility_pct == pytest.approx(25.0)
+    # Window [t0, t0+3h): 4 Horizons-style samples, last at end → 0 h hold.
+    # Covered 3 h; sun at 0–1 (2 h); earth at 1–2 (2 h); joint at 1 (1 h).
+    assert m.sun_visibility_pct == pytest.approx(66.667, abs=1e-3)
+    assert m.earth_visibility_pct == pytest.approx(66.667, abs=1e-3)
+    assert m.joint_visibility_pct == pytest.approx(33.333, abs=1e-3)
+    assert m.longest_communication_gap_hours <= 3.0 + 1e-9
 
 
 class FakeHorizons:

@@ -73,6 +73,7 @@ def build_synthetic_analysis(req: AnalysisCreate) -> DemoAnalysisResponse:
             step_minutes=step,
             weights=weights,
             data_quality="SYNTHETIC_DEMO",
+            analysis_end_utc=req.end_utc,
         )
         scores.append(score)
         site_results.append(site_result)
@@ -99,13 +100,14 @@ def build_synthetic_analysis(req: AnalysisCreate) -> DemoAnalysisResponse:
             "the model drifts from reality away from that date.",
             "Geometric (smooth-sphere) horizon at 0°; terrain shadowing is not modelled.",
             "Sun visibility is evaluated at the solar disc centre.",
-            "Durations use sample-and-hold with a resolution of ±1 time step.",
+            "Durations use sample-and-hold over [start_utc, end_utc) with ±1 step resolution.",
         ],
         limitations=[
             "Synthetic data must not be used for mission decisions.",
             "Earth above the horizon does not guarantee a working communication link.",
             "The score is a comparative planning heuristic, not a NASA-endorsed safety score.",
             "Ties in score produce no single recommendation.",
+            "Coarse synthetic samples are estimates only — not second-precision ephemeris.",
         ],
         provenance=[
             Provenance(
