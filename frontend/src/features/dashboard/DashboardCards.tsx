@@ -1,9 +1,6 @@
 import {
   Activity,
   ArrowRight,
-  CheckCircle2,
-  CircleDashed,
-  Database,
   ExternalLink,
   MapPin,
   Rocket,
@@ -18,7 +15,6 @@ import { Link } from 'react-router'
 import { StateBadge } from '@/components/shared/badges'
 import { staggerChild } from '@/components/shared/PageTransition'
 import { ErrorState } from '@/components/shared/States'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/misc'
@@ -255,56 +251,6 @@ export function PlannerAccessCard() {
           {t('overview.openPlanner')} <ArrowRight />
         </Link>
       </Button>
-    </DashCard>
-  )
-}
-
-type CapabilityKey =
-  | 'foundation'
-  | 'horizonsClient'
-  | 'visibilityEngine'
-  | 'ephemerisPipeline'
-  | 'aiBriefing'
-  | 'terrain'
-
-export function AnalysisStatusCard() {
-  const { t } = useTranslation()
-  const items: { key: CapabilityKey; state: 'live' | 'built' | 'planned'; phase: number }[] = [
-    { key: 'foundation', state: 'live', phase: 1 },
-    { key: 'horizonsClient', state: 'live', phase: 2 },
-    { key: 'visibilityEngine', state: 'live', phase: 2 },
-    { key: 'ephemerisPipeline', state: 'live', phase: 2 },
-    { key: 'aiBriefing', state: 'planned', phase: 3 },
-    { key: 'terrain', state: 'planned', phase: 4 },
-  ]
-  const tone = { live: 'success', built: 'cyan', planned: 'violet' } as const
-  const label = {
-    live: t('overview.stateLive'),
-    built: t('overview.stateBuilt'),
-    planned: t('overview.statePlanned'),
-  }
-  return (
-    <DashCard icon={Database} title={t('overview.analysisStatus')} description={t('overview.analysisStatusText')}>
-      <ol className="relative space-y-3 before:absolute before:top-2 before:bottom-2 before:left-[7px] before:w-px before:bg-line">
-        {items.map((it) => (
-          <li key={it.key} className="relative flex items-start gap-3 pl-0">
-            {it.state === 'planned' ? (
-              <CircleDashed className="relative z-10 mt-0.5 size-[15px] shrink-0 bg-surface text-fg-3" aria-hidden />
-            ) : (
-              <CheckCircle2 className="relative z-10 mt-0.5 size-[15px] shrink-0 bg-surface text-success" aria-hidden />
-            )}
-            <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
-              <span className={cn('min-w-0 text-[13px] leading-snug', it.state === 'planned' ? 'text-fg-2' : 'text-fg')}>
-                {t(`overview.capabilities.${it.key}`)}
-              </span>
-              <span className="flex shrink-0 items-center gap-1.5">
-                <span className="hidden font-mono text-[10px] text-fg-3 sm:inline">{t('common.phase', { n: it.phase })}</span>
-                <Badge tone={tone[it.state]}>{label[it.state]}</Badge>
-              </span>
-            </div>
-          </li>
-        ))}
-      </ol>
     </DashCard>
   )
 }

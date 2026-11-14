@@ -1,5 +1,6 @@
-import { AlertTriangle, Crosshair } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useQueries } from '@tanstack/react-query'
+import { Crosshair, ExternalLink, Flag, Info } from 'lucide-react'
+import { useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 
@@ -7,18 +8,42 @@ import { PageHeader } from '@/components/shared/PageHeader'
 import { PageTransition } from '@/components/shared/PageTransition'
 import { ErrorState } from '@/components/shared/States'
 import { Badge } from '@/components/ui/badge'
+import { MissionTimelineDock } from '@/features/analysis-data/MissionTimelineDock'
+import { CoordinateForm, SiteList } from '@/features/lunar-explorer/ExplorerPanels'
+import { isRenderable, LayerDock, type PreviewStatus } from '@/features/lunar-explorer/LayerDock'
+import {
+  DEFAULT_LAYERS,
+  LunarMap,
+  type LunarMapHandle,
+  type MapLayers,
+  type MapSite,
+  tilesExtent,
+} from '@/features/lunar-explorer/LunarMap'
+import { isInMapRegion, lonLatToXY } from '@/features/lunar-explorer/projection'
+import { type DetailTarget, SiteInspector } from '@/features/lunar-explorer/SiteInspector'
 import { useSites } from '@/hooks/useApi'
 import { formatCoord } from '@/lib/format'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  CoordinateForm,
-  DetailsPanel,
-  type DetailTarget,
-  LayerPanel,
-  SiteList,
-} from '@/features/lunar-explorer/ExplorerPanels'
-import { LunarMap, type MapLayers, type MapSite } from '@/features/lunar-explorer/LunarMap'
-import { isInMapRegion } from '@/features/lunar-explorer/projection'
-import { useMissionStore } from '@/stores/missionStore'
+  contractApi,
+  PREVIEW_MAX_HALF_EXTENT_M,
+  type RasterPreview,
+  useArtemisRegions,
+  useCapabilities,
+  useMapLayers,
+  useTerrainCatalog,
+} from '@/services/contracts'
+
+import { resolveSite, useMissionStore } from '@/stores/missionStore'
+
+/** Preview window for the current view: ≤ backend cap, snapped to 1 km so cache keys stay stable. */
+function previewBounds(v: { center: [number, number]; halfExtent: number } | null): [number, number, number, number] | null {
+  if (!v) return null
+  const half = Math.ceil(Math.min(v.halfExtent, PREVIEW_MAX_HALF_EXTENT_M) / 1000) * 1000
+  const cx = Math.round(v.center[0] / 1000) * 1000
+  const cy = Math.round(v.center[1] / 1000) * 1000
+  return [cx - half, cy - half, cx + half, cy + half]
+}
 
 export default function ExplorerPage() {
   const { t } = useTranslation()
@@ -26,23 +51,31 @@ export default function ExplorerPage() {
   const custom = useMissionStore((s) => s.customSites)
   const addCustom = useMissionStore((s) => s.addCustomSite)
   const removeCustom = useMissionStore((s) => s.removeCustomSite)
-  const assignSite = useMissionStore((s) => s.assignSite)
   const draft = useMissionStore((s) => s.draft)
+  const caps = useCapabilities()
+  const catalog = useTerrainCatalog(caps.has('terrainCatalog'))
+  const mapLayers = useMapLayers(caps.has('mapLayers'))
+  const artemis = useArtemisRegions(caps.has('artemisRegions'))
+  const [view, setView] = useState<{ center: [number, number]; halfExtent: number } | null>(null)
+  const mapRef = useRef<LunarMapHandle>(null)
 
   const [params, setParams] = useSearchParams()
   const selectedId = params.get('site')
   const setSelectedId = useCallback(
     (id: string | null) =>
-      setParams((p) => {
-        if (id) p.set('site', id)
-        else p.delete('site')
-        return p
-      }, { replace: true }),
+      setParams(
+        (p) => {
+          if (id) p.set('site', id)
+          else p.delete('site')
+          return p
+        },
+        { replace: true },
+      ),
     [setParams],
   )
   const [picked, setPicked] = useState<{ lat: number; lon: number } | null>(null)
   const [cursor, setCursor] = useState<{ lat: number; lon: number } | null>(null)
-  const [layers, setLayers] = useState<MapLayers>({ graticule: true, reference: true, custom: true, labels: true })
+  const [layers, setLayers] = useState<MapLayers>(DEFAULT_LAYERS)
 
   const reference = useMemo(() => data?.items ?? [], [data])
   const mapSites: MapSite[] = useMemo(
@@ -52,6 +85,14 @@ export default function ExplorerPage() {
     ],
     [reference, custom],
   )
+  const marks = useMemo(() => {
+    const m: Record<string, string> = {}
+    if (draft.siteA) m[draft.siteA.id] = 'A'
+    if (draft.siteB) m[draft.siteB.id] = 'B'
+    return m
+  }, [draft.siteA, draft.siteB])
+  const siteA = resolveSite(draft.siteA, reference, custom)
+  const siteB = resolveSite(draft.siteB, reference, custom)
 
   const target: DetailTarget | null = useMemo(() => {
     const ref = reference.find((s) => s.id === selectedId)
@@ -66,17 +107,10 @@ export default function ExplorerPage() {
         status: ref.coordinate_status,
       }
     const c = custom.find((s) => s.id === selectedId)
-    if (c) return { kind: 'custom', id: c.id, name: c.name, lat: c.latitude_deg, lon: c.longitude_deg, source: 'User input' }
+    if (c) return { kind: 'custom', id: c.id, name: c.name, lat: c.latitude_deg, lon: c.longitude_deg, source: t('explorer2.userInput') }
     if (picked) return { kind: 'picked', id: null, name: formatCoord(picked.lat, picked.lon, 3), lat: picked.lat, lon: picked.lon }
     return null
-  }, [reference, custom, selectedId, picked])
-
-  const assignedSlot =
-    target?.id && draft.siteA?.id === target.id
-      ? 'siteA'
-      : target?.id && draft.siteB?.id === target.id
-        ? 'siteB'
-        : null
+  }, [reference, custom, selectedId, picked, t])
 
   const handleAdd = (s: { name: string; lat: number; lon: number }) => {
     const created = addCustom({ name: s.name, latitude_deg: s.lat, longitude_deg: s.lon })
@@ -84,12 +118,37 @@ export default function ExplorerPage() {
     setSelectedId(created.id)
   }
 
+  const tiles = catalog.data?.tiles ?? []
+  const layerList = mapLayers.data?.items ?? []
+  const bounds = previewBounds(view)
+  const enabledIds = layerList.filter((l) => isRenderable(l) && layers.rasters[l.id] && caps.has('mapPreview')).map((l) => l.id)
+  const previewQueries = useQueries({
+    queries: enabledIds.map((id) => ({
+      queryKey: ['map-preview', id, bounds],
+      queryFn: () => contractApi.mapPreview(id, bounds!),
+      enabled: bounds !== null,
+      staleTime: 10 * 60_000,
+      retry: 0,
+      placeholderData: (prev: RasterPreview | undefined) => prev,
+    })),
+  })
+  const previews = previewQueries.map((q) => q.data).filter((d): d is RasterPreview => Boolean(d))
+  const previewStatus: Record<string, PreviewStatus> = Object.fromEntries(
+    enabledIds.map((id, i) => {
+      const q = previewQueries[i]!
+      return [id, q.isFetching ? 'loading' : q.error ? 'error' : q.data ? 'ready' : 'idle'] as const
+    }),
+  )
+  const anyRaster = previews.length > 0
+  const previewWindowKm = bounds ? (bounds[2] - bounds[0]) / 1000 : null
+  const cursorXY = cursor && cursor.lat <= 0 ? lonLatToXY(cursor.lon, cursor.lat) : null
+
   return (
     <PageTransition>
       <PageHeader
         eyebrow="LRO · LOLA · JPL Horizons"
         title={t('explorer.title')}
-        description={t('explorer.description')}
+        description={t('explorer2.description')}
         actions={
           <Badge tone="neutral" className="whitespace-normal normal-case">
             {t('explorer.projection')}: {t('explorer.projectionValue')}
@@ -101,8 +160,22 @@ export default function ExplorerPage() {
           <ErrorState error={error} onRetry={() => void refetch()} />
         </div>
       )}
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[280px_minmax(0,1fr)_300px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[290px_minmax(0,1fr)_320px]">
         <div className="order-2 space-y-5 xl:order-1">
+          <LayerDock
+            layers={layers}
+            onChange={setLayers}
+            catalog={catalog.data}
+            catalogLoading={caps.isPending || catalog.isLoading}
+            mapLayers={layerList}
+            mapLayersLoading={caps.isPending || mapLayers.isLoading}
+            previewStatus={previewStatus}
+            onFitPolar={() => mapRef.current?.fitPolar()}
+            onFitTiles={() => {
+              const ext = tilesExtent(tiles)
+              if (ext) mapRef.current?.fitExtent(ext)
+            }}
+          />
           <SiteList
             reference={reference}
             custom={custom}
@@ -118,16 +191,45 @@ export default function ExplorerPage() {
             }}
           />
           <CoordinateForm onAdd={handleAdd} />
-          <LayerPanel layers={layers} onChange={setLayers} />
+          {artemis.data && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-2">
+                  <Flag className="size-4 text-gold" aria-hidden /> {t('explorer2.artemisTitle')}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <ul className="flex flex-wrap gap-1.5">
+                  {artemis.data.regions.map((r) => (
+                    <li key={r.id}>
+                      <Badge tone="neutral" className="normal-case">{r.name}</Badge>
+                    </li>
+                  ))}
+                </ul>
+                <p className="text-[11px] leading-relaxed text-fg-3">{t('explorer2.artemisNote')}</p>
+                {artemis.data.official_sources.map((src) => (
+                  <a key={src.id} href={src.url} target="_blank" rel="noreferrer noopener" className="flex items-start gap-1.5 text-[11px] text-fg-2 hover:text-cyan">
+                    <ExternalLink className="mt-0.5 size-3 shrink-0" aria-hidden />
+                    <span className="break-all">{src.url.replace('https://', '')}</span>
+                  </a>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <section className="order-1 xl:order-2" aria-label={t('explorer.title')}>
-          <div className="sel-card relative h-[58vh] min-h-[380px] overflow-hidden xl:h-[calc(100dvh-220px)] xl:min-h-[560px]">
+          <div className="sel-card relative h-[60vh] min-h-[380px] overflow-hidden xl:h-[calc(100dvh-230px)] xl:min-h-[600px]">
             <LunarMap
+              ref={mapRef}
               sites={mapSites}
               selectedId={selectedId}
               picked={picked}
               layers={layers}
+              tiles={tiles}
+              previews={previews}
+              onView={setView}
+              marks={marks}
               ariaLabel={t('explorer.projectionValue')}
               onSelect={(id) => {
                 setPicked(null)
@@ -139,32 +241,42 @@ export default function ExplorerPage() {
               }}
               onCursor={setCursor}
             />
-            <div className="pointer-events-none absolute top-3 left-3 flex max-w-[calc(100%-4rem)] items-start gap-2 rounded-lg border border-warning/25 bg-bg/85 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur">
-              <AlertTriangle className="mt-px size-3.5 shrink-0 text-warning" aria-hidden />
-              <span>{t('explorer.baseRasterMissing')}</span>
-            </div>
+            {anyRaster && previewWindowKm !== null && (
+              <div className="pointer-events-none absolute top-3 left-3 max-w-[calc(100%-4rem)] rounded-lg border border-line-strong bg-bg/85 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur sm:max-w-sm">
+                {t('explorer2.previewNote', { km: previewWindowKm.toFixed(0) })}
+                <div className="mt-0.5 truncate text-[10px] text-fg-3">{previews.map((p) => p.attribution.split(';')[0]).join(' · ')}</div>
+              </div>
+            )}
+            {!anyRaster && (
+              <div className="pointer-events-none absolute top-3 left-3 flex max-w-[calc(100%-4rem)] items-start gap-2 rounded-lg border border-line-strong bg-bg/85 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur sm:max-w-sm">
+                <Info className="mt-px size-3.5 shrink-0 text-cyan" aria-hidden />
+                <span>{t('explorer2.noBasemap')}</span>
+              </div>
+            )}
             <div
-              className="pointer-events-none absolute right-3 bottom-3 flex items-center gap-2 rounded-lg border border-line bg-bg/85 px-3 py-1.5 font-mono text-[11px] text-fg-2 backdrop-blur"
+              className="pointer-events-none absolute right-3 bottom-3 flex flex-col items-end gap-0.5 rounded-lg border border-line bg-bg/85 px-3 py-1.5 font-mono text-[11px] text-fg-2 backdrop-blur"
               aria-live="off"
             >
-              <Crosshair className="size-3.5 text-cyan" aria-hidden />
-              <span className="text-fg-3">{t('explorer.cursor')}</span>
-              {cursor ? formatCoord(cursor.lat, cursor.lon, 3) : '—'}
+              <span className="flex items-center gap-2">
+                <Crosshair className="size-3.5 text-cyan" aria-hidden />
+                <span className="text-fg-3">{t('explorer.cursor')}</span>
+                {cursor ? formatCoord(cursor.lat, cursor.lon, 4) : '—'}
+              </span>
+              {cursorXY && (
+                <span className="text-[10px] text-fg-3">
+                  x {(cursorXY[0] / 1000).toFixed(3)} km · y {(cursorXY[1] / 1000).toFixed(3)} km
+                </span>
+              )}
             </div>
           </div>
-          {target && !isInMapRegion(target.lat) && (
-            <p className="mt-2 text-xs text-warning">{t('explorer.outsideMap')}</p>
-          )}
+          {target && !isInMapRegion(target.lat) && <p className="mt-2 text-xs text-warning">{t('explorer.outsideMap')}</p>}
         </section>
 
         <div className="order-3">
-          <DetailsPanel
+          <SiteInspector
             target={target}
-            assignedSlot={assignedSlot}
-            onAssign={(slot) => {
-              if (!target?.id || target.kind === 'picked') return
-              assignSite(slot, { kind: target.kind, id: target.id })
-            }}
+            siteA={siteA}
+            siteB={siteB}
             onSavePicked={() => {
               if (!picked) return
               handleAdd({
@@ -174,6 +286,10 @@ export default function ExplorerPage() {
               })
             }}
           />
+        </div>
+
+        <div className="order-4 xl:col-span-3">
+          <MissionTimelineDock />
         </div>
       </div>
     </PageTransition>

@@ -24,7 +24,6 @@ import { Link } from 'react-router'
 import { DataQualityBadge, StateBadge } from '@/components/shared/badges'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { PageTransition, staggerChild, staggerParent } from '@/components/shared/PageTransition'
-import { siteColor } from '@/components/shared/siteColors'
 import { ErrorState } from '@/components/shared/States'
 import { SyntheticBanner } from '@/components/shared/SyntheticBanner'
 import { Badge } from '@/components/ui/badge'
@@ -33,11 +32,17 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { NativeSelect } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/misc'
 import { useAnalyses, useAnalysis, useDataSources, useExplanation, useHealth } from '@/hooks/useApi'
-import { formatHours, formatPct, formatUtc } from '@/lib/format'
+import { formatUtc } from '@/lib/format'
 import { ApiError } from '@/services/apiClient'
 import { queryKeys, selenoraApi } from '@/services/selenoraApi'
 import { useMissionStore } from '@/stores/missionStore'
 import type { AIMissionReport, AnalysisResult, ExplainResponse } from '@/types/api'
+import { recommendationStatus } from '@/features/analysis-data/adapter'
+import { analysisLabel } from '@/features/analysis-data/AnalysisPicker'
+import { useAnalysisCatalog } from '@/features/analysis-data/useWorkspaceAnalysis'
+import { EvidenceGrid, EvidenceText, evidenceValues } from '@/features/ai-analyst/evidence'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
+import type { ReactNode } from 'react'
 
 type SectionKey =
   | 'summary'
@@ -64,11 +69,14 @@ function ReportBody({
   report,
   recommended,
   result,
+  r,
 }: {
   section: SectionKey
   report: AIMissionReport | null
   recommended: string | null
   result: AnalysisResult | null
+  /** Renders AI text with evidence-linked numbers. */
+  r: (text: string) => ReactNode
 }) {
   const { t } = useTranslation()
   if (!report) {
@@ -84,12 +92,12 @@ function ReportBody({
   }
   switch (section) {
     case 'summary':
-      return <p className="text-[13px] leading-relaxed text-fg-2">{report.summary}</p>
+      return <p className="text-[13px] leading-relaxed text-fg-2">{r(report.summary)}</p>
     case 'findings':
       return (
         <ul className="list-disc space-y-1.5 pl-4 text-[13px] text-fg-2 marker:text-fg-3">
           {report.key_findings.map((f) => (
-            <li key={f}>{f}</li>
+            <li key={f}>{r(f)}</li>
           ))}
         </ul>
       )
@@ -104,7 +112,7 @@ function ReportBody({
                 })
               : t('analyst.facts.noRanking')}
           </p>
-          <p className="leading-relaxed">{report.comparison_explanation}</p>
+          <p className="leading-relaxed">{r(report.comparison_explanation)}</p>
           <p className="text-[11px] text-fg-3">{t('analyst.recommendationSource')}</p>
         </div>
       )
@@ -116,7 +124,7 @@ function ReportBody({
               <div className="font-medium text-fg">{site}</div>
               <ul className="mt-1 list-disc pl-4 marker:text-fg-3">
                 {items.map((i) => (
-                  <li key={i}>{i}</li>
+                  <li key={i}>{r(i)}</li>
                 ))}
               </ul>
             </li>
@@ -131,7 +139,7 @@ function ReportBody({
               <div className="font-medium text-fg">{site}</div>
               <ul className="mt-1 list-disc pl-4 marker:text-fg-3">
                 {items.map((i) => (
-                  <li key={i}>{i}</li>
+                  <li key={i}>{r(i)}</li>
                 ))}
               </ul>
             </li>
@@ -142,7 +150,7 @@ function ReportBody({
       return (
         <ul className="list-disc space-y-1.5 pl-4 text-[13px] text-fg-2 marker:text-fg-3">
           {report.mission_tradeoffs.map((f) => (
-            <li key={f}>{f}</li>
+            <li key={f}>{r(f)}</li>
           ))}
         </ul>
       )
@@ -150,7 +158,7 @@ function ReportBody({
       return (
         <ul className="list-disc space-y-1.5 pl-4 text-[13px] text-fg-2 marker:text-fg-3">
           {[...report.scientific_limitations, ...report.data_quality_notes].map((f) => (
-            <li key={f}>{f}</li>
+            <li key={f}>{r(f)}</li>
           ))}
         </ul>
       )
@@ -167,7 +175,14 @@ export default function AnalystPage() {
   const analyses = useAnalyses()
   const demo = useMissionStore((s) => s.demo)
   const [lang, setLang] = useState<'en' | 'tr'>('en')
-  const [selectedId, setSelectedId] = useState<string>('')
+  const wsAnalysisId = useWorkspaceStore((s) => s.analysisId)
+  const setWorkspaceAnalysis = useWorkspaceStore((s) => s.setAnalysis)
+  const [selectedId, setSelectedIdState] = useState<string>(wsAnalysisId ?? '')
+  const setSelectedId = (id: string) => {
+    setSelectedIdState(id)
+    if (id) setWorkspaceAnalysis(id)
+  }
+  const catalog = useAnalysisCatalog()
   const [localExplain, setLocalExplain] = useState<ExplainResponse | null>(null)
 
   const completed = useMemo(
@@ -209,6 +224,7 @@ export default function AnalystPage() {
 
   const leader = result?.sites.find((s) => s.rank === 1 && result.recommended_site_label === s.label)
   const genError = generate.error instanceof ApiError ? generate.error : generate.error
+  const evidenceNumbers = useMemo(() => (result ? evidenceValues(result) : []), [result])
 
   return (
     <PageTransition>
@@ -253,7 +269,10 @@ export default function AnalystPage() {
                   <option value="">{t('analyst.selectPlaceholder')}</option>
                   {completed.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.id.slice(0, 8)}… · {a.data_quality}
+                      {(() => {
+                        const full = catalog.items.find((c) => c.id === a.id)
+                        return full ? analysisLabel(full) : `${a.id.slice(0, 8)}… · ${a.data_quality}`
+                      })()}
                     </option>
                   ))}
                 </NativeSelect>
@@ -362,39 +381,16 @@ export default function AnalystPage() {
                   {result.data_quality === 'SYNTHETIC_DEMO' && <SyntheticBanner />}
                   <div>
                     <div className="sel-eyebrow mb-2 text-[10px]">{t('analyst.deterministicFindings')}</div>
-                    <ul className="space-y-2">
-                      {result.sites.map((s, i) => (
-                        <li
-                          key={s.label}
-                          className="rounded-lg border border-line bg-bg-2/50 px-3 py-2.5 text-[13px] leading-relaxed text-fg-2"
-                        >
-                          <span
-                            className="mr-2 inline-block size-2 rounded-full align-middle"
-                            style={{ background: siteColor(i) }}
-                            aria-hidden
-                          />
-                          {t('analyst.facts.visibility', {
-                            site: s.label,
-                            sun: formatPct(s.metrics.sun_visibility_pct),
-                            earth: formatPct(s.metrics.earth_visibility_pct),
-                            joint: formatPct(s.metrics.joint_visibility_pct),
-                          })}{' '}
-                          {t('analyst.facts.outages', {
-                            site: s.label,
-                            dark: formatHours(s.metrics.longest_darkness_hours),
-                            gap: formatHours(s.metrics.longest_communication_gap_hours),
-                          })}
-                        </li>
-                      ))}
-                      <li className="rounded-lg border border-gold/25 bg-gold/[0.05] px-3 py-2.5 text-[13px] text-fg">
-                        {leader
-                          ? t('analyst.facts.ranking', {
-                              site: leader.label,
-                              score: leader.score?.toFixed(2),
-                            })
-                          : t('analyst.facts.noRanking')}
-                      </li>
-                    </ul>
+                    <EvidenceGrid result={result} />
+                    <div className="mt-3 rounded-lg border border-gold/25 bg-gold/[0.05] px-3 py-2.5 text-[13px] text-fg">
+                      {(() => {
+                        const st = recommendationStatus(result)
+                        if (st.kind === 'recommended')
+                          return t('analyst.facts.ranking', { site: st.label, score: leader?.score?.toFixed(2) ?? '—' })
+                        return `${t('lab.noRecommendation')} ${st.kind === 'tie' ? t('lab.tie') : t(`lab.refused.${st.reason}`)}`
+                      })()}
+                    </div>
+                    {explain && <p className="mt-2 text-[11px] text-fg-3">{t('analystP5.legend')}</p>}
                   </div>
                   {explain?.unsupported_numbers && explain.unsupported_numbers.length > 0 && (
                     <div className="rounded-xl border border-warning/30 bg-warning/[0.07] p-3 text-[12.5px] text-fg-2">
@@ -439,6 +435,7 @@ export default function AnalystPage() {
                         report={explain?.report ?? null}
                         recommended={explain?.recommended_site_label ?? result?.recommended_site_label ?? null}
                         result={result}
+                        r={(text) => <EvidenceText text={text} evidence={evidenceNumbers} unsupported={explain?.unsupported_numbers ?? []} />}
                       />
                     )}
                   </CardContent>

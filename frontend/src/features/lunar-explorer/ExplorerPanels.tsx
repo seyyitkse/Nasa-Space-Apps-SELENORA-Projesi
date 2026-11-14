@@ -1,21 +1,17 @@
-import { useQuery } from '@tanstack/react-query'
-import { Info, Layers, MapPin, Plus, Trash2 } from 'lucide-react'
+import { MapPin, Plus, Trash2 } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { FieldError, Input, Label } from '@/components/ui/input'
-import { Separator, Skeleton, Switch } from '@/components/ui/misc'
+import { Separator, Skeleton } from '@/components/ui/misc'
 import { formatCoord } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { selenoraApi } from '@/services/selenoraApi'
 import type { CustomSite } from '@/stores/missionStore'
 import type { LandingSite } from '@/types/api'
 
 import { type CoordinateErrors, parseCoordinates } from './coordinates'
-import type { MapLayers } from './LunarMap'
 
 export function SiteList({
   reference,
@@ -152,168 +148,6 @@ export function CoordinateForm({ onAdd }: { onAdd: (s: { name: string; lat: numb
             <Plus /> {t('explorer.addSite')}
           </Button>
         </form>
-      </CardContent>
-    </Card>
-  )
-}
-
-export function LayerPanel({ layers, onChange }: { layers: MapLayers; onChange: (l: MapLayers) => void }) {
-  const { t } = useTranslation()
-  const items: { key: keyof MapLayers; label: string; dot?: string }[] = [
-    { key: 'graticule', label: t('explorer.layerGraticule') },
-    { key: 'reference', label: t('explorer.layerReference'), dot: 'bg-cyan' },
-    { key: 'custom', label: t('explorer.layerCustom'), dot: 'bg-gold' },
-    { key: 'labels', label: t('explorer.layerLabels') },
-  ]
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2">
-          <Layers className="size-4 text-cyan" aria-hidden /> {t('explorer.layers')}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-2.5">
-        {items.map((it) => (
-          <label key={it.key} className="flex cursor-pointer items-center justify-between gap-3 text-[13px] text-fg-2">
-            <span className="flex items-center gap-2">
-              {it.dot && <span className={cn('size-2 rounded-full', it.dot)} aria-hidden />}
-              {it.label}
-            </span>
-            <Switch checked={layers[it.key]} onCheckedChange={(v) => onChange({ ...layers, [it.key]: v })} />
-          </label>
-        ))}
-        <label className="flex items-center justify-between gap-3 text-[13px] text-fg-2">
-          <span>{t('explorer.layerLola')}</span>
-          <Switch checked disabled aria-describedby="lola-note" />
-        </label>
-        <p id="lola-note" className="flex gap-1.5 text-[11px] leading-relaxed text-fg-3">
-          <Info className="mt-0.5 size-3 shrink-0" aria-hidden />
-          {t('explorer.baseRasterMissing')}
-        </p>
-      </CardContent>
-    </Card>
-  )
-}
-
-export interface DetailTarget {
-  kind: 'reference' | 'custom' | 'picked'
-  id: string | null
-  name: string
-  lat: number
-  lon: number
-  source?: string
-  status?: string
-}
-
-export function DetailsPanel({
-  target,
-  onAssign,
-  onSavePicked,
-  assignedSlot,
-}: {
-  target: DetailTarget | null
-  onAssign: (slot: 'siteA' | 'siteB') => void
-  onSavePicked: () => void
-  assignedSlot: 'siteA' | 'siteB' | null
-}) {
-  const { t } = useTranslation()
-  const coverage = useQuery({
-    queryKey: ['terrain-coverage', target?.lat, target?.lon],
-    queryFn: () => selenoraApi.terrainCoverage(target!.lat, target!.lon),
-    enabled: !!target,
-    staleTime: 60_000,
-  })
-  return (
-    <Card className="h-full">
-      <CardHeader className="pb-2">
-        <CardTitle>{t('explorer.details')}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {!target ? (
-          <p className="text-[13px] leading-relaxed text-fg-3">{t('explorer.noSelection')}</p>
-        ) : (
-          <div className="space-y-4">
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone={target.kind === 'reference' ? 'cyan' : target.kind === 'custom' ? 'gold' : 'neutral'}>
-                  {target.kind === 'picked' ? t('explorer.pickedPoint') : target.kind}
-                </Badge>
-                {assignedSlot && (
-                  <Badge tone="violet">{t('explorer.assigned', { slot: t(`common.${assignedSlot}`) })}</Badge>
-                )}
-              </div>
-              <h3 className="mt-2 font-display text-base font-semibold text-fg">{target.name}</h3>
-            </div>
-            <dl className="grid grid-cols-2 gap-2 font-mono text-xs">
-              <div className="rounded-lg border border-line bg-bg-2/60 p-2.5">
-                <dt className="text-[10.5px] text-fg-3">{t('explorer.latitude')}</dt>
-                <dd className="mt-0.5 text-fg">{target.lat.toFixed(4)}°</dd>
-              </div>
-              <div className="rounded-lg border border-line bg-bg-2/60 p-2.5">
-                <dt className="text-[10.5px] text-fg-3">{t('explorer.longitude')}</dt>
-                <dd className="mt-0.5 text-fg">{target.lon.toFixed(4)}°</dd>
-              </div>
-            </dl>
-            <div>
-              <div className="sel-eyebrow mb-1.5 text-[10px]">{t('explorer.terrainCoverage')}</div>
-              {coverage.isLoading ? (
-                <Skeleton className="h-16" />
-              ) : coverage.data ? (
-                <div className="space-y-2 rounded-lg border border-line bg-bg-2/60 p-2.5 text-xs">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-fg-3">{t('explorer.terrainCoverage')}</span>
-                    <Badge tone={coverage.data.covered ? 'success' : 'warning'}>
-                      {coverage.data.covered ? t('explorer.terrainCovered') : t('explorer.terrainUncovered')}
-                    </Badge>
-                  </div>
-                  {coverage.data.covered && (
-                    <dl className="grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[11px]">
-                      <dt className="text-fg-3">{t('explorer.terrainDataset')}</dt>
-                      <dd className="text-right text-fg">{coverage.data.dem_site_id}</dd>
-                      <dt className="text-fg-3">{t('explorer.terrainElevation')}</dt>
-                      <dd className="text-right text-fg">
-                        {coverage.data.surface_z_m != null ? `${coverage.data.surface_z_m.toFixed(1)} m` : '—'}
-                      </dd>
-                    </dl>
-                  )}
-                  <p className="text-[11px] leading-relaxed text-fg-3">{coverage.data.message}</p>
-                </div>
-              ) : (
-                <p className="text-[11px] text-fg-3">{coverage.error ? String(coverage.error) : '—'}</p>
-              )}
-            </div>
-            {target.source && (
-              <div>
-                <div className="sel-eyebrow text-[10px]">{t('explorer.dataSource')}</div>
-                <p className="mt-1 text-xs leading-relaxed text-fg-2">{target.source}</p>
-              </div>
-            )}
-            {target.status && (
-              <div className="flex items-center justify-between gap-2">
-                <span className="sel-eyebrow text-[10px]">{t('explorer.status')}</span>
-                <Badge tone="warning">{target.status}</Badge>
-              </div>
-            )}
-            <Separator />
-            {target.kind === 'picked' ? (
-              <Button variant="secondary" className="w-full" onClick={onSavePicked}>
-                <Plus /> {t('explorer.saveAsSite')}
-              </Button>
-            ) : (
-              <div>
-                <div className="sel-eyebrow mb-2 text-[10px]">{t('explorer.addToMission')}</div>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button variant={assignedSlot === 'siteA' ? 'primary' : 'outline'} size="sm" onClick={() => onAssign('siteA')}>
-                    {t('explorer.asSiteA')}
-                  </Button>
-                  <Button variant={assignedSlot === 'siteB' ? 'violet' : 'outline'} size="sm" onClick={() => onAssign('siteB')}>
-                    {t('explorer.asSiteB')}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
       </CardContent>
     </Card>
   )

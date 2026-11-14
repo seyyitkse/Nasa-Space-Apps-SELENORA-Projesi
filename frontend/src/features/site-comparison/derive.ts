@@ -87,3 +87,21 @@ export function explainRanking(sites: SiteResult[]): RankingExplanation | null {
   }
   return { tie: delta === 0, leader, runnerUp, delta, driver }
 }
+
+/** Cumulative hours of confirmed joint visibility from adapter epochs (sample-and-hold). */
+export function cumulativeConfirmedJoint(
+  sites: { epochs: { t: number; joint: 'VISIBLE' | 'NOT_VISIBLE' | 'UNKNOWN' }[] }[],
+  stepMinutes: number,
+) {
+  const first = sites[0]?.epochs
+  if (!first) return []
+  const acc = sites.map(() => 0)
+  return first.map((e, i) => {
+    const row: Record<string, number> = { t: e.t }
+    sites.forEach((s, k) => {
+      if (s.epochs[i]?.joint === 'VISIBLE') acc[k] = (acc[k] ?? 0) + stepMinutes / 60
+      row[`s${k}`] = Math.round((acc[k] ?? 0) * 10) / 10
+    })
+    return row
+  })
+}
