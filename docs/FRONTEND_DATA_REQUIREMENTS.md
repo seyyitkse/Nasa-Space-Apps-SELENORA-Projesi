@@ -126,6 +126,54 @@ When `include_terrain_states=true` and DEM covers the site, each point may inclu
 
 ---
 
+## Phase 5E — authoritative epochs (R1 closed)
+
+### `GET /api/v1/analyses/{analysis_id}/epochs`
+
+Built from stored `visibility_timelines` (full Az/El). **No new Horizons request.**
+
+Top-level fields: `analysis_id`, `mission_name`, `horizon_model`, `data_quality`,
+`algorithm_version`, `start_utc`, `end_utc`, `time_step_minutes`, `sample_count_per_site`,
+`duration_semantics` (always `"[start_utc, end_utc)"`), `sites[]`, `provenance[]`, `limitations[]`.
+
+Per site: `label`, lon/lat, optional `dem_site_id`, `terrain_complete_coverage_fraction`,
+`true_north_grid_azimuth_deg`, `samples[]`.
+
+Per sample:
+
+| Field | Notes |
+|-------|--------|
+| `t` | UTC timestamp |
+| `sun_azimuth_deg` / `sun_elevation_deg` | Stored Horizons values (nullable) |
+| `earth_azimuth_deg` / `earth_elevation_deg` | Stored Horizons values (nullable) |
+| `sun_state` / `earth_state` | `VISIBLE` \| `BLOCKED` \| `UNKNOWN` |
+| `joint_state` | `VISIBLE` \| `NOT_VISIBLE` \| `UNKNOWN` |
+| `sun_terrain_horizon_deg` / `earth_terrain_horizon_deg` | TERRAIN only |
+| `sun_geometric_state` / `earth_geometric_state` | Always: el>0 → VISIBLE else BLOCKED (NaN→UNKNOWN) |
+| `hold_hours` | Sample-and-hold clamped to `[t, end)` |
+| `contributes_duration` | `false` when `t >= end_utc` (inclusive STOP contributes 0 h) |
+
+**Rules:** incomplete DEM coverage → `UNKNOWN` (never inferred clear sky). Prefer this endpoint over deriving states from darkness/communication windows.
+
+### Imagery (Phase 5E)
+
+- `GET /api/v1/maps/imagery/sources` — allow-listed Lunaserv / Moon Trek metadata + `alignment_status`
+- `GET /api/v1/maps/preview?layer_id=lroc-wac-south-summer&…` — polar-stereo-warped PNG when `preview_enabled`
+- `moon-trek-wac-global` is `REFERENCE_ONLY` (EQ WMTS; not Explorer basemap)
+
+### Mesh (Phase 5E schema)
+
+`GET /api/v1/maps/mesh` returns `grid.{nx,ny,n_cells}`, `extent_m`, `nodata_mask`,
+`reference_elevation_m`, `elevation_units`, `crs_proj4`, `warning`. No fabricated Z values.
+
+### Artemis (Phase 5E provenance)
+
+`GET /api/v1/artemis/regions` includes `historical_2022_regions` (13) and
+`current_2024_shortlist` (9) with `classification` + `source_date`. Combined `regions[]`
+carries the same fields. `polygon` / `geometry` always null.
+
+---
+
 ## Suggested Explorer 2.0 wiring
 
 1. Layer picker from `/maps/layers` with role badges.

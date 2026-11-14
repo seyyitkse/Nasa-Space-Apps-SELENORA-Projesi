@@ -295,17 +295,20 @@ def build_mesh(
     step_m: float = 50.0,
     layer_id: str = "lola-site04-5mpp-surf",
 ) -> dict[str, Any]:
-    """Downsampled XYZ grid for optional 3D preview (not a full LOD engine)."""
+    """Downsampled XYZ grid for optional 3D preview (not a full LOD engine).
+
+    Phase 5E: returns explicit grid dimensions, NoData mask, reference elevation,
+    extent, and source metadata. Values are real DEM samples only (never invented).
+    """
     if step_m < 10.0 or step_m > 500.0:
         raise MapServiceError("step_m must be in [10, 500].")
     if half_extent_m > 5_000.0:
-        raise MapServiceError("Mesh half_extent_m capped at 5000 m for Phase 5B.")
+        raise MapServiceError("Mesh half_extent_m capped at 5000 m.")
     layer = get_layer(layer_id)
     if layer is None:
         raise LayerNotFoundError(f"Unknown layer id '{layer_id}'.")
-    if layer.role != "SCIENCE_VALIDATED_LOCAL" and layer.kind != "elevation":
-        # Allow viz elevation layers but label them.
-        pass
+    if layer.kind not in {"elevation", "hillshade"}:
+        raise MapServiceError(f"Layer '{layer_id}' (kind={layer.kind}) cannot build an elevation mesh.")
     path = _open_path_for_layer(layer)
     pt = lonlat_to_stereo(longitude_deg, latitude_deg)
     left, bottom, right, top = (
@@ -316,27 +319,62 @@ def build_mesh(
     )
     xs = np.arange(left, right + step_m * 0.5, step_m)
     ys = np.arange(bottom, top + step_m * 0.5, step_m)
-    if xs.size * ys.size > 20_000:
+    nx, ny = int(xs.size), int(ys.size)
+    if nx * ny > 20_000:
         raise MapServiceError("Mesh too dense; increase step_m or reduce half_extent_m.")
     grid_x, grid_y = np.meshgrid(xs, ys)
     coords = list(zip(grid_x.ravel().tolist(), grid_y.ravel().tolist()))
     with rasterio.open(path) as ds:
         samples = np.array([v[0] for v in ds.sample(coords)], dtype=float)
-        if ds.nodata is not None:
-            samples = np.where(samples == ds.nodata, np.nan, samples)
-    z = samples.reshape(grid_y.shape)
+        nodata = ds.nodata
+        if nodata is not None:
+            samples = np.where(samples == nodata, np.nan, samples)
+        # Outside raster extent → NaN
+        outside = []
+        for x, y in coords:
+            outside.append(not (ds.bounds.left <= x <= ds.bounds.right and ds.bounds.bottom <= y <= ds.bounds.top))
+        samples = np.where(outside, np.nan, samples)
+    z = samples.reshape(ny, nx)
+    nodata_mask = ~np.isfinite(z)
+    valid = z[np.isfinite(z)]
+    z_ref = float(np.nanmedian(valid)) if valid.size else None
+    z_min = float(np.nanmin(valid)) if valid.size else None
+    z_max = float(np.nanmax(valid)) if valid.size else None
     return {
         "layer_id": layer_id,
         "role": layer.role,
+        "kind": layer.kind,
         "crs_summary": layer.crs_summary,
+        "crs_proj4": (
+            f"+proj=stere +lat_0=-90 +lon_0=0 +k=1 +x_0=0 +y_0=0 "
+            f"+a=1737400 +b=1737400 +units=m +no_defs"
+        ),
         "attribution": layer.attribution,
+        "source_url": layer.source_url,
+        "access_mode": layer.access_mode,
+        "origin_lonlat_deg": [longitude_deg, latitude_deg],
         "origin_stereo_m": [pt.x_m, pt.y_m],
+        "extent_m": {
+            "left": left,
+            "bottom": bottom,
+            "right": right,
+            "top": top,
+        },
+        "grid": {"nx": nx, "ny": ny, "n_cells": nx * ny},
         "x_m": xs.tolist(),
         "y_m": ys.tolist(),
         "z_m": [[None if not np.isfinite(v) else float(v) for v in row] for row in z],
+        "nodata_mask": nodata_mask.astype(bool).tolist(),
+        "nodata_fraction": float(nodata_mask.mean()) if nodata_mask.size else 1.0,
+        "elevation_units": layer.units or "metres",
+        "reference_elevation_m": z_ref,
+        "z_min_m": z_min,
+        "z_max_m": z_max,
+        "sampling_resolution_m": step_m,
         "step_m": step_m,
         "half_extent_m": half_extent_m,
         "warning": (
-            "Downsampled preview mesh only — not a flight-dynamics surface model."
+            "Downsampled preview mesh only — not a flight-dynamics surface model. "
+            "NoData cells are null in z_m and true in nodata_mask; values are never fabricated."
         ),
     }
