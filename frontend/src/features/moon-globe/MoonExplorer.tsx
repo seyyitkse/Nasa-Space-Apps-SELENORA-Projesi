@@ -7,10 +7,10 @@ import { HelpTip } from '@/components/shared/Explain'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-import { MOON_ASSET, MoonAssetError } from './asset'
-import { defaultQuality, fmtLat, fmtLon, loadMoonBuffer, maxTextureSize, webglAvailable } from './globeUtils'
+import { HIGH_MODEL_ID, MOON_ASSET, MOON_MODELS, MoonAssetError } from './asset'
+import { defaultQuality, fmtLat, fmtLon, highModelId, highSupported, loadMoonBuffer, maxAnisotropy, maxTextureSize, webglAvailable } from './globeUtils'
 import { LANDMARKS } from './landmarks'
-import type { LoadedMoon, MoonQuality } from './loadMoon'
+import type { LoadedMoon, MoonQuality, ReliefMode } from './loadMoon'
 import type { CameraCommand, CameraIntent, CameraState, GlobeSite } from './MoonScene'
 import { StaticMoonFallback } from './StaticMoonFallback'
 import type { ViewPreset } from './orientation'
@@ -32,10 +32,12 @@ export interface MoonExplorerProps {
   compact?: boolean
   /** Shown when the camera reaches the global model's resolution limit. */
   onOpenLocalTerrain?: () => void
+  /** LOLA 5 m tile footprints to outline on the globe. */
+  tiles?: { site_id: string; bounds_m: [number, number, number, number] }[]
   className?: string
 }
 
-export function MoonExplorer({ sites, selectedId, onSelect, command, onCommand, onCamera, compact = false, onOpenLocalTerrain, className }: MoonExplorerProps) {
+export function MoonExplorer({ sites, selectedId, onSelect, command, onCommand, onCamera, compact = false, onOpenLocalTerrain, tiles, className }: MoonExplorerProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion() ?? false
   const [webgl] = useState(() => (typeof document === 'undefined' ? false : webglAvailable()))
@@ -46,38 +48,71 @@ export function MoonExplorer({ sites, selectedId, onSelect, command, onCommand, 
   const [landmarks, setLandmarks] = useState(!compact)
   const [cam, setCam] = useState<CameraState | null>(null)
   const [attempt, setAttempt] = useState(0)
+  const [upgrade, setUpgrade] = useState<{ loaded: number; total: number; parsing: boolean } | null>(null)
+  const [highError, setHighError] = useState<'missing' | 'failed' | null>(null)
+  const [relief, setRelief] = useState<ReliefMode>('true')
+  const [canHigh] = useState(() => (typeof document === 'undefined' ? false : highSupported()))
   const moonRef = useRef<LoadedMoon | null>(null)
 
+  // Progressive loading: the lightweight NASA globe is always shown first; "High" then
+  // downloads the high-detail NASA model in the background and swaps it in when parsed.
   useEffect(() => {
     if (!webgl) return
     let cancelled = false
-    setPhase({ kind: 'loading', loaded: 0, total: MOON_ASSET.bytes })
-    mark('start')
-    loadMoonBuffer((loaded, total) => !cancelled && setPhase({ kind: 'loading', loaded, total }))
-      .then(async (buf) => {
+    const swap = (m: LoadedMoon) => {
+      const old = moonRef.current
+      moonRef.current = m
+      setMoon(m)
+      // dispose after React has committed the new mesh (never render a disposed geometry)
+      if (old) window.setTimeout(() => old.dispose(), 400)
+    }
+    const run = async () => {
+      const wantHigh = quality === 'high'
+      if (!moonRef.current || !wantHigh) {
+        setPhase({ kind: 'loading', loaded: 0, total: MOON_MODELS.small.bytes })
+        mark('start')
+        const buf = await loadMoonBuffer((loaded, total) => !cancelled && setPhase({ kind: 'loading', loaded, total }), MOON_MODELS.small)
         if (cancelled) return
         mark('fetched')
         setPhase({ kind: 'parsing' })
         const { parseMoon } = await import('./loadMoon')
-        const loaded = await parseMoon(buf, quality, maxTextureSize() || 4096)
-        if (cancelled) {
-          loaded.dispose()
-          return
-        }
-        moonRef.current?.dispose()
-        moonRef.current = loaded
+        const m = await parseMoon(buf, { modelId: 'small', maxTextureWidth: Math.min(quality === 'reduced' ? 2048 : 4096, maxTextureSize() || 4096), anisotropy: maxAnisotropy() })
+        if (cancelled) return m.dispose()
         mark('parsed')
-        setMoon(loaded)
-      })
-      .catch((e: unknown) => {
-        if (cancelled) return
-        const err = e instanceof MoonAssetError ? e : new MoonAssetError('parse', e instanceof Error ? e.message : String(e))
-        setPhase({ kind: 'error', error: err })
-      })
+        swap(m)
+      }
+      if (!wantHigh) return
+      const highId = highModelId()
+      const high = MOON_MODELS[highId]
+      setUpgrade({ loaded: 0, total: high.bytes, parsing: false })
+      mark('high-start')
+      const buf = await loadMoonBuffer((loaded, total) => !cancelled && setUpgrade({ loaded, total, parsing: false }), high)
+      if (cancelled) return
+      mark('high-fetched')
+      setUpgrade({ loaded: high.bytes, total: high.bytes, parsing: true })
+      const { parseMoon } = await import('./loadMoon')
+      const m = await parseMoon(buf, { modelId: highId, maxTextureWidth: Math.min(high.texturePx[0], maxTextureSize() || 4096), anisotropy: maxAnisotropy(), relief })
+      if (cancelled) return m.dispose()
+      mark('high-parsed')
+      swap(m)
+      setUpgrade(null)
+    }
+    run().catch((e: unknown) => {
+      if (cancelled) return
+      const err = e instanceof MoonAssetError ? e : new MoonAssetError('parse', e instanceof Error ? e.message : String(e))
+      if (quality === 'high' && moonRef.current) {
+        // keep the working standard globe; explain why High is unavailable
+        setUpgrade(null)
+        setHighError(err.kind === 'missing' ? 'missing' : 'failed')
+        setQuality('standard')
+        return
+      }
+      setPhase({ kind: 'error', error: err })
+    })
     return () => {
       cancelled = true
     }
-  }, [webgl, quality, attempt])
+  }, [webgl, quality, attempt, relief])
 
   // GPU cleanup on unmount.
   useEffect(
@@ -155,9 +190,10 @@ export function MoonExplorer({ sites, selectedId, onSelect, command, onCommand, 
               showGraticule={grid}
               command={command}
               reducedMotion={reduce}
-              dpr={quality === 'reduced' ? [1, 1] : [1, 1.5]}
+              dpr={quality === 'reduced' ? [1, 1] : quality === 'high' ? [1, 2] : [1, 1.5]}
               onCamera={handleCamera}
               onReady={onReady}
+              tiles={tiles}
             />
           </Suspense>
         )}
@@ -234,10 +270,56 @@ export function MoonExplorer({ sites, selectedId, onSelect, command, onCommand, 
         </IconBtn>
       </div>
 
+      {/* Progressive High-detail download (the standard globe stays interactive) */}
+      {(upgrade || highError) && (
+        <div className="absolute top-14 left-3 max-w-[16rem] rounded-lg border border-line-strong bg-bg/90 px-2.5 py-1.5 text-[11px] text-fg-2 backdrop-blur" role="status" aria-live="polite" data-testid="moon-upgrade">
+          {upgrade ? (
+            <>
+              <div>{upgrade.parsing ? t('moon.highPreparing') : t('moon.highDownloading')}</div>
+              {!upgrade.parsing && (
+                <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/10" role="progressbar" aria-label={t('moon.highDownloading')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round((100 * upgrade.loaded) / (upgrade.total || 1))}>
+                  <div className="h-full bg-violet" style={{ width: `${Math.min(100, (100 * upgrade.loaded) / (upgrade.total || 1))}%` }} />
+                </div>
+              )}
+              <div className="mt-0.5 font-mono text-[10px] text-fg-3">
+                {(upgrade.loaded / 1e6).toFixed(1)} / {(upgrade.total / 1e6).toFixed(1)} MB
+              </div>
+            </>
+          ) : (
+            <span>
+              {highError === 'missing' ? t('moon.highMissing') : t('moon.highFailed')}
+              {highError === 'missing' && <code className="ml-1 rounded bg-white/5 px-1 font-mono text-[10px]">npm run fetch:moon -- --high</code>}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Topographic model: relief scale + display-light disclosure */}
+      {moon?.lit && phase.kind === 'ready' && !upgrade && (
+        <div className="absolute top-14 left-3 flex max-w-[17rem] flex-col gap-1 rounded-lg border border-line-strong bg-bg/90 px-2.5 py-1.5 text-[10.5px] text-fg-2 backdrop-blur" data-testid="moon-relief">
+          <div role="radiogroup" aria-label={t('moon.reliefLabel')} className="flex items-center gap-1">
+            <span className="mr-1 text-fg-3">{t('moon.reliefLabel')}</span>
+            {(['true', 'nasa'] as const).map((r) => (
+              <button
+                key={r}
+                type="button"
+                role="radio"
+                aria-checked={relief === r}
+                onClick={() => setRelief(r)}
+                className={cn('rounded px-1.5 py-0.5', relief === r ? 'bg-cyan/15 text-cyan' : 'text-fg-2 hover:text-fg')}
+              >
+                {r === 'true' ? t('moon.reliefTrue') : t('moon.reliefNasa', { x: moon.model.relief?.exaggeration })}
+              </button>
+            ))}
+          </div>
+          <p className="leading-snug text-fg-3">{t('moon.reliefLightNote')}</p>
+        </div>
+      )}
+
       {/* Resolution limit → honest hand-off to the local LOLA viewer */}
       {nearLimit && phase.kind === 'ready' && (
         <div className="absolute inset-x-3 bottom-14 mx-auto max-w-md rounded-xl border border-gold/40 bg-bg/90 p-3 text-[12px] leading-snug text-fg-2 backdrop-blur" role="note">
-          <span className="font-medium text-gold">{t('moon.limitTitle')}</span> {t('moon.limitBody', { km: MOON_ASSET.kmPerTexelSouthPole })}
+          <span className="font-medium text-gold">{t('moon.limitTitle')}</span> {t('moon.limitBody', { km: (moon?.model ?? MOON_MODELS.small).kmPerTexel.southPole.toFixed(1) })}
           {onOpenLocalTerrain && (
             <Button size="sm" variant="secondary" className="mt-2 w-full" onClick={onOpenLocalTerrain}>
               <Mountain /> {t('moon.openLocal')}
@@ -258,18 +340,25 @@ export function MoonExplorer({ sites, selectedId, onSelect, command, onCommand, 
               <span>{t('moon.quality')}</span>
               <select
                 value={quality}
-                onChange={(e) => setQuality(e.target.value as MoonQuality)}
+                onChange={(e) => {
+                  setHighError(null)
+                  setQuality(e.target.value as MoonQuality)
+                }}
                 className="rounded border border-line bg-bg px-1 py-0.5 text-[10.5px] text-fg-2"
               >
-                <option value="standard">{t('moon.qualityStandard')}</option>
                 <option value="reduced">{t('moon.qualityReduced')}</option>
+                <option value="standard">{t('moon.qualityStandard')}</option>
+                <option value="high" disabled={!canHigh}>
+                  {t('moon.qualityHigh', { mb: Math.round(MOON_MODELS[HIGH_MODEL_ID].bytes / 1e6) })}
+                  {!canHigh ? ` — ${t('moon.qualityHighUnsupported')}` : ''}
+                </option>
               </select>
             </label>
           )}
           <a href={MOON_ASSET.sourcePage} target="_blank" rel="noreferrer" className="whitespace-nowrap underline decoration-dotted underline-offset-2 hover:text-fg-2">
             {t('moon.credit')}
           </a>
-          <HelpTip label={t('moon.aboutModel')} text={t('moon.aboutModelText', { km: MOON_ASSET.kmPerTexelGlobal })} />
+          <HelpTip label={t('moon.aboutModel')} text={moon?.lit ? t('moon.aboutModelTopo', { km: moon.model.kmPerTexel.global.toFixed(1), exag: moon.model.relief?.exaggeration }) : t('moon.aboutModelText', { km: (moon?.model ?? MOON_MODELS.small).kmPerTexel.global.toFixed(1) })} />
         </span>
       </div>
     </div>

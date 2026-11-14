@@ -8,11 +8,12 @@ import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/misc'
 import { useSites } from '@/hooks/useApi'
 import { cn } from '@/lib/utils'
+import { HIGH_MODEL_ID, MOON_MODELS } from '@/features/moon-globe/asset'
 import { MoonExplorer } from '@/features/moon-globe/MoonExplorer'
 import type { CameraCommand, CameraIntent, GlobeSite } from '@/features/moon-globe/MoonScene'
 import { type Coverage, NasaRegions, SiteCard, SiteList } from '@/features/moon-globe/SitePanel'
 import { Terrain3DPanel } from '@/features/terrain3d/Terrain3DPanel'
-import { useArtemisRegions, useCapabilities } from '@/services/contracts'
+import { useArtemisRegions, useCapabilities, useTerrainCatalog } from '@/services/contracts'
 import { selenoraApi } from '@/services/selenoraApi'
 import { useMissionStore } from '@/stores/missionStore'
 
@@ -26,6 +27,8 @@ export default function MoonPage() {
   const assignSite = useMissionStore((s) => s.assignSite)
   const caps = useCapabilities()
   const artemis = useArtemisRegions(caps.has('artemisRegions'))
+  const catalog = useTerrainCatalog(caps.has('terrainCatalog'))
+  const tiles = useMemo(() => catalog.data?.tiles ?? [], [catalog.data])
 
   const [params, setParams] = useSearchParams()
   const selectedId = params.get('site')
@@ -161,6 +164,7 @@ export default function MoonPage() {
           command={command}
           onCommand={send}
           onOpenLocalTerrain={selected ? openTerrain : undefined}
+          tiles={tiles}
           className="h-[min(60vh,560px)] min-h-[340px] lg:h-[min(72vh,640px)]"
         />
 
@@ -198,9 +202,41 @@ export default function MoonPage() {
         <div ref={terrainRef} className="scroll-mt-20 space-y-2">
           <h2 className="font-display text-lg font-semibold">{t('moon.localTitle', { name: selected.name })}</h2>
           <p className="text-[12.5px] text-fg-2">{t('moon.localLede')}</p>
+          <ResolutionLadder />
           <Terrain3DPanel key={selected.id} latitude={selected.latitude_deg} longitude={selected.longitude_deg} siteLabel={selected.name} autoOpen />
         </div>
       )}
     </div>
+  )
+}
+
+/** Global globe tiers vs local LOLA: real ground sizes, on a log scale. */
+function ResolutionLadder() {
+  const { t } = useTranslation()
+  const rows = [
+    { label: t('moon.ladderStandard'), m: MOON_MODELS.small.kmPerTexel.southPole * 1000, tone: 'bg-fg-3' },
+    { label: t('moon.ladderHigh'), m: MOON_MODELS[HIGH_MODEL_ID].kmPerTexel.southPole * 1000, tone: 'bg-violet' },
+    { label: t('moon.ladderLola'), m: 5, tone: 'bg-cyan' },
+  ]
+  const max = Math.log10(rows[0]!.m)
+  return (
+    <figure className="sel-card space-y-2 p-3" aria-labelledby="ladder-title" data-testid="resolution-ladder">
+      <figcaption id="ladder-title" className="text-[12.5px] font-medium text-fg">
+        {t('moon.ladderTitle')}
+      </figcaption>
+      <ul className="space-y-1.5">
+        {rows.map((r) => (
+          <li key={r.label} className="grid grid-cols-[8.5rem_minmax(0,1fr)_4.5rem] items-center gap-2 text-[11.5px]">
+            <span className="text-fg-2">{r.label}</span>
+            <span className="h-2 rounded-full bg-white/5">
+              <span className={cn('block h-2 rounded-full', r.tone)} style={{ width: `${Math.max(2, (Math.log10(r.m) / max) * 100)}%` }} />
+            </span>
+            <span className="text-right font-mono text-fg-2">{r.m >= 1000 ? `${(r.m / 1000).toFixed(1)} km` : `${r.m} m`}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="text-[11px] leading-snug text-fg-3">{t('moon.ladderNote', { x: Math.round((MOON_MODELS[HIGH_MODEL_ID].kmPerTexel.southPole * 1000) / 5) })}</p>
+      <p className="text-[10.5px] text-fg-3">{t('moon.tileFootprint')} · {t('moon.logScale')}</p>
+    </figure>
   )
 }

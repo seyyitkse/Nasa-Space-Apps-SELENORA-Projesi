@@ -11,6 +11,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 
+import { xyToLonLat } from '@/features/lunar-explorer/projection'
+
 import { MOON_ASSET } from './asset'
 import type { LoadedMoon } from './loadMoon'
 import { easeInOut, graticule, latLonToModel, modelToLatLon, presetPose, sitePose, slerp, type Vec3, type ViewPreset } from './orientation'
@@ -45,6 +47,8 @@ export interface CameraState {
 }
 
 interface Props {
+  /** Real LOLA 5 m DEM tile footprints (polar stereographic metres) drawn as outlines. */
+  tiles?: { site_id: string; bounds_m: [number, number, number, number] }[]
   moon: LoadedMoon
   sites: GlobeSite[]
   selectedId: string | null
@@ -59,8 +63,6 @@ interface Props {
 }
 
 const R = MOON_ASSET.modelRadius
-/** Max vertex radius / min vertex radius of the NASA mesh (measured: 1.282231 / 1.271864). */
-const SURFACE_MAX = 1.00815
 const MIN_DIST = 1.18
 const MAX_DIST = 6
 const COLORS = { A: '#56D9E9', B: '#9585FF', none: '#F5C674' } as const
@@ -209,11 +211,12 @@ function MoonMesh({ moon, onReady }: { moon: LoadedMoon; onReady: () => void }) 
 const UP = new THREE.Vector3(0, 1, 0)
 
 /** A pin of constant on-screen size: a stem along the local vertical plus a head. */
-function Pin({ site, selected, onSelect, visible }: { site: GlobeSite; selected: boolean; onSelect: (id: string) => void; visible: boolean }) {
+function Pin({ site, selected, onSelect, visible, radius }: { site: GlobeSite; selected: boolean; onSelect: (id: string) => void; visible: boolean; radius: number }) {
   const [hover, setHover] = useState(false)
   const group = useRef<THREE.Group>(null)
   const camera = useThree((s) => s.camera)
-  const base = useMemo(() => latLonToModel(site.lat, site.lon, R * SURFACE_MAX), [site.lat, site.lon])
+  // Base on the rendered surface (relief models) or just above the chord faces (smooth models).
+  const base = useMemo(() => latLonToModel(site.lat, site.lon, R * radius), [site.lat, site.lon, radius])
   const quat = useMemo(() => new THREE.Quaternion().setFromUnitVectors(UP, new THREE.Vector3(...base).normalize()), [base])
   const color = COLORS[site.slot ?? 'none']
   const k = selected ? 1.35 : 1
@@ -259,19 +262,131 @@ function Pin({ site, selected, onSelect, visible }: { site: GlobeSite; selected:
   )
 }
 
+/**
+ * Measurement hook (only when the URL has `?bench`): `await window.__selenoraMoonBench(3000)`
+ * renders continuously while orbiting and reports FPS, draw stats and buffer/texture sizes.
+ * Used for docs/PHASE6A1_MOON_QUALITY_REPORT.md; inert otherwise.
+ */
+function Bench({ moon }: { moon: LoadedMoon }) {
+  const { gl, camera, invalidate } = useThree()
+  const run = useRef<{ until: number; frames: number; t0: number; resolve: (v: unknown) => void } | null>(null)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !new URLSearchParams(window.location.search).has('bench')) return
+    const w = window as unknown as { __selenoraMoonBench?: (ms?: number) => Promise<unknown> }
+    w.__selenoraMoonBench = (ms = 3000) =>
+      new Promise((resolve) => {
+        run.current = { until: performance.now() + ms, frames: 0, t0: performance.now(), resolve }
+        invalidate()
+      })
+    return () => {
+      delete w.__selenoraMoonBench
+    }
+  }, [invalidate])
+  useFrame(() => {
+    const r = run.current
+    if (!r) return
+    r.frames += 1
+    const s = new THREE.Spherical().setFromVector3(camera.position)
+    s.theta += 0.01
+    camera.position.setFromSpherical(s)
+    camera.lookAt(0, 0, 0)
+    if (performance.now() < r.until) {
+      invalidate()
+      return
+    }
+    const ms = performance.now() - r.t0
+    run.current = null
+    const geo = moon.mesh.geometry
+    const attrBytes = Object.values(geo.attributes).reduce((a, x) => a + (x as THREE.BufferAttribute).array.byteLength, 0) + (geo.index?.array.byteLength ?? 0)
+    const ctx = gl.getContext()
+    r.resolve({
+      model: moon.modelId,
+      frames: r.frames,
+      ms: Math.round(ms),
+      fps: Math.round((r.frames / ms) * 10000) / 10,
+      dpr: gl.getPixelRatio(),
+      drawingBuffer: [ctx.drawingBufferWidth, ctx.drawingBufferHeight],
+      triangles: gl.info.render.triangles,
+      calls: gl.info.render.calls,
+      textures: gl.info.memory.textures,
+      geometries: gl.info.memory.geometries,
+      geometryMB: Math.round(attrBytes / 1e5) / 10,
+      textureMBWithMips: Math.round((moon.textureSize[0] * moon.textureSize[1] * 4 * 4) / 3 / 1e5) / 10,
+      texturePx: moon.textureSize,
+      maxTextureSize: gl.capabilities.maxTextureSize,
+      maxAnisotropy: gl.capabilities.getMaxAnisotropy(),
+      renderer: (() => {
+        const ext = ctx.getExtension('WEBGL_debug_renderer_info')
+        return ext ? ctx.getParameter(ext.UNMASKED_RENDERER_WEBGL) : 'n/a'
+      })(),
+    })
+  })
+  return null
+}
+
+/**
+ * Display light for the topographic model ONLY: a light that rides with the camera (slightly
+ * above-left of the view direction) so relief reads as shape. It is NOT the Sun and casts no
+ * shadows; the UI labels it as such.
+ */
+function ReliefLight() {
+  const camera = useThree((s) => s.camera)
+  const light = useRef<THREE.DirectionalLight>(null)
+  useFrame(() => {
+    const l = light.current
+    if (!l) return
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(camera.quaternion)
+    const left = new THREE.Vector3(-1, 0, 0).applyQuaternion(camera.quaternion)
+    l.position.copy(camera.position).addScaledVector(up, camera.position.length() * 0.35).addScaledVector(left, camera.position.length() * 0.35)
+    l.target.position.set(0, 0, 0)
+    l.target.updateMatrixWorld()
+  })
+  return (
+    <>
+      <ambientLight intensity={0.55} />
+      <directionalLight ref={light} intensity={1.6} />
+    </>
+  )
+}
+
 export default function MoonScene(props: Props) {
-  const { moon, sites, selectedId, onSelect, landmarks, showGraticule, command, reducedMotion, dpr, onCamera, onReady } = props
+  const { moon, sites, selectedId, onSelect, landmarks, showGraticule, command, reducedMotion, dpr, onCamera, onReady, tiles = [] } = props
   const start = presetPose('near').position
   // Camera position in lunar radii (direction × distance), for horizon tests of HTML labels.
   const [camPos, setCamPos] = useState<Vec3>(start)
   // The sphere-ised cube's vertices span r = 1.2719–1.2822 (+0.8 %); overlays sit just above that.
-  const grid = useMemo(() => graticule(30, R * SURFACE_MAX * 1.002), [])
+  const grid = useMemo(() => graticule(30, R * moon.surfaceMax * 1.002), [moon])
+  // Inverse polar stereographic (same projection as the 2D Explorer) → outline on the globe.
+  const footprints = useMemo(
+    () =>
+      tiles.map((t) => {
+        const [x0, y0, x1, y1] = t.bounds_m
+        const corners: [number, number][] = [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]
+        const pts: Vec3[] = []
+        for (let i = 0; i < 4; i++) {
+          const [ax, ay] = corners[i]!
+          const [bx, by] = corners[i + 1]!
+          for (let k = 0; k <= 12; k++) {
+            const [lon, lat] = xyToLonLat(ax + ((bx - ax) * k) / 12, ay + ((by - ay) * k) / 12)
+            pts.push(latLonToModel(lat, lon, R * moon.surfaceMax * 1.003))
+          }
+        }
+        return { id: t.site_id, pts }
+      }),
+    [tiles, moon],
+  )
   /** True when the surface point is above the camera's horizon: p̂·c > 1 (+ small margin). */
   const facing = (lat: number, lon: number) => {
     const p = latLonToModel(lat, lon)
     return p[0] * camPos[0] + p[1] * camPos[1] + p[2] * camPos[2] > 1.01
   }
   const raf = useRef(0)
+  // Surface radius under each pin: computed once per model/site list (a full vertex scan per site).
+  const pinRadii = useMemo(() => {
+    const m = new Map<string, number>()
+    for (const site of sites) m.set(site.id, moon.lit ? moon.surfaceRadiusAt(site.lat, site.lon) * 1.0005 : moon.surfaceMax)
+    return m
+  }, [moon, sites])
 
   return (
     <Canvas
@@ -284,8 +399,10 @@ export default function MoonScene(props: Props) {
     >
       <color attach="background" args={['#05070f']} />
       <MoonMesh moon={moon} onReady={onReady} />
+      {moon.lit && <ReliefLight />}
       <AdaptiveFov />
-      <InvalidateOn deps={[showGraticule, sites, selectedId, landmarks]} />
+      <Bench moon={moon} />
+      <InvalidateOn deps={[showGraticule, sites, selectedId, landmarks, footprints]} />
       {showGraticule && (
         <group>
           {grid.lines.map((l, i) => (
@@ -295,8 +412,11 @@ export default function MoonScene(props: Props) {
           <Line points={grid.primeMeridian} color="#F5C674" lineWidth={1.8} />
         </group>
       )}
+      {footprints.map((f) => (
+        <Line key={f.id} points={f.pts} color="#56D9E9" lineWidth={2} />
+      ))}
       {landmarks.map((l) => (
-        <Html key={l.id} position={latLonToModel(l.lat, l.lon, R * SURFACE_MAX)} center zIndexRange={[10, 0]}>
+        <Html key={l.id} position={latLonToModel(l.lat, l.lon, R * moon.surfaceMax)} center zIndexRange={[10, 0]}>
           <span
             className="pointer-events-none flex items-center gap-1 font-mono text-[10px] whitespace-nowrap text-fg-2 [text-shadow:0_1px_2px_#000]"
             style={{ display: facing(l.lat, l.lon) ? undefined : 'none' }}
@@ -307,7 +427,7 @@ export default function MoonScene(props: Props) {
         </Html>
       ))}
       {sites.map((s) => (
-        <Pin key={s.id} site={s} selected={s.id === selectedId} onSelect={onSelect} visible={facing(s.lat, s.lon)} />
+        <Pin key={s.id} site={s} selected={s.id === selectedId} onSelect={onSelect} visible={facing(s.lat, s.lon)} radius={pinRadii.get(s.id) ?? moon.surfaceMax} />
       ))}
       <CameraRig
         command={command}
