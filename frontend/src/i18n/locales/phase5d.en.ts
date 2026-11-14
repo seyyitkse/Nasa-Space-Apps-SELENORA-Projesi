@@ -1,6 +1,7 @@
 /** Phase 5D strings (Explorer/Scientist modes, guided mission, 3D terrain, LROC). */
 const phase5dEn = {
   imageryQuality: {
+    options: 'Image options',
     sampled: 'Display: {{resolution}} m/px',
     overview: 'Polar overview ready.', starting: 'Preparing the NASA basemap.',
     detailLoading: 'Preparing higher-resolution imagery.', detailReady: 'Viewport detail ready',

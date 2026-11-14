@@ -1,5 +1,6 @@
 import { Camera, ImageOff, Mountain } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useState } from 'react'
 
 import { HelpTip } from '@/components/shared/Explain'
 import { Slider } from '@/components/ui/slider'
@@ -48,6 +49,7 @@ export function BasemapControl({
   onNac?: (value: boolean) => void
 }) {
   const { t } = useTranslation()
+  const [expanded, setExpanded] = useState(false)
   const { photo, hillshade } = pickBasemapLayers(layers)
   const options: { key: BasemapChoice; icon: typeof Camera; label: string; layer: MapLayer | null | 'none' }[] = [
     { key: 'photo', icon: Camera, label: t('lroc.photo'), layer: photo },
@@ -84,6 +86,10 @@ export function BasemapControl({
           )
         })}
       </div>
+      <button type="button" className="w-full rounded border border-line px-2 py-1 text-left text-[10.5px] text-fg-2 sm:hidden" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+        {t('imageryQuality.options')}
+      </button>
+      <div className={cn('space-y-1.5', !expanded && 'hidden sm:block')}>
       {!photo && <p className="text-[10.5px] leading-snug text-fg-3">{t('lroc.photoShort')}</p>}
       {choice === 'photo' && photo && (
         <p className="text-[10.5px] leading-snug text-warning/90" role="note">
@@ -111,6 +117,7 @@ export function BasemapControl({
           <Slider aria-label={t('lroc.opacity')} min={10} max={100} step={5} value={[Math.round(opacity * 100)]} onValueChange={([v]) => onOpacity((v ?? 85) / 100)} />
         </div>
       )}
+      </div>
     </div>
   )
 }

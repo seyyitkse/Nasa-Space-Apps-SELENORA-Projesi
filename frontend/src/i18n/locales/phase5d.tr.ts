@@ -2,6 +2,7 @@ import type phase5dEn from './phase5d.en'
 
 const phase5dTr: typeof phase5dEn = {
   imageryQuality: {
+    options: 'Görüntü seçenekleri',
     sampled: 'Görünüm: {{resolution}} m/px',
     overview: 'Kutupsal genel görünüm hazır.', starting: 'NASA taban haritası hazırlanıyor.',
     detailLoading: 'Yüksek çözünürlüklü görüntü hazırlanıyor.', detailReady: 'Görünüm ayrıntısı hazır',

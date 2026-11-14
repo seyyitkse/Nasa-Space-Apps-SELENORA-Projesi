@@ -215,7 +215,7 @@ export class PolarBasemap {
     const detail = relevant.filter((r) => r.layer === target && r.coord[0] === z)
     const loaded = detail.filter((r) => r.state === 'ready')
     const photoFull = covers(this.extent, photo.filter((r) => r.nodata === 0).map((r) => r.bounds))
-    const overviewReady = ready.some((r) => r.layer === target && r.coord[0]! <= 1 && valid(r))
+    const overviewReady = ready.some((r) => r.coord[0]! <= 1 && valid(r))
     const pending = detail.some((r) => r.state === 'queued' || r.state === 'loading')
     const failed = detail.filter((r) => r.state === 'failed').length
     const any = ready.some(valid)
