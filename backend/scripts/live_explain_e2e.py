@@ -27,14 +27,13 @@ def main() -> int:
     with TestClient(app) as client:
         body = {
             "mission_name": "Phase31 Live Validation",
+            # South-polar pair only (Bussey et al. 2010 Points A/B approximations).
             "sites": [
-                {"label": "Shackleton A", "latitude_deg": -89.68, "longitude_deg": -166.0},
-                # Distant mid-latitude site so scores / recommendation are not a polar tie.
-                {"label": "Equatorial Ref", "latitude_deg": 0.0, "longitude_deg": 0.0},
+                {"label": "Shackleton Rim Point A", "latitude_deg": -89.68, "longitude_deg": -166.0},
+                {"label": "Connecting Ridge Point B", "latitude_deg": -89.44, "longitude_deg": -141.8},
             ],
-            # December window typically yields non-zero polar illumination samples.
             "start_utc": "2026-12-01T00:00:00Z",
-            "end_utc": "2026-12-03T00:00:00Z",
+            "end_utc": "2026-12-05T00:00:00Z",
             "time_step_minutes": 360,
             "horizon_model": "GEOMETRIC",
             "weights": {"sun_visibility": 40, "earth_visibility": 40, "joint_visibility": 20},
