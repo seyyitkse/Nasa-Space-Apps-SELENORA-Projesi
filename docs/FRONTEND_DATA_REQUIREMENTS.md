@@ -221,3 +221,46 @@ low `max_edge_px`) would let the overview show context.
 
 **R4 — 3D.** `/maps/mesh` exists. The frontend has not built the optional viewer yet (P2). It will show the
 mesh `warning`, resolution and vertical exaggeration when implemented.
+
+---
+
+## Phase 5D frontend requests for Cursor (appended 2026-11-14)
+
+Frontend branch: `feature/phase5d-immersive-ux` (from `94aaac3`). Capability detection is unchanged: a feature
+turns on only when its exact path appears in `/openapi.json`.
+
+### `GET /api/v1/maps/mesh` — consumed (verified; no change required)
+
+Verified behaviour that the 3D viewer relies on (please keep stable):
+- `x_m[cols]`, `y_m[rows]` absolute south-polar stereographic metres; `z_m[row][col]` with rows by ascending y.
+- Centre and corner cells equal `GET /maps/elevation` exactly (checked at Point A: 1592.04 m; corners 1198.28 m / 355.88 m).
+- Out-of-tile cells are `null` (never 0). Point B needs `layer_id=lola-site01-5mpp-surf` (the frontend picks the layer
+  from `/terrain/coverage.dem_site_id`).
+- Guards: `half_extent_m ≤ 5000`, `step_m ∈ [10, 500]`, ≤ 20 000 vertices. Presets used: 2 km/25 m, 4 km/50 m, 10 km/100 m.
+
+Nice-to-have: state the sampling method in the response (`"sampling": "nearest_pixel"`), and add `observer_z_m`
+plus `true_north_grid_azimuth_deg` so the client does not need two extra calls.
+
+### R1 (still P0) — authoritative per-epoch states for stored analyses
+
+`GET /api/v1/analyses/{analysis_id}/epochs` (shape unchanged from the Phase 5A request): per sample
+`sun_/earth_azimuth_deg`, `sun_/earth_elevation_deg`, `sun_/earth_terrain_horizon_deg`, `sun_/earth_state ∈
+VISIBLE | BLOCKED | BELOW_HORIZON | UNKNOWN`, no downsampling (or paginated).
+Why: Explorer Mode explains each moment in plain language. Without R1 the UI must say "visible or unknown" for some
+TERRAIN moments and fetch live `/ephemeris/observer-series` chunks to place the Sun in 3D. With R1 the 3D Sun
+direction and every timeline cell would come from the stored, reproducible analysis.
+
+### R2 (P1) — LROC photographic basemap
+
+The Explorer's Photo/Hillshade/Off control enables **Photo** automatically when `GET /api/v1/maps/layers` lists a
+layer with `kind: "imagery"` whose `role` is not `REFERENCE_DOC` and whose `access_mode` is not
+`documentation_only`. It is rendered through the existing preview contract:
+- `GET /api/v1/maps/preview?layer_id=<id>&left_m&bottom_m&right_m&top_m&max_edge_px` → `image/png`.
+- Required headers: `X-SELENORA-Bounds-M` (the client refuses to place an image without it),
+  `X-SELENORA-Attribution` (shown on the map), `X-SELENORA-Layer-Role`.
+- CRS: `+proj=stere +lat_0=-90 +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=1737400 +b=1737400 +units=m` (reproject server-side;
+  LROC polar mosaics use a different sphere/ellipsoid convention, so please state the reprojection in `crs_summary`).
+- Suggested metadata: `resolution_m`, `product_page` (LROC/PDS URL), `notes` with acquisition/illumination caveats
+  (photos show illumination at image time, not at the analysis epoch).
+
+Until then the Photo option is disabled with the reason. No decorative image is substituted.

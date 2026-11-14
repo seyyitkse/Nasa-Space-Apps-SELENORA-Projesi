@@ -25,6 +25,9 @@ import { buildEpochs } from '@/features/analysis-data/adapter'
 import { StateLanes, StateLegend } from '@/features/analysis-data/StateLanes'
 import type { SiteEpochs } from '@/features/analysis-data/useWorkspaceAnalysis'
 import { ConfidencePanel, RecommendationBanner, WeightLab } from '@/features/site-comparison/LabPanels'
+import { Advanced } from '@/components/shared/Explain'
+import { PlainSummary } from '@/features/guided/PlainSummary'
+import { useIsScientist } from '@/stores/modeStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useAnalysis, useTimeline } from '@/hooks/useApi'
 import { useMissionStore } from '@/stores/missionStore'
@@ -105,6 +108,7 @@ function ComparisonDashboard({
   }, [result.id, result.weights])
 
   const weightsValid = Math.abs(weights.sun_visibility + weights.earth_visibility + weights.joint_visibility - 100) < 0.01
+  const scientist = useIsScientist()
   const isSynthetic = result.data_quality === 'SYNTHETIC_DEMO'
   const cursorT = useWorkspaceStore((s) => s.cursorT)
   const setCursor = useWorkspaceStore((s) => s.setCursor)
@@ -117,10 +121,8 @@ function ComparisonDashboard({
     [result, timeline],
   )
 
-  return (
-    <div className="space-y-5">
-      {isSynthetic && <SyntheticBanner />}
-      <RecommendationBanner result={result} />
+  const details = (
+    <>
 
       <div className="grid gap-3 md:grid-cols-2">
         {result.sites.map((s, i) => (
@@ -245,6 +247,15 @@ function ComparisonDashboard({
       </div>
 
       <ScienceTransparencyPanel result={result} />
+    </>
+  )
+
+  return (
+    <div className="space-y-5">
+      {isSynthetic && <SyntheticBanner />}
+      <RecommendationBanner result={result} />
+      {!scientist && <PlainSummary result={result} />}
+      {scientist ? details : <Advanced title={t('mode.scientificDetails')}>{details}</Advanced>}
     </div>
   )
 }

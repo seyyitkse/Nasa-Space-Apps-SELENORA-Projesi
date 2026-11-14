@@ -1,7 +1,7 @@
-import { Compass, FileSearch, Info, SunMoon } from 'lucide-react'
+import { Box, Compass, FileSearch, Info, SunMoon } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 
 import { DataQualityBadge } from '@/components/shared/badges'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -21,6 +21,9 @@ import { ElevationGauge } from '@/features/horizon-sim/ElevationGauge'
 import { type BodyDirection, HorizonPanorama } from '@/features/horizon-sim/HorizonPanorama'
 import { SimElevationChart } from '@/features/horizon-sim/SimElevationChart'
 import { TimeControls } from '@/features/horizon-sim/TimeControls'
+import { Terrain3DPanel } from '@/features/terrain3d/Terrain3DPanel'
+import { Term } from '@/components/shared/Explain'
+import { useIsScientist } from '@/stores/modeStore'
 import { LunarMap, type MapSite } from '@/features/lunar-explorer/LunarMap'
 import { formatCoord, formatPct, formatUtc } from '@/lib/format'
 import { observerChunk, useCapabilities, useHorizonProfile, useObserverSeries, useTerrainCatalog } from '@/services/contracts'
@@ -47,6 +50,9 @@ export default function SimulatorPage() {
   const cursorT = useWorkspaceStore((s) => s.cursorT)
   const setCursor = useWorkspaceStore((s) => s.setCursor)
   const caps = useCapabilities()
+  const scientist = useIsScientist()
+  const [params] = useSearchParams()
+  const want3d = params.get('view') === '3d'
 
   const result = ws.result
   const safeIndex = result ? Math.min(siteIndex, result.sites.length - 1) : 0
@@ -139,6 +145,26 @@ export default function SimulatorPage() {
         ) : (
           <>
             {result.data_quality === 'SYNTHETIC_DEMO' && <SyntheticBanner />}
+            {!scientist && (
+              <Card role="note">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-[14px]">{t('sim5d.howTitle')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="grid grid-cols-[minmax(0,1fr)] gap-2 text-[12.5px] leading-relaxed text-fg-2 md:grid-cols-3">
+                    <li className="rounded-lg border border-line bg-bg-2/50 p-3">
+                      {t('sim5d.how1a')} <Term k="horizon" /> {t('sim5d.how1b')}
+                    </li>
+                    <li className="rounded-lg border border-line bg-bg-2/50 p-3">
+                      {t('sim5d.how2a')} <Term k="terrainBlocked" /> {t('sim5d.how2b')}
+                    </li>
+                    <li className="rounded-lg border border-line bg-bg-2/50 p-3">
+                      {t('sim5d.how3a')} <Term k="sampledEpoch" /> {t('sim5d.how3b')}
+                    </li>
+                  </ul>
+                </CardContent>
+              </Card>
+            )}
             <div className="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
               <Card>
                 <CardHeader className="flex-row flex-wrap items-start justify-between gap-2">
@@ -294,6 +320,26 @@ export default function SimulatorPage() {
                 </Card>
               </div>
             </div>
+
+            <Card id="terrain-3d">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Box className="size-4 text-cyan" aria-hidden /> {t('terrain3d.title')}
+                </CardTitle>
+                <CardDescription>{t('terrain3d.description')}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Terrain3DPanel
+                  key={`${site.latitude_deg},${site.longitude_deg}`}
+                  latitude={site.latitude_deg}
+                  longitude={site.longitude_deg}
+                  siteLabel={site.label}
+                  sample={sample}
+                  profile={profile.data}
+                  autoOpen={want3d}
+                />
+              </CardContent>
+            </Card>
 
             <Card>
               <CardHeader>

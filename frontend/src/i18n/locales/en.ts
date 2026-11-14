@@ -1,6 +1,8 @@
 import phase5a from './phase5a.en'
+import phase5d from './phase5d.en'
 const en = {
   ...phase5a,
+  ...phase5d,
   common: {
     appName: 'SELENORA',
     subtitle: 'AI-Powered Lunar Mission Intelligence',
@@ -22,6 +24,7 @@ const en = {
     requestId: 'Request ID',
   },
   nav: {
+    guided: 'Guided mission',
     simulator: 'Horizon Simulator',
     windows: 'Mission Windows',
     mission: 'Mission',

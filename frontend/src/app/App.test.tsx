@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { api } from '@/services/apiClient'
 import { selenoraApi } from '@/services/selenoraApi'
+import { useModeStore } from '@/stores/modeStore'
 
 import { AppProviders, makeQueryClient } from './providers'
 import { routes } from './router'
@@ -66,18 +67,21 @@ function renderAt(path: string) {
 
 beforeEach(() => {
   localStorage.clear()
+  useModeStore.setState({ mode: 'explorer' }) // default for new visitors
   void i18n.changeLanguage('en')
 })
+const scientistMode = () => useModeStore.setState({ mode: 'scientist' })
 afterEach(() => vi.restoreAllMocks())
 
 describe('SELENORA app shell', () => {
-  it('renders Mission Control with live API health', async () => {
+  it('renders Mission Control with live API health (Scientist Mode CTA)', async () => {
+    scientistMode()
     mockApi()
     renderAt('/')
     expect(await screen.findByRole('heading', { name: 'SELENORA', level: 1 })).toBeInTheDocument()
     expect(await screen.findByText('API online')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Start Mission Analysis/ })).toHaveAttribute('href', '/planner')
-    expect(screen.getByRole('link', { name: /Explore Lunar Surface/ })).toHaveAttribute('href', '/explorer')
+    for (const l of screen.getAllByRole('link', { name: /Explore Lunar Surface/ })) expect(l).toHaveAttribute('href', '/explorer')
   })
 
   it('shows an honest offline state when the API is unreachable', async () => {
@@ -86,7 +90,8 @@ describe('SELENORA app shell', () => {
     expect(await screen.findByText('API offline', {}, { timeout: 4000 })).toBeInTheDocument()
   })
 
-  it('navigates via the sidebar', async () => {
+  it('navigates via the sidebar (Scientist Mode shows the planner)', async () => {
+    scientistMode()
     mockApi()
     const router = renderAt('/')
     const nav = await screen.findAllByRole('navigation', { name: 'Primary' })
@@ -113,6 +118,7 @@ describe('SELENORA app shell', () => {
   })
 
   it('loads a stored analysis route with real data quality badge', async () => {
+    scientistMode()
     mockApi()
     const site = (label: string, score: number, rank: number) => ({
       label,
@@ -199,7 +205,25 @@ describe('SELENORA app shell', () => {
     mockApi()
     renderAt('/')
     await userEvent.click(await screen.findByRole('button', { name: 'tr' }))
-    expect(await screen.findByRole('link', { name: /Görev Analizini Başlat/ })).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: /Rehberli göreve başla/ })).toBeInTheDocument()
+  })
+
+  it('Explorer Mode: primary CTA starts the guided mission and the sidebar hides expert tools', async () => {
+    mockApi()
+    renderAt('/')
+    expect(await screen.findByRole('link', { name: /Start a guided mission/ })).toHaveAttribute('href', '/mission')
+    const nav = await screen.findAllByRole('navigation', { name: 'Primary' })
+    expect(within(nav[0]!).getByRole('link', { name: 'Guided mission' })).toBeInTheDocument()
+    expect(within(nav[0]!).queryByRole('link', { name: 'Mission Planner' })).toBeNull()
+    expect(screen.getByRole('radio', { name: /Explorer/ })).toHaveAttribute('aria-checked', 'true')
+  })
+
+  it('switching to Scientist Mode reveals the expert tools', async () => {
+    mockApi()
+    renderAt('/')
+    await userEvent.click(await screen.findByRole('radio', { name: /Scientist/ }))
+    const nav = await screen.findAllByRole('navigation', { name: 'Primary' })
+    expect(within(nav[0]!).getByRole('link', { name: 'Mission Planner' })).toBeInTheDocument()
   })
 
   it('renders a not-found page', async () => {
