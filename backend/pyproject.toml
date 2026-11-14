@@ -15,6 +15,7 @@ dependencies = [
     "openai>=1.55",
     "rasterio>=1.4",
     "pyproj>=3.7",
+    "pillow>=10.0",
 ]
 
 [project.optional-dependencies]

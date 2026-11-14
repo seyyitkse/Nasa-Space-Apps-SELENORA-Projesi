@@ -49,10 +49,31 @@ def list_data_sources(settings: Settings) -> DataSourceList:
                 notes=(
                     f"{terrain_data_service.DATASET_CITATION} "
                     + (
-                        "Local GeoTIFFs present; TERRAIN mode enabled for covered sites."
+                        "Local GeoTIFFs present; TERRAIN mode enabled for covered sites. "
+                        "PGDA Product 90 80 m layers available via /api/v1/maps as "
+                        "MAP_VISUALIZATION_ONLY (vsicurl window reads)."
                         if lola_ready
                         else "Place *_surf.tif under data/raw/lola/ to enable TERRAIN mode."
                     )
+                ),
+            ),
+            DataSourceOut(
+                id="pgda-lola-80s",
+                name="LOLA South Polar Large-Area Grids (PGDA Product 90)",
+                provider="NASA Goddard Planetary Geodesy Data Archive (PGDA)",
+                category="TOPOGRAPHY",
+                description=(
+                    "80°S LDEM/LDSM/LPSR GeoTIFFs (e.g. 80 m/pix hillshade & elevation) "
+                    "for Explorer map previews via HTTP range window reads."
+                ),
+                url="https://pgda.gsfc.nasa.gov/products/90",
+                documentation_url="https://pgda.gsfc.nasa.gov/products/90",
+                integration_status="INTEGRATED",
+                used_for=["Map hillshade preview", "Wide-area elevation sample", "PSR preview"],
+                phase=5,
+                notes=(
+                    "MAP_VISUALIZATION_ONLY — does not auto-enable TERRAIN scoring. "
+                    "Verified Accept-Ranges; SELENORA does not commit multi-100MB rasters to Git."
                 ),
             ),
             DataSourceOut(
