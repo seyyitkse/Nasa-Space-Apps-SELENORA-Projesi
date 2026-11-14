@@ -27,7 +27,8 @@ from app.services import terrain_data_service
 logger = logging.getLogger("selenora.maps")
 
 MAX_PREVIEW_EDGE_PX = 1024
-MAX_HALF_EXTENT_M = 50_000.0
+# Phase 5F: polar overview needs ~300 km half-extent; keep a hard science-safe cap.
+MAX_HALF_EXTENT_M = 400_000.0
 MIN_HALF_EXTENT_M = 250.0
 DEFAULT_HALF_EXTENT_M = 8_000.0
 

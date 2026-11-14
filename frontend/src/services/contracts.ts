@@ -187,12 +187,26 @@ export interface RasterPreview {
   /** Bounds actually rendered by the backend (X-SELENORA-Bounds-M). */
   extent: [number, number, number, number]
   sizePx: string
+  /** Parsed from X-SELENORA-Size-Px for OpenLayers ImageStatic (prevents stretch). */
+  imageSize?: [number, number]
   role: string
   attribution: string
 }
 
-/** Backend cap for preview windows (MAP_SERVICE_ERROR above this). */
-export const PREVIEW_MAX_HALF_EXTENT_M = 50_000
+export function parseSizePxHeader(v: string | undefined | null): [number, number] | undefined {
+  if (!v) return undefined
+  const m = /^(\d+)x(\d+)$/i.exec(v.trim())
+  if (!m) return undefined
+  const w = Number(m[1])
+  const h = Number(m[2])
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w < 1 || h < 1) return undefined
+  return [w, h]
+}
+
+/** Backend cap for preview windows (MAP_SERVICE_ERROR above this). Phase 5F raised to 400 km for polar overview. */
+export const PREVIEW_MAX_HALF_EXTENT_M = 400_000
+/** Snap preview BBOX edges to this grid (metres) so React Query keys stay stable while panning. */
+export const PREVIEW_BOUNDS_SNAP_M = 2_000
 
 export function parseBoundsHeader(v: string | undefined | null): [number, number, number, number] | null {
   if (!v) return null
@@ -359,18 +373,23 @@ export const contractApi = {
   mapLayers: () => api.get<MapLayerList>(ROUTES.mapLayers).then((r) => r.data),
   mapPreview: async (layerId: string, bounds: [number, number, number, number], maxEdgePx = 768): Promise<RasterPreview> => {
     const [left_m, bottom_m, right_m, top_m] = bounds
+    // Coarser max_edge for very wide polar windows keeps payload bounded.
+    const span = Math.max(right_m - left_m, top_m - bottom_m)
+    const edge = span > 200_000 ? Math.min(maxEdgePx, 512) : maxEdgePx
     const r = await api.get<Blob>(ROUTES.mapPreview, {
-      params: { layer_id: layerId, left_m, bottom_m, right_m, top_m, max_edge_px: maxEdgePx },
+      params: { layer_id: layerId, left_m, bottom_m, right_m, top_m, max_edge_px: edge },
       responseType: 'blob',
       timeout: 120_000,
     })
     const extent = parseBoundsHeader(r.headers['x-selenora-bounds-m'] as string | undefined)
     if (!extent) throw new Error('Preview response is missing X-SELENORA-Bounds-M; refusing to place the image.')
+    const sizePx = String(r.headers['x-selenora-size-px'] ?? '')
     return {
       layerId,
       url: URL.createObjectURL(r.data),
       extent,
-      sizePx: String(r.headers['x-selenora-size-px'] ?? ''),
+      sizePx,
+      imageSize: parseSizePxHeader(sizePx),
       role: String(r.headers['x-selenora-layer-role'] ?? ''),
       attribution: String(r.headers['x-selenora-attribution'] ?? ''),
     }

@@ -62,8 +62,15 @@ interface Props {
   previews?: RasterPreview[]
   /** Per-layer opacity (0..1) for previews; default 0.85. */
   rasterOpacity?: Record<string, number>
-  /** Fires after pan/zoom with the view centre and half-extent (metres). */
-  onView?: (v: { center: [number, number]; halfExtent: number; resolution: number }) => void
+  /** Fires after pan/zoom with the view centre and viewport half-extents (metres). */
+  onView?: (v: {
+    center: [number, number]
+    /** Larger of halfW/halfH — legacy square covering the viewport. */
+    halfExtent: number
+    halfWidthM: number
+    halfHeightM: number
+    resolution: number
+  }) => void
   /** Badge letters drawn on markers (e.g. mission Site A / B). */
   marks?: Record<string, string>
   onSelect?: (id: string) => void
@@ -339,7 +346,15 @@ export function LunarMap({
       const size = map.getSize()
       const res = v.getResolution()
       if (!c || !size || !res) return
-      state.current.onView?.({ center: [c[0]!, c[1]!], halfExtent: (Math.max(size[0]!, size[1]!) * res) / 2, resolution: res })
+      const halfWidthM = (size[0]! * res) / 2
+      const halfHeightM = (size[1]! * res) / 2
+      state.current.onView?.({
+        center: [c[0]!, c[1]!],
+        halfExtent: Math.max(halfWidthM, halfHeightM),
+        halfWidthM,
+        halfHeightM,
+        resolution: res,
+      })
     }
     map.on('moveend', emitView)
     map.once('rendercomplete', emitView)
@@ -398,7 +413,14 @@ export function LunarMap({
       }
     }
     previews.forEach((p, k) => {
-      const source = new ImageStatic({ url: p.url, imageExtent: p.extent, projection: lunarProjection, attributions: p.attribution })
+      // imageSize keeps PNG aspect locked to X-SELENORA-Bounds-M (no stretch when W≠H).
+      const source = new ImageStatic({
+        url: p.url,
+        imageExtent: p.extent,
+        projection: lunarProjection,
+        attributions: p.attribution,
+        ...(p.imageSize ? { imageSize: p.imageSize } : {}),
+      })
       const layer = existing.get(p.layerId)
       if (layer) layer.setSource(source)
       else {

@@ -9,6 +9,10 @@ export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInp
   return <input className={cn(fieldBase, '[color-scheme:dark]', className)} {...props} />
 }
 
+/**
+ * Native &lt;select&gt; fallback. Prefer `@/components/ui/select` (Radix) for menus —
+ * OS option popups often ignore page CSS (white-on-white in dark theme).
+ */
 export function NativeSelect({
   className,
   children,
@@ -18,7 +22,10 @@ export function NativeSelect({
     <select
       className={cn(
         fieldBase,
+        '[color-scheme:dark]',
         'appearance-none bg-[url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2712%27%20height=%2712%27%20viewBox=%270%200%2024%2024%27%20fill=%27none%27%20stroke=%27%2394A3B8%27%20stroke-width=%272%27%3E%3Cpath%20d=%27m6%209%206%206%206-6%27/%3E%3C/svg%3E")] bg-[length:14px] bg-[right_0.75rem_center] bg-no-repeat pr-9',
+        // Best-effort option styling (Chromium honour; Safari/Firefox still OS-native).
+        '[&>option]:bg-bg-2 [&>option]:text-fg',
         className,
       )}
       {...props}

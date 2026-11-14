@@ -40,7 +40,8 @@ TREK_WAC_WMTS_TEMPLATE = (
     "default/default028mm/{z}/{y}/{x}.jpg"
 )
 
-MAX_HALF_EXTENT_M = 50_000.0
+# Match raster_preview_service polar-overview cap (Phase 5F).
+MAX_HALF_EXTENT_M = 400_000.0
 MAX_EDGE_PX = 768
 MIN_EDGE_PX = 64
 REQUEST_TIMEOUT_S = 45.0

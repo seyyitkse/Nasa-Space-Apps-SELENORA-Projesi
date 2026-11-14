@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { normalizeHorizonProfile, observerChunk, parseBoundsHeader } from './contracts'
+import { normalizeHorizonProfile, observerChunk, parseBoundsHeader, parseSizePxHeader } from './contracts'
 
 // Deterministic fixtures shaped like Phase 5B responses — not live data.
 describe('Phase 5B contract adapters', () => {
@@ -23,6 +23,12 @@ describe('Phase 5B contract adapters', () => {
     expect(parseBoundsHeader('-22347.488,-29415.262,17652.512,10584.738')).toEqual([-22347.488, -29415.262, 17652.512, 10584.738])
     expect(parseBoundsHeader('1,2,3')).toBeNull()
     expect(parseBoundsHeader(undefined)).toBeNull()
+  })
+
+  it('parses X-SELENORA-Size-Px for ImageStatic imageSize', () => {
+    expect(parseSizePxHeader('768x512')).toEqual([768, 512])
+    expect(parseSizePxHeader('bad')).toBeUndefined()
+    expect(parseSizePxHeader(undefined)).toBeUndefined()
   })
 
   it('aligns live observer chunks to the analysis start and clips to its end', () => {

@@ -1,7 +1,8 @@
 import { useTranslation } from 'react-i18next'
 
 import { siteColor } from '@/components/shared/siteColors'
-import { Label, NativeSelect } from '@/components/ui/input'
+import { Label } from '@/components/ui/input'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { formatUtcDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -13,7 +14,7 @@ export function analysisLabel(a: AnalysisResult) {
   return `${a.mission_name} · ${a.horizon_model} · ${formatUtcDate(a.start_utc)} → ${formatUtcDate(a.end_utc)}`
 }
 
-/** Selects the shared workspace analysis (+ optional site). */
+/** Selects the shared workspace analysis (+ optional site). Dark-theme Radix listbox. */
 export function AnalysisPicker({
   current,
   showSites = true,
@@ -29,24 +30,34 @@ export function AnalysisPicker({
   const siteIndex = useWorkspaceStore((s) => s.siteIndex)
   const setSiteIndex = useWorkspaceStore((s) => s.setSiteIndex)
   const items = catalog.items.some((a) => a.id === current?.id) || !current ? catalog.items : [current, ...catalog.items]
+  const disabled = catalog.isPending && items.length === 0
 
   return (
     <div className={cn('flex flex-col gap-3 sm:flex-row sm:items-end', className)}>
       <div className="min-w-0 flex-1">
         <Label htmlFor="ws-analysis">{t('lab.analysis')}</Label>
-        <NativeSelect
-          id="ws-analysis"
-          value={current?.id ?? ''}
-          onChange={(e) => setAnalysis(e.target.value || null)}
-          disabled={catalog.isPending && items.length === 0}
+        <Select
+          value={current?.id ?? undefined}
+          onValueChange={(id) => setAnalysis(id || null)}
+          disabled={disabled}
         >
-          {items.length === 0 && <option value="">{catalog.isPending ? t('common.loading') : t('lab.noAnalyses')}</option>}
-          {items.map((a) => (
-            <option key={a.id} value={a.id}>
-              {analysisLabel(a)}
-            </option>
-          ))}
-        </NativeSelect>
+          <SelectTrigger id="ws-analysis" aria-label={t('lab.analysis')} className="w-full">
+            <SelectValue placeholder={catalog.isPending ? t('common.loading') : t('lab.noAnalyses')} />
+          </SelectTrigger>
+          <SelectContent>
+            {items.length === 0 ? (
+              <SelectItem value="__empty" disabled>
+                {catalog.isPending ? t('common.loading') : t('lab.noAnalyses')}
+              </SelectItem>
+            ) : (
+              items.map((a) => (
+                <SelectItem key={a.id} value={a.id} textValue={analysisLabel(a)}>
+                  {analysisLabel(a)}
+                </SelectItem>
+              ))
+            )}
+          </SelectContent>
+        </Select>
       </div>
       {showSites && current && current.sites.length > 0 && (
         <div role="radiogroup" aria-label={t('lab.site')} className="flex shrink-0 gap-1.5">

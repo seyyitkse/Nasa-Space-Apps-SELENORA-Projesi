@@ -1,6 +1,6 @@
 import { useQueries } from '@tanstack/react-query'
 import { Crosshair, ExternalLink, Flag, Info } from 'lucide-react'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 
@@ -27,6 +27,7 @@ import { formatCoord } from '@/lib/format'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   contractApi,
+  PREVIEW_BOUNDS_SNAP_M,
   PREVIEW_MAX_HALF_EXTENT_M,
   type RasterPreview,
   useArtemisRegions,
@@ -37,13 +38,22 @@ import {
 
 import { resolveSite, useMissionStore } from '@/stores/missionStore'
 
-/** Preview window for the current view: ≤ backend cap, snapped to 1 km so cache keys stay stable. */
-function previewBounds(v: { center: [number, number]; halfExtent: number } | null): [number, number, number, number] | null {
+type MapViewState = {
+  center: [number, number]
+  halfExtent: number
+  halfWidthM: number
+  halfHeightM: number
+}
+
+/** Viewport-matched stereo BBOX ≤ backend cap, snapped for stable cache keys. Never CSS-scaled. */
+export function previewBounds(v: MapViewState | null): [number, number, number, number] | null {
   if (!v) return null
-  const half = Math.ceil(Math.min(v.halfExtent, PREVIEW_MAX_HALF_EXTENT_M) / 1000) * 1000
-  const cx = Math.round(v.center[0] / 1000) * 1000
-  const cy = Math.round(v.center[1] / 1000) * 1000
-  return [cx - half, cy - half, cx + half, cy + half]
+  const snap = PREVIEW_BOUNDS_SNAP_M
+  const halfW = Math.ceil(Math.min(Math.max(v.halfWidthM, 1_000), PREVIEW_MAX_HALF_EXTENT_M) / snap) * snap
+  const halfH = Math.ceil(Math.min(Math.max(v.halfHeightM, 1_000), PREVIEW_MAX_HALF_EXTENT_M) / snap) * snap
+  const cx = Math.round(v.center[0] / snap) * snap
+  const cy = Math.round(v.center[1] / snap) * snap
+  return [cx - halfW, cy - halfH, cx + halfW, cy + halfH]
 }
 
 export default function ExplorerPage() {
@@ -59,10 +69,18 @@ export default function ExplorerPage() {
   const artemis = useArtemisRegions(caps.has('artemisRegions'))
   // Seed a polar window so basemap previews can fetch before the first OpenLayers moveend
   // (mobile browsers sometimes delay rendercomplete until after the first interaction).
-  const [view, setView] = useState<{ center: [number, number]; halfExtent: number } | null>({
+  const [viewLive, setViewLive] = useState<MapViewState | null>({
     center: [0, 0],
     halfExtent: PREVIEW_MAX_HALF_EXTENT_M,
+    halfWidthM: PREVIEW_MAX_HALF_EXTENT_M,
+    halfHeightM: PREVIEW_MAX_HALF_EXTENT_M,
   })
+  // Debounce pan/zoom so we do not hammer /maps/preview on every wheel tick.
+  const [view, setView] = useState(viewLive)
+  useEffect(() => {
+    const t = window.setTimeout(() => setView(viewLive), 280)
+    return () => window.clearTimeout(t)
+  }, [viewLive])
   const mapRef = useRef<LunarMapHandle>(null)
 
   const [params, setParams] = useSearchParams()
@@ -287,7 +305,7 @@ export default function ExplorerPage() {
               tiles={tiles}
               previews={previews}
               rasterOpacity={rasterOpacity}
-              onView={setView}
+              onView={setViewLive}
               marks={marks}
               ariaLabel={t('explorer.projectionValue')}
               onSelect={(id) => {
