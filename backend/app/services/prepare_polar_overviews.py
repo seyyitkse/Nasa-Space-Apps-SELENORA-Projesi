@@ -1,6 +1,6 @@
 """Deployment: python -m app.services.prepare_polar_overviews [--export-bundle].
 
-Thirty-eight 240px tiles, never bulk RDRs. The checked-in bundle is usable offline;
+Forty-four 240px tiles, never bulk RDRs. The checked-in bundle is usable offline;
 normal deployment imports it into the persistent cache before workers start.
 Export reuses verified disk entries, acquires missing data and records provenance.
 """
@@ -24,7 +24,7 @@ def main():
     tiles += [(layer, 1, x, y) for layer in (HILL_LAYER, WAC_LAYER) for x in (1, 2) for y in (1, 2)]
     # Full-resolution WAC startup coverage, including the tall mobile viewport.
     tiles += [(WAC_LAYER, 5, x, y) for x in range(30, 34) for y in range(30, 35)]
-    tiles += [(WAC_LAYER, 4, x, y) for x in (15, 16) for y in (15, 16, 17)]
+    tiles += [(layer, 4, x, y) for layer in (HILL_LAYER, WAC_LAYER) for x in (15, 16) for y in (15, 16, 17)]
     manifest = {"grid": GRID_VERSION, "crs": "IAU2000:30120", "tiles": {}}
     failures = []
     for layer, z, x, y in tiles:

@@ -1,6 +1,6 @@
 # Genuine lunar basemap bundle — Phase 5F.2
 
-38 small georeferenced PNGs (2,254,802 bytes total); no decorative or AI-generated imagery.
+44 small georeferenced PNGs (2,545,840 bytes total); no decorative or AI-generated imagery.
 `manifest.json` records exact metre bounds, output dimensions, projection, source identity,
 processing version, attribution and SHA-256 of every PNG.
 
@@ -15,7 +15,8 @@ Bounded, masked raster reads, fixed DN 0–255 display transfer; absent coverage
 Grid: Moon sphere radius 1,737,400 m; south polar stereographic, 90°S, 0°E, k=1.
 World square ±768 km. Four WAC level-0 tiles (3,200 m/px), four WAC and four LOLA
 central level-1 tiles (1,600 m/px). Startup WAC: twenty level-5 tiles (100 m/px,
-96 × 120 km), six level-4 tiles (200 m/px, 96 × 144 km). No bounds are enlarged.
+96 × 120 km), six WAC and six LOLA level-4 tiles (200 m/px, 96 × 144 km).
+No bounds are enlarged.
 
 These static photographic/shaded-relief textures are not mission-time illumination and
 do not feed terrain scoring. NAC 2 m is optional and acquired on demand; no NAC 1 m RDR

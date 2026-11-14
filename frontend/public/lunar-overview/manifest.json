@@ -1346,6 +1346,258 @@
         "cache_key": "96346bedb4edc2fe3a654f55a7b5efe042438c997f4215d2312824e6c29038c7"
       }
     },
+    "ldem-80s-80mpp-hill/4/15/15": {
+      "file": "ldem-80s-80mpp-hill-4-15-15.png",
+      "sha256": "930b75190a5768b59d4425ca217df5c97483ebf0f8436e9400b835a5231a74fa",
+      "spec": {
+        "layer": "ldem-80s-80mpp-hill",
+        "bounds_m": [
+          -48000.0,
+          0.0,
+          0.0,
+          48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "pgda90-hill-fixed-DN-0-255",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "ldem-80s-80mpp-hill",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -48000.0,
+          0.0,
+          0.0,
+          48000.0
+        ],
+        "resolution_m": 200.0,
+        "source_access": "vsicurl_window",
+        "attribution": "Barker et al., 2021, Planet. Space Sci. 203, 105119; NASA PGDA LOLA topography products. Product page: https://pgda.gsfc.nasa.gov/products/90",
+        "value_min": 66.65681457519531,
+        "value_max": 244.9678955078125,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "50750995a04e06deba4a1583cc466fc02ee65a9b0ba4371d099ab83083b82f10"
+      }
+    },
+    "ldem-80s-80mpp-hill/4/15/16": {
+      "file": "ldem-80s-80mpp-hill-4-15-16.png",
+      "sha256": "6351aece1553fac9c324885f3ccb3388948d3e9ebb381bc8d7bd1fa1e327b82a",
+      "spec": {
+        "layer": "ldem-80s-80mpp-hill",
+        "bounds_m": [
+          -48000.0,
+          -48000.0,
+          0.0,
+          0.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "pgda90-hill-fixed-DN-0-255",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "ldem-80s-80mpp-hill",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -48000.0,
+          -48000.0,
+          0.0,
+          0.0
+        ],
+        "resolution_m": 200.0,
+        "source_access": "vsicurl_window",
+        "attribution": "Barker et al., 2021, Planet. Space Sci. 203, 105119; NASA PGDA LOLA topography products. Product page: https://pgda.gsfc.nasa.gov/products/90",
+        "value_min": 71.4466552734375,
+        "value_max": 244.54148864746094,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "e80a5cbbbe9f74b79d5f5c05f5503f13f0888db9f2e166d31111fb281f6589cf"
+      }
+    },
+    "ldem-80s-80mpp-hill/4/15/17": {
+      "file": "ldem-80s-80mpp-hill-4-15-17.png",
+      "sha256": "5dc601b32f7ae6938e06d7cd2ada6ca24b26d781244e783c82ab58dba1b128b9",
+      "spec": {
+        "layer": "ldem-80s-80mpp-hill",
+        "bounds_m": [
+          -48000.0,
+          -96000.0,
+          0.0,
+          -48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "pgda90-hill-fixed-DN-0-255",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "ldem-80s-80mpp-hill",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          -48000.0,
+          -96000.0,
+          0.0,
+          -48000.0
+        ],
+        "resolution_m": 200.0,
+        "source_access": "vsicurl_window",
+        "attribution": "Barker et al., 2021, Planet. Space Sci. 203, 105119; NASA PGDA LOLA topography products. Product page: https://pgda.gsfc.nasa.gov/products/90",
+        "value_min": 94.02450561523438,
+        "value_max": 239.22032165527344,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "3e36d65a4f6495caf109c555cdd6bca122a096b5105fbb25c34bae99ef816b3e"
+      }
+    },
+    "ldem-80s-80mpp-hill/4/16/15": {
+      "file": "ldem-80s-80mpp-hill-4-16-15.png",
+      "sha256": "a44a83dbf82b53523fcd3cbbab898d7871c2ad145d2d54d165fd31e6c61c6d1c",
+      "spec": {
+        "layer": "ldem-80s-80mpp-hill",
+        "bounds_m": [
+          0.0,
+          0.0,
+          48000.0,
+          48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "pgda90-hill-fixed-DN-0-255",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "ldem-80s-80mpp-hill",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          0.0,
+          48000.0,
+          48000.0
+        ],
+        "resolution_m": 200.0,
+        "source_access": "vsicurl_window",
+        "attribution": "Barker et al., 2021, Planet. Space Sci. 203, 105119; NASA PGDA LOLA topography products. Product page: https://pgda.gsfc.nasa.gov/products/90",
+        "value_min": 57.91520690917969,
+        "value_max": 241.50396728515625,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "27d3515746cda7960332769155f6923ebd506c4542083b32588cc09888acd5cf"
+      }
+    },
+    "ldem-80s-80mpp-hill/4/16/16": {
+      "file": "ldem-80s-80mpp-hill-4-16-16.png",
+      "sha256": "1ca8e5b506edc682e5a5f3304d3075732a9ec5f6c59dbeb9d4f597eff6449764",
+      "spec": {
+        "layer": "ldem-80s-80mpp-hill",
+        "bounds_m": [
+          0.0,
+          -48000.0,
+          48000.0,
+          0.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "pgda90-hill-fixed-DN-0-255",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "ldem-80s-80mpp-hill",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          -48000.0,
+          48000.0,
+          0.0
+        ],
+        "resolution_m": 200.0,
+        "source_access": "vsicurl_window",
+        "attribution": "Barker et al., 2021, Planet. Space Sci. 203, 105119; NASA PGDA LOLA topography products. Product page: https://pgda.gsfc.nasa.gov/products/90",
+        "value_min": 51.915374755859375,
+        "value_max": 248.95176696777344,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "f55d7e5cc3b6ceea56280aa4a780cbe76ac87612bad8fca4ab2d97d87e87ecf2"
+      }
+    },
+    "ldem-80s-80mpp-hill/4/16/17": {
+      "file": "ldem-80s-80mpp-hill-4-16-17.png",
+      "sha256": "a3e22017d18ed44b01b8f81be9e46113c820336b13fbf17a400641d07f55c2cc",
+      "spec": {
+        "layer": "ldem-80s-80mpp-hill",
+        "bounds_m": [
+          0.0,
+          -96000.0,
+          48000.0,
+          -48000.0
+        ],
+        "crs": "+proj=stere +lat_0=-90 +lon_0=0 +k=1 +a=1737400 +b=1737400 +units=m",
+        "max_edge_px": 240,
+        "output_dimensions": [
+          240,
+          240
+        ],
+        "source": "pgda90-hill-fixed-DN-0-255",
+        "processing_version": "phase5f2-tiles-v1",
+        "grid": "sps-768km-v1"
+      },
+      "meta": {
+        "layer_id": "ldem-80s-80mpp-hill",
+        "role": "MAP_VISUALIZATION_ONLY",
+        "width_px": 240,
+        "height_px": 240,
+        "bounds_m": [
+          0.0,
+          -96000.0,
+          48000.0,
+          -48000.0
+        ],
+        "resolution_m": 200.0,
+        "source_access": "vsicurl_window",
+        "attribution": "Barker et al., 2021, Planet. Space Sci. 203, 105119; NASA PGDA LOLA topography products. Product page: https://pgda.gsfc.nasa.gov/products/90",
+        "value_min": 84.24778747558594,
+        "value_max": 241.5590057373047,
+        "nodata_fraction": 0.0,
+        "cache_status": "HIT",
+        "cache_key": "0a15067e303c3028ff1969ced0a31ef62ac29e07ef79b6f73fbdc0d249866517"
+      }
+    },
     "lroc-wac-south-summer/4/15/15": {
       "file": "lroc-wac-south-summer-4-15-15.png",
       "sha256": "4c8843aefafbd94cf74f0fb88f48bd557f5ac2b62c2a1bcb7e232c708c7e63fb",
@@ -1384,7 +1636,7 @@
         "value_min": 0.0,
         "value_max": 255.0,
         "nodata_fraction": 0.0,
-        "cache_status": "MISS",
+        "cache_status": "HIT",
         "cache_key": "8adb490607fab298b525477a9ffa296a2c5f47c7c4d658471efccde37afca3fe"
       }
     },
@@ -1426,7 +1678,7 @@
         "value_min": 0.0,
         "value_max": 255.0,
         "nodata_fraction": 0.0,
-        "cache_status": "MISS",
+        "cache_status": "HIT",
         "cache_key": "6fb2a203c20e7e5152a0046902d49d66f3987904a796ce2661bd4de1871d7c59"
       }
     },
@@ -1468,7 +1720,7 @@
         "value_min": 0.0,
         "value_max": 255.0,
         "nodata_fraction": 0.0,
-        "cache_status": "MISS",
+        "cache_status": "HIT",
         "cache_key": "b0979f29772a5b765f3cf5b712f74dd08f1f9cdffa4e9d151df7efb8edd90188"
       }
     },
@@ -1510,7 +1762,7 @@
         "value_min": 0.0,
         "value_max": 255.0,
         "nodata_fraction": 0.0,
-        "cache_status": "MISS",
+        "cache_status": "HIT",
         "cache_key": "e5908193a6cca016445783f82d7e5c0915d5a8fbf8dbc808883c52e9109e99d1"
       }
     },
@@ -1552,7 +1804,7 @@
         "value_min": 0.0,
         "value_max": 255.0,
         "nodata_fraction": 0.0,
-        "cache_status": "MISS",
+        "cache_status": "HIT",
         "cache_key": "79e87883bbb75e55ab637357a27149632357fa36bee613604234149d9ff5d8fb"
       }
     },
@@ -1594,7 +1846,7 @@
         "value_min": 0.0,
         "value_max": 255.0,
         "nodata_fraction": 0.0,
-        "cache_status": "MISS",
+        "cache_status": "HIT",
         "cache_key": "537a4c404f457cc1b9f473eafa2e1a47fd8c18882155a96cbd3bdd2cabdf6099"
       }
     }

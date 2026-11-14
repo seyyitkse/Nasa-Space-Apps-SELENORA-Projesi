@@ -90,6 +90,8 @@ export class PolarBasemap {
     const z = grid.getZForResolution(this.resolution, 1)
     const [rz, x, y] = record.coord
     const prepared = preparedTile(record.layer, rz!, x!, y!)
+    if (rz === 0 && covers(this.extent, [[-384000, -384000, 384000, 384000]])) return false
+    if (record.layer === WAC && rz === 4 && z === 5) return false
     if (!prepared && rz !== z) return false
     // Photo already has its own ready coarse pyramid. Hill detail is only
     // requested in hillshade mode; genuine prepared LOLA remains underneath.

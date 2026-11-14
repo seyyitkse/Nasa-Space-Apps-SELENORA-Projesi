@@ -26,6 +26,7 @@ describe('Native polar tile pyramid', () => {
     expect(preparedTile(NAC, 0, 0, 0)).toBe(false)
     expect(preparedTile(WAC, 5, 32, 32)).toBe(true)
     expect(preparedTile(WAC, 4, 15, 16)).toBe(true)
+    expect(preparedTile(HILL, 4, 15, 16)).toBe(true)
     expect(preparedTile(WAC, 5, 40, 40)).toBe(false)
   })
   it('does not count valid pixels elsewhere in a partial tile as viewport coverage', () => {

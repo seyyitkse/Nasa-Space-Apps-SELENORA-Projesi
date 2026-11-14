@@ -60,7 +60,7 @@ export function covers(view: Bounds, rectangles: Bounds[]): boolean {
 export function preparedTile(layer: string, z: number, x: number, y: number) {
   return (layer === WAC && z === 0) || ([WAC, HILL].includes(layer) && z === 1 && [1, 2].includes(x) && [1, 2].includes(y))
     || (layer === WAC && z === 5 && x >= 30 && x <= 33 && y >= 30 && y <= 34)
-    || (layer === WAC && z === 4 && x >= 15 && x <= 16 && y >= 15 && y <= 17)
+    || ([WAC, HILL].includes(layer) && z === 4 && x >= 15 && x <= 16 && y >= 15 && y <= 17)
 }
 
 export interface BasemapStatus {
