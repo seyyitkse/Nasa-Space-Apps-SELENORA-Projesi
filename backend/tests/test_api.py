@@ -65,7 +65,7 @@ def test_create_analysis_runs_with_mocked_horizons(client: TestClient) -> None:
 
     client.app.dependency_overrides[horizons_client] = lambda: FakeHorizons()
     r = client.post("/api/v1/analyses", json=VALID_ANALYSIS)
-    assert r.status_code == 202, r.text
+    assert r.status_code == 200, r.text
     body = r.json()
     assert body["status"] == "COMPLETED"
     assert body["data_quality"] == "EPHEMERIS_GEOMETRIC"

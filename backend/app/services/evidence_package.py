@@ -43,6 +43,8 @@ def build_evidence_package(result: AnalysisResult) -> dict[str, Any]:
     if any(s.score is None for s in result.sites):
         missing_notes.append("One or more sites have no score (unscorable or partial data).")
 
+    window_hours = round((result.end_utc - result.start_utc).total_seconds() / 3600.0, 3)
+
     return {
         "analysis_id": result.id,
         "mission_name": result.mission_name,
@@ -51,6 +53,7 @@ def build_evidence_package(result: AnalysisResult) -> dict[str, Any]:
         "algorithm_version": result.algorithm_version,
         "start_utc": result.start_utc.isoformat(),
         "end_utc": result.end_utc.isoformat(),
+        "window_hours": window_hours,
         "time_step_minutes": result.time_step_minutes,
         "horizon_model": result.horizon_model,
         "weights": result.weights.model_dump(),

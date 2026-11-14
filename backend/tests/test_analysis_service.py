@@ -241,7 +241,7 @@ def test_create_analysis_persists_and_caches(client: TestClient) -> None:
         "weights": {"sun_visibility": 40, "earth_visibility": 40, "joint_visibility": 20},
     }
     r1 = client.post("/api/v1/analyses", json=body)
-    assert r1.status_code == 202, r1.text
+    assert r1.status_code == 200, r1.text
     status = r1.json()
     assert status["status"] == "COMPLETED"
     assert status["data_quality"] == "EPHEMERIS_GEOMETRIC"
@@ -264,9 +264,9 @@ def test_create_analysis_persists_and_caches(client: TestClient) -> None:
     listed = client.get("/api/v1/analyses").json()
     assert any(a["id"] == analysis_id for a in listed)
 
-    # Cache hit — no extra Horizons calls
+    # Cache hit — no extra Horizons calls; completed → 200 not 202
     r2 = client.post("/api/v1/analyses", json=body)
-    assert r2.status_code == 202
+    assert r2.status_code == 200
     assert r2.json()["id"] == analysis_id
     assert fake.calls == calls_after_first
 
@@ -339,7 +339,7 @@ def test_live_two_site_analysis_end_to_end(client: TestClient) -> None:
         "weights": {"sun_visibility": 40, "earth_visibility": 40, "joint_visibility": 20},
     }
     r = client.post("/api/v1/analyses", json=body)
-    assert r.status_code == 202, r.text
+    assert r.status_code == 200, r.text
     status = r.json()
     assert status["status"] == "COMPLETED"
     assert status["data_quality"] in {"EPHEMERIS_GEOMETRIC", "PARTIAL"}
