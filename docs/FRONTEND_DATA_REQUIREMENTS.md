@@ -151,6 +151,24 @@ Always surface layer `attribution` / response headers for LOLA/PGDA and Horizons
 
 ---
 
+## Phase 5C integration verification (2026-11-14)
+
+Verified on `feature/phase5c-integration` (isolated worktree, DB copy `selenora.phase5c.db`, API `:8001`, SPA `:5175`):
+
+| Check | Result |
+|---|---|
+| CORS for SPA origin | `Access-Control-Allow-Origin: http://127.0.0.1:5175` |
+| `/maps/layers` roles + attribution | 8 layers; SCIENCE / VIZ / REFERENCE badges in Explorer |
+| `/maps/preview` PNG + `X-SELENORA-Bounds-M` | OK (hillshade overlay) |
+| `/maps/elevation` Site04 Point A | Z ≈ 1592.04 m |
+| `/terrain/horizon-profile` Point A | `LOCAL_TERRAIN_PARTIAL`, γ ≈ 194°, el@az86 ≈ 13.05° |
+| `/ephemeris/observer-series` | OK with `end_utc`; live Δ vs stored = 0.0000° on TERRAIN run |
+| `/artemis/regions` | 13 names; `geometry` always null |
+| TERRAIN analysis ranking | Refused under `LOCAL_TERRAIN_PARTIAL`; scores null / UNRANKED |
+| DeepSeek explain | Cached read OK (key server-side only) |
+
+---
+
 ## Phase 5A frontend consumption status (appended by the frontend, 2026-11-14)
 
 The SPA detects routes from the live `GET /openapi.json` (`frontend/src/services/contracts.ts → useCapabilities`)

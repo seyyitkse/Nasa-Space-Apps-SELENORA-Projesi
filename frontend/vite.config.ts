@@ -12,6 +12,12 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+    // Avoid Invalid hook call / null useContext when Recharts prebundles against a
+    // second React copy (common with worktree + shared node_modules junctions).
+    dedupe: ['react', 'react-dom'],
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'recharts'],
   },
   server: {
     port: devPort,
