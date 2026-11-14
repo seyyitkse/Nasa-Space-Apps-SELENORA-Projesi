@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app import __version__
 from app.core.config import ALGORITHM_VERSION, API_VERSION, Settings
+from app.integrations.nasa.lola import lola_available
 from app.schemas.health import ComponentStatus, HealthResponse
 
 _STARTED = time.monotonic()
@@ -36,8 +37,12 @@ def check_health(settings: Settings, session: Session) -> HealthResponse:
         ),
         ComponentStatus(
             name="terrain_model",
-            status="NOT_IMPLEMENTED",
-            detail="LOLA horizon model planned for Phase 4.",
+            status="READY" if lola_available() else "NOT_CONFIGURED",
+            detail=(
+                "LOLA 5 m/pix DEM horizon available (horizon_model=TERRAIN)."
+                if lola_available()
+                else "No local LOLA GeoTIFF under data/raw/lola/; TERRAIN mode unavailable."
+            ),
         ),
         ComponentStatus(
             name="ai_analyst",

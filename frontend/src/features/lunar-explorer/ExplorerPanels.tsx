@@ -1,3 +1,4 @@
+import { useQuery } from '@tanstack/react-query'
 import { Info, Layers, MapPin, Plus, Trash2 } from 'lucide-react'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -9,6 +10,7 @@ import { FieldError, Input, Label } from '@/components/ui/input'
 import { Separator, Skeleton, Switch } from '@/components/ui/misc'
 import { formatCoord } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { selenoraApi } from '@/services/selenoraApi'
 import type { CustomSite } from '@/stores/missionStore'
 import type { LandingSite } from '@/types/api'
 
@@ -180,9 +182,9 @@ export function LayerPanel({ layers, onChange }: { layers: MapLayers; onChange: 
             <Switch checked={layers[it.key]} onCheckedChange={(v) => onChange({ ...layers, [it.key]: v })} />
           </label>
         ))}
-        <label className="flex items-center justify-between gap-3 text-[13px] text-fg-3">
+        <label className="flex items-center justify-between gap-3 text-[13px] text-fg-2">
           <span>{t('explorer.layerLola')}</span>
-          <Switch checked={false} disabled aria-describedby="lola-note" />
+          <Switch checked disabled aria-describedby="lola-note" />
         </label>
         <p id="lola-note" className="flex gap-1.5 text-[11px] leading-relaxed text-fg-3">
           <Info className="mt-0.5 size-3 shrink-0" aria-hidden />
@@ -215,6 +217,12 @@ export function DetailsPanel({
   assignedSlot: 'siteA' | 'siteB' | null
 }) {
   const { t } = useTranslation()
+  const coverage = useQuery({
+    queryKey: ['terrain-coverage', target?.lat, target?.lon],
+    queryFn: () => selenoraApi.terrainCoverage(target!.lat, target!.lon),
+    enabled: !!target,
+    staleTime: 60_000,
+  })
   return (
     <Card className="h-full">
       <CardHeader className="pb-2">
@@ -246,6 +254,34 @@ export function DetailsPanel({
                 <dd className="mt-0.5 text-fg">{target.lon.toFixed(4)}°</dd>
               </div>
             </dl>
+            <div>
+              <div className="sel-eyebrow mb-1.5 text-[10px]">{t('explorer.terrainCoverage')}</div>
+              {coverage.isLoading ? (
+                <Skeleton className="h-16" />
+              ) : coverage.data ? (
+                <div className="space-y-2 rounded-lg border border-line bg-bg-2/60 p-2.5 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-fg-3">{t('explorer.terrainCoverage')}</span>
+                    <Badge tone={coverage.data.covered ? 'success' : 'warning'}>
+                      {coverage.data.covered ? t('explorer.terrainCovered') : t('explorer.terrainUncovered')}
+                    </Badge>
+                  </div>
+                  {coverage.data.covered && (
+                    <dl className="grid grid-cols-2 gap-x-2 gap-y-1 font-mono text-[11px]">
+                      <dt className="text-fg-3">{t('explorer.terrainDataset')}</dt>
+                      <dd className="text-right text-fg">{coverage.data.dem_site_id}</dd>
+                      <dt className="text-fg-3">{t('explorer.terrainElevation')}</dt>
+                      <dd className="text-right text-fg">
+                        {coverage.data.surface_z_m != null ? `${coverage.data.surface_z_m.toFixed(1)} m` : '—'}
+                      </dd>
+                    </dl>
+                  )}
+                  <p className="text-[11px] leading-relaxed text-fg-3">{coverage.data.message}</p>
+                </div>
+              ) : (
+                <p className="text-[11px] text-fg-3">{coverage.error ? String(coverage.error) : '—'}</p>
+              )}
+            </div>
             {target.source && (
               <div>
                 <div className="sel-eyebrow text-[10px]">{t('explorer.dataSource')}</div>

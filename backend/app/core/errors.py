@@ -55,6 +55,13 @@ class RateLimitedError(AppError):
     code = "RATE_LIMITED"
 
 
+class TerrainUnavailableError(AppError):
+    """Requested TERRAIN mode but LOLA coverage/horizon is insufficient."""
+
+    status_code = 422
+    code = "TERRAIN_UNAVAILABLE"
+
+
 def _body(request: Request, code: str, message: str, details: Any = None) -> dict[str, Any]:
     return {
         "error": {

@@ -6,6 +6,7 @@
 export type DataQuality =
   | 'EPHEMERIS_GEOMETRIC'
   | 'EPHEMERIS_TERRAIN'
+  | 'LOCAL_TERRAIN_PARTIAL'
   | 'SYNTHETIC_DEMO'
   | 'PARTIAL'
   | 'UNAVAILABLE'
@@ -126,6 +127,35 @@ export interface ScoreContribution {
   contribution: number
 }
 
+export interface TerrainSiteMeta {
+  dem_file: string | null
+  dem_site_id: string | null
+  resolution_m: number | null
+  horizon_coverage_fraction: number | null
+  any_data_fraction?: number | null
+  complete_coverage_fraction?: number | null
+  median_valid_range_m?: number | null
+  min_valid_range_m?: number | null
+  max_range_m?: number | null
+  true_north_grid_azimuth_deg?: number | null
+  observer_height_m: number | null
+  surface_z_m: number | null
+  dataset_version: string | null
+  sun_unknown_fraction: number | null
+  earth_unknown_fraction: number | null
+  unknown_hours?: number | null
+  known_sample_fraction?: number | null
+}
+
+export interface GeometricVsTerrain {
+  geometric: VisibilityMetrics
+  longest_darkness_hours_delta: number
+  longest_communication_gap_hours_delta: number
+  sun_visibility_pct_delta: number
+  earth_visibility_pct_delta: number
+  joint_visibility_pct_delta: number
+}
+
 export interface SiteResult {
   label: string
   latitude_deg: number
@@ -138,6 +168,22 @@ export interface SiteResult {
   darkness_windows: Interval[]
   communication_gaps: Interval[]
   joint_windows: Interval[]
+  terrain?: TerrainSiteMeta | null
+  geometric_comparison?: GeometricVsTerrain | null
+}
+
+export interface TerrainCoverage {
+  covered: boolean
+  latitude_deg: number
+  longitude_deg: number
+  stereo_x_m: number
+  stereo_y_m: number
+  surface_z_m: number | null
+  dem_site_id: string | null
+  dem_file: string | null
+  message: string
+  dataset_version: string
+  citation: string
 }
 
 export interface Provenance {

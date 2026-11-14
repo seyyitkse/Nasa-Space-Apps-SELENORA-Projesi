@@ -18,6 +18,7 @@ import { useSyntheticDemo } from '@/features/mission-planner/useSyntheticDemo'
 import { toAnalysisRequest, validatePlanner } from '@/features/mission-planner/validation'
 import { WeightsEditor } from '@/features/mission-planner/WeightsEditor'
 import { CumulativeJointChart, ElevationChart, VisibilityBarChart } from '@/features/site-comparison/Charts'
+import { GeometricTerrainCompare } from '@/features/site-comparison/GeometricTerrainCompare'
 import { ScienceTransparencyPanel } from '@/features/site-comparison/ScienceTransparencyPanel'
 import { ScoreBreakdown } from '@/features/site-comparison/ScoreBreakdown'
 import { VisibilityTimeline } from '@/features/site-comparison/VisibilityTimeline'
@@ -128,6 +129,8 @@ function ComparisonDashboard({
       </div>
 
       <MetricTiles sites={result.sites} />
+
+      <GeometricTerrainCompare sites={result.sites} />
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Section title={t('comparison.elevationTitle')} description={timeline.downsampled ? t('comparison.downsampled', { n: timeline.step_minutes }) : undefined}>

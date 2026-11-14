@@ -3,10 +3,13 @@
 from __future__ import annotations
 
 from app.core.config import Settings
+from app.integrations.nasa.lola import lola_available
 from app.schemas.data_source import DataSourceList, DataSourceOut
+from app.services import terrain_data_service
 
 
 def list_data_sources(settings: Settings) -> DataSourceList:
+    lola_ready = lola_available()
     return DataSourceList(
         items=[
             DataSourceOut(
@@ -25,21 +28,32 @@ def list_data_sources(settings: Settings) -> DataSourceList:
                 phase=2,
                 notes=(
                     "POST /api/v1/analyses fetches live observer Az/El for Sun (10) and Earth (399) "
-                    "at lunar GEODETIC sites (coord@301). Geometric horizon only until LOLA (Phase 4)."
+                    "at lunar GEODETIC sites (coord@301). Use horizon_model=GEOMETRIC (default) or "
+                    "TERRAIN when local LOLA tiles cover the sites."
                 ),
             ),
             DataSourceOut(
                 id="lro-lola",
                 name="LRO Lunar Orbiter Laser Altimeter (LOLA)",
-                provider="NASA Goddard / LRO Project",
+                provider="NASA Goddard Planetary Geodesy Data Archive (PGDA)",
                 category="TOPOGRAPHY",
-                description="Polar digital elevation models for terrain elevation and local horizon profiles.",
-                url="https://science.nasa.gov/mission/lro/data-products/",
-                documentation_url="https://pds-geosciences.wustl.edu/missions/lro/lola.htm",
-                integration_status="PLANNED",
+                description=(
+                    "5 m/pix south-polar stereographic DEMs (Site01 Connecting Ridge, "
+                    "Site04 Shackleton Rim) for local terrain horizon profiles."
+                ),
+                url="https://pgda.gsfc.nasa.gov/products/78",
+                documentation_url="https://doi.org/10.1016/j.pss.2020.105119",
+                integration_status="INTEGRATED" if lola_ready else "NOT_CONFIGURED",
                 used_for=["Terrain elevation", "Local horizon profile", "Terrain shadowing"],
                 phase=4,
-                notes="Until integrated, all analyses use a geometric (smooth-sphere) horizon.",
+                notes=(
+                    f"{terrain_data_service.DATASET_CITATION} "
+                    + (
+                        "Local GeoTIFFs present; TERRAIN mode enabled for covered sites."
+                        if lola_ready
+                        else "Place *_surf.tif under data/raw/lola/ to enable TERRAIN mode."
+                    )
+                ),
             ),
             DataSourceOut(
                 id="deepseek",

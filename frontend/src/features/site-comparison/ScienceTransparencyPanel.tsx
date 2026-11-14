@@ -33,6 +33,10 @@ export function ScienceTransparencyPanel({ result }: { result: AnalysisResult })
           {result.data_quality === 'EPHEMERIS_GEOMETRIC' && (
             <span className="text-[11px] text-fg-3">{t('transparency.realEphemerisHint')}</span>
           )}
+          {(result.data_quality === 'EPHEMERIS_TERRAIN' ||
+            result.data_quality === 'LOCAL_TERRAIN_PARTIAL') && (
+            <span className="text-[11px] text-success/90">{t('transparency.realTerrainHint')}</span>
+          )}
           {result.data_quality === 'SYNTHETIC_DEMO' && (
             <span className="text-[11px] text-gold/90">{t('quality.syntheticWarning')}</span>
           )}
@@ -46,6 +50,30 @@ export function ScienceTransparencyPanel({ result }: { result: AnalysisResult })
             </div>
           ))}
         </dl>
+
+        {result.horizon_model === 'TERRAIN' && result.sites.some((s) => s.terrain) && (
+          <div>
+            <div className="sel-eyebrow mb-2 text-[10px]">{t('transparency.terrainMeta')}</div>
+            <ul className="space-y-1.5 font-mono text-[11.5px] text-fg-2">
+              {result.sites.map(
+                (s) =>
+                  s.terrain && (
+                    <li key={s.label}>
+                      <span className="text-fg">{s.label}</span>
+                      {': '}
+                      {s.terrain.dem_file ?? '—'} · {t('transparency.resolution')}{' '}
+                      {s.terrain.resolution_m ?? '—'} m · {t('transparency.horizonCoverage')}{' '}
+                      {s.terrain.horizon_coverage_fraction != null
+                        ? `${(s.terrain.horizon_coverage_fraction * 100).toFixed(0)}%`
+                        : '—'}{' '}
+                      · {t('transparency.observerHeight')} {s.terrain.observer_height_m ?? '—'} m · Z=
+                      {s.terrain.surface_z_m?.toFixed(1) ?? '—'} m · {s.terrain.dataset_version}
+                    </li>
+                  ),
+              )}
+            </ul>
+          </div>
+        )}
 
         <div>
           <div className="sel-eyebrow mb-2 text-[10px]">{t('transparency.sites')}</div>

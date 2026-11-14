@@ -13,11 +13,12 @@ dependencies = [
     "alembic>=1.14",
     "numpy>=2.1",
     "openai>=1.55",
+    "rasterio>=1.4",
+    "pyproj>=3.7",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.3"]
-# Phase 4 (terrain): "scipy", "rasterio", "pyproj" — added only when actually used.
 
 [build-system]
 requires = ["setuptools>=68"]

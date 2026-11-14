@@ -9,6 +9,7 @@ import type {
   ExplainResponse,
   HealthResponse,
   LandingSiteList,
+  TerrainCoverage,
   TimelineResponse,
 } from '@/types/api'
 
@@ -16,6 +17,10 @@ export const selenoraApi = {
   health: () => api.get<HealthResponse>('/health').then((r) => r.data),
   sites: () => api.get<LandingSiteList>('/api/v1/sites').then((r) => r.data),
   dataSources: () => api.get<DataSourceList>('/api/v1/data-sources').then((r) => r.data),
+  terrainCoverage: (latitude_deg: number, longitude_deg: number) =>
+    api
+      .get<TerrainCoverage>('/api/v1/terrain/coverage', { params: { latitude_deg, longitude_deg } })
+      .then((r) => r.data),
   analyses: () => api.get<AnalysisStatus[]>('/api/v1/analyses').then((r) => r.data),
   /** Real JPL Horizons analysis — may take tens of seconds for multi-day windows. */
   createAnalysis: (body: AnalysisCreate) =>

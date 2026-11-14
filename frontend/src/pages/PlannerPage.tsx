@@ -230,9 +230,7 @@ export default function PlannerPage() {
                   onChange={(e) => update({ horizonModel: e.target.value === 'TERRAIN' ? 'TERRAIN' : 'GEOMETRIC' })}
                 >
                   <option value="GEOMETRIC">{t('planner.horizonGeometric')}</option>
-                  <option value="TERRAIN" disabled>
-                    {t('planner.horizonTerrain')}
-                  </option>
+                  <option value="TERRAIN">{t('planner.horizonTerrain')}</option>
                 </NativeSelect>
               </div>
             </CardContent>
