@@ -1,0 +1,7 @@
+{
+  "status": 503,
+  "body": "{\"error\":{\"code\":\"LAYER_UNAVAILABLE\",\"message\":\"Browser QA: simulated remote LROC HTTP 503\",\"details\":null,\"request_id\":\"70aaf30368e64b6b\"}}",
+  "seconds": 0.03697889999602921,
+  "url": "http://127.0.0.1:8044/api/v1/maps/tiles/lroc-wac-south-summer/5/45/45.png",
+  "scenario": "controlled Lunaserv HTTP 503 on an uncached tile"
+}

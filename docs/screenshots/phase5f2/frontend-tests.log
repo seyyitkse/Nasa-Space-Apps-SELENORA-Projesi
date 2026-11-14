@@ -1,0 +1,8 @@
+
+ RUN  v5.1.0 C:/Users/ahmet/.codex/worktrees/phase5f2/phase5f/frontend
+
+
+ Test Files  16 passed (16)
+      Tests  93 passed (93)
+   Start at  23:59:55
+   Duration  7.78s (environment 59%, setup 21%, tests 9%, import 8%, transform 2%, worker 1%)

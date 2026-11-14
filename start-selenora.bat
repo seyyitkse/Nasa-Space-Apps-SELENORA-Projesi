@@ -37,7 +37,7 @@ if not exist "backend\.env" (
 
 echo [0/2] Preparing verified NASA startup basemaps in the disk cache...
 pushd backend
-.venv\Scripts\python.exe -m app.services.prepare_map_previews
+rem Import the shipped NASA pyramid; optional legacy acquisition must not delay launch.
 .venv\Scripts\python.exe -m app.services.prepare_polar_overviews
 if errorlevel 1 echo [WARNING] NASA preparation incomplete. Explorer will show available cached imagery and offer Retry.
 popd

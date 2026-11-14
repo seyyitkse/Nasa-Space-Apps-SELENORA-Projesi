@@ -1,0 +1,10 @@
+{
+  "branch": "feature/phase5f2-imagery-quality",
+  "application_commit": "d824cbe3d5853a0454ce2605bc02eead5b05578c",
+  "base": "cef848bc043c67d341d5fd8e9414a02467484f3f",
+  "phase6a": "409a06256c49be9e43e0caff8cb97e24789dc58b",
+  "phase6b": "c80002daf1be4e66192eb0a67893a4cac4aa3ead",
+  "protected_science_diff": [],
+  "phase5f1_status": [],
+  "active_faults": []
+}
