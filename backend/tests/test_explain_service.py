@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 
 from app.integrations.deepseek.client import DeepSeekClient
 from app.schemas.analysis import AIMissionReport, AnalysisResult, DecisionWeights
-from app.services.ai_guard import ranking_contradicts
+from app.services.ai_guard import find_unsupported_numbers, ranking_contradicts
 from app.services.evidence_package import build_evidence_package
 
 
@@ -125,6 +125,7 @@ def test_evidence_package_is_allowlisted() -> None:
     assert pkg["analysis_id"] == "ana-1"
     assert pkg["recommended_site_label"] == "Site A"
     assert "sites" in pkg and len(pkg["sites"]) == 2
+    assert pkg["window_hours"] == 48.0
     assert "instruction_note" in pkg
     # No timeline / raw ephemeris dumps
     blob = json.dumps(pkg)
@@ -142,6 +143,75 @@ def test_ranking_contradiction_detected() -> None:
     )
     assert ranking_contradicts(report, "Site A") is True
     assert ranking_contradicts(report, "Site B") is False
+
+
+def test_ranking_contradiction_turkish_and_false_positives() -> None:
+    # TR: clear contradiction
+    tr = AIMissionReport(
+        summary="Önerilen Site B iniş noktasıdır.",
+        key_findings=["En uygun Site B."],
+        site_advantages={"Site A": ["güneş"], "Site B": ["iletişim"]},
+        site_disadvantages={},
+        comparison_explanation="Tavsiye edilen Site B.",
+    )
+    assert ranking_contradicts(tr, "Site A") is True
+    assert ranking_contradicts(tr, "Site B") is False
+
+    # Mentioning Site B without recommend language is allowed
+    mention = AIMissionReport(
+        summary="Site A leads; Site B has longer darkness.",
+        key_findings=["Site B darkness is longer."],
+        site_advantages={"Site A": ["sun"], "Site B": ["earth"]},
+        site_disadvantages={},
+        comparison_explanation="Deterministic ranking keeps Site A first.",
+    )
+    assert ranking_contradicts(mention, "Site A") is False
+
+    # Tie / no recommendation never contradicts
+    assert ranking_contradicts(tr, None) is False
+
+
+def test_unsupported_numbers_en_tr_rounding() -> None:
+    analysis = {
+        "window_hours": 48.0,
+        "sites": [
+            {"label": "Site A", "score": 62.0, "metrics": {"sun_visibility_pct": 80.0}},
+            {"label": "Site B", "score": 52.0, "metrics": {"sun_visibility_pct": 60.5}},
+        ],
+        "recommended_site_label": "Site A",
+    }
+    ok = AIMissionReport(
+        summary="Over a 48-hour window Site A score 62 with sun_visibility_pct 80.",
+        key_findings=["Site B sun_visibility_pct yaklaşık 60,5."],
+        site_advantages={"Site A": ["80.0"]},
+        site_disadvantages={"Site B": ["60.5"]},
+        comparison_explanation="Ranks use scores 62 and 52.",
+    )
+    assert find_unsupported_numbers(ok, analysis) == []
+
+    bad = AIMissionReport(
+        summary="Site A reaches 87.2 percent sunlight.",
+        key_findings=["Gizli skor 99.9."],
+        site_advantages={"Site A": ["ok"]},
+        site_disadvantages={"Site B": ["ok"]},
+        comparison_explanation="Baseline.",
+    )
+    unsupported = find_unsupported_numbers(bad, analysis)
+    assert "87.2" in unsupported
+    assert "99.9" in unsupported
+
+    # Provenance ISO timestamps must not flag fractional seconds as claims.
+    stamped = AIMissionReport(
+        summary="Metrics match the engine.",
+        key_findings=[],
+        site_advantages={"Site A": ["ok"]},
+        site_disadvantages={"Site B": ["ok"]},
+        comparison_explanation="Baseline.",
+        data_quality_notes=[
+            "Provenance retrieved 2026-11-14T08:19:41.093937Z from Horizons."
+        ],
+    )
+    assert find_unsupported_numbers(stamped, analysis) == []
 
 
 def test_explain_endpoint_not_configured(client: TestClient) -> None:

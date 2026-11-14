@@ -36,19 +36,29 @@ def intervals_from_times(
     mask: np.ndarray,
     step_minutes: int,
     value: bool,
+    *,
+    analysis_end_utc: datetime,
 ) -> list[Interval]:
-    """Build Interval list from a boolean mask over an ordered time grid."""
+    """Build Interval list from a boolean mask; durations clamped to ``[t, end)``."""
+    hold = visibility.hold_hours_for_samples(times, step_minutes, analysis_end_utc)
     spans = visibility.runs(mask, value)
-    spans.sort(key=lambda se: se[1] - se[0], reverse=True)
+    spans.sort(key=lambda se: float(hold[se[0] : se[1]].sum()), reverse=True)
+    end_limit = to_utc(analysis_end_utc)
+    step = timedelta(minutes=step_minutes)
     out: list[Interval] = []
     for start_idx, end_idx in spans[:MAX_WINDOWS]:
         start = to_utc(times[start_idx])
-        end = to_utc(times[end_idx - 1]) + timedelta(minutes=step_minutes)
+        # Half-open hold ends at min(last_sample + step, analysis_end).
+        raw_end = to_utc(times[end_idx - 1]) + step
+        end = min(raw_end, end_limit)
+        duration = float(hold[start_idx:end_idx].sum())
+        if duration <= 0:
+            continue
         out.append(
             Interval(
                 start_utc=start,
                 end_utc=end,
-                duration_hours=round((end_idx - start_idx) * step_minutes / 60.0, 3),
+                duration_hours=round(duration, 3),
             )
         )
     return sorted(out, key=lambda i: i.start_utc)
@@ -103,9 +113,14 @@ def build_site_result(
     step_minutes: int,
     weights: dict[str, float],
     data_quality: str,
+    analysis_end_utc: datetime,
 ) -> tuple[SiteResult, float | None, np.ndarray, np.ndarray, np.ndarray]:
     summary, sun_vis, earth_vis, joint = visibility.summarize(
-        sun_elevation, earth_elevation, step_minutes
+        sun_elevation,
+        earth_elevation,
+        step_minutes,
+        times=times,
+        analysis_end_utc=analysis_end_utc,
     )
     metrics = summary.as_metrics()
     scorable = scoring.is_scorable(data_quality, summary.missing_fraction)
@@ -113,6 +128,9 @@ def build_site_result(
     contribs: list[Contribution] = []
     if scorable:
         score, contribs = scoring.score_site(metrics, weights)
+    # Invisible masks for window lists (missing already excluded from sun_vis/earth_vis).
+    sun_dark = visibility.classify_visibility(sun_elevation)[1]
+    earth_dark = visibility.classify_visibility(earth_elevation)[1]
     site = SiteResult(
         label=label,
         latitude_deg=latitude_deg,
@@ -122,9 +140,15 @@ def build_site_result(
         score=score,
         rank=None,
         contributions=contributions_to_schema(contribs),
-        darkness_windows=intervals_from_times(times, sun_vis, step_minutes, False),
-        communication_gaps=intervals_from_times(times, earth_vis, step_minutes, False),
-        joint_windows=intervals_from_times(times, joint, step_minutes, True),
+        darkness_windows=intervals_from_times(
+            times, sun_dark, step_minutes, True, analysis_end_utc=analysis_end_utc
+        ),
+        communication_gaps=intervals_from_times(
+            times, earth_dark, step_minutes, True, analysis_end_utc=analysis_end_utc
+        ),
+        joint_windows=intervals_from_times(
+            times, joint, step_minutes, True, analysis_end_utc=analysis_end_utc
+        ),
     )
     return site, score, sun_vis, earth_vis, joint
 

@@ -28,8 +28,9 @@ function ReportSection({ title, children }: { title: string; children: React.Rea
 }
 
 function AiReportBlock({ analysisId }: { analysisId: string }) {
-  const { t } = useTranslation()
-  const explain = useExplanation(analysisId.startsWith('demo-') ? undefined : analysisId)
+  const { t, i18n } = useTranslation()
+  const lang = (i18n.language?.startsWith('tr') ? 'tr' : 'en') as 'en' | 'tr'
+  const explain = useExplanation(analysisId.startsWith('demo-') ? undefined : analysisId, lang)
   if (analysisId.startsWith('demo-')) {
     return <p className="text-[13px] text-fg-3">{t('reports.aiNone')}</p>
   }

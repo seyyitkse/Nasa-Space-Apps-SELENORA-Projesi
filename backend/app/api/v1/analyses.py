@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends, Path, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -55,16 +55,23 @@ def list_analyses(session: Annotated[Session, Depends(db_session)]) -> list[Anal
 @router.post(
     "",
     response_model=AnalysisStatus,
-    status_code=202,
-    responses=_ERRORS,
+    responses={
+        **_ERRORS,
+        200: {"model": AnalysisStatus, "description": "Analysis completed (sync or cache hit)"},
+        202: {"model": AnalysisStatus, "description": "Analysis accepted and still running"},
+    },
     summary="Create a mission analysis from JPL Horizons ephemeris",
 )
 async def create_analysis(
     body: AnalysisCreate,
+    response: Response,
     session: Annotated[Session, Depends(db_session)],
     horizons: Annotated[HorizonsClient, Depends(horizons_client)],
 ) -> AnalysisStatus:
-    return await analysis_service.create_analysis(session, horizons, body)
+    status = await analysis_service.create_analysis(session, horizons, body)
+    # 202 only when work is still in flight; completed/cache-hit → 200.
+    response.status_code = 202 if status.status in {"PENDING", "RUNNING"} else 200
+    return status
 
 
 @router.get("/{analysis_id}", response_model=AnalysisResult, responses=_ERRORS)

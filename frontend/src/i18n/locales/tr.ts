@@ -1,6 +1,8 @@
 import type { Messages } from './en'
+import phase5a from './phase5a.tr'
 
 const tr: Messages = {
+  ...phase5a,
   common: {
     appName: 'SELENORA',
     subtitle: 'Yapay Zekâ Destekli Ay Görevi İstihbaratı',
@@ -22,6 +24,8 @@ const tr: Messages = {
     requestId: 'İstek kimliği',
   },
   nav: {
+    simulator: 'Ufuk Simülatörü',
+    windows: 'Görev Pencereleri',
     mission: 'Görev',
     intelligence: 'Analiz',
     overview: 'Görev Kontrol',
@@ -62,6 +66,7 @@ const tr: Messages = {
   quality: {
     EPHEMERIS_GEOMETRIC: 'Efemeris · geometrik ufuk',
     EPHEMERIS_TERRAIN: 'Efemeris · arazi ufku',
+    LOCAL_TERRAIN_PARTIAL: 'Efemeris · yerel arazi (kısmi DEM menzili)',
     SYNTHETIC_DEMO: 'SYNTHETIC_DEMO',
     PARTIAL: 'Kısmi veri',
     UNAVAILABLE: 'Veri yok',
@@ -128,9 +133,14 @@ const tr: Messages = {
     layerReference: 'Referans noktalar',
     layerCustom: 'Sizin noktalarınız',
     layerLabels: 'Etiketler',
-    layerLola: 'LOLA yükseltisi (Aşama 4)',
+    layerLola: 'LOLA DEM kapsamı (Site01 / Site04)',
     baseRasterMissing:
-      'Taban raster bağlı değil: Ay görüntüsü veya yükselti gösterilmiyor. Yalnızca koordinat ağı ve işaretçiler — LOLA mozaiği Aşama 4’te gelecek.',
+      'Tam Ay görüntü mozaiği yok. A/B noktaları TERRAIN analizinde PGDA LOLA 5 m DEM kullanır; seçili noktada kapsam ve yükselti görünür.',
+    terrainCoverage: 'LOLA kapsamı',
+    terrainCovered: 'Kapsanıyor',
+    terrainUncovered: 'Yerel 5 m karolar dışında',
+    terrainElevation: 'Yüzey Z',
+    terrainDataset: 'DEM karosu',
     projection: 'Projeksiyon',
     projectionValue: 'Kutupsal stereografik (güney), R = 1737,4 km',
     cursor: 'İmleç',
@@ -164,7 +174,7 @@ const tr: Messages = {
     minutes: '{{n}} dk',
     horizonModel: 'Ufuk modeli',
     horizonGeometric: 'Geometrik (düzgün küre)',
-    horizonTerrain: 'Arazi (LOLA) — Aşama 4',
+    horizonTerrain: 'Arazi (LOLA 5 m DEM)',
     priorities: 'Görev öncelikleri',
     prioritiesHint: 'Karar ağırlıklarının toplamı %100 olmalıdır.',
     total: 'Toplam',
@@ -326,10 +336,24 @@ const tr: Messages = {
     sampling: 'Örnekleme çözünürlüğü',
     created: 'Oluşturulma',
     sites: 'Gözlem koordinatları',
-    coordFrame: 'planetosentrik, doğu-pozitif boylam, geometrik ufuk',
+    coordFrame: 'planetosentrik, doğu-pozitif boylam',
     retrieved: 'Alınma zamanı',
     assumptions: 'Hesaplama varsayımları',
     realEphemerisHint: 'GERÇEK EFEMERİS — GEOMETRİK UFUK (arazi düzeltilmiş değil).',
+    realTerrainHint: 'GERÇEK EFEMERİS + LOLA ARAZİ UFKU (PGDA 5 m/piksel).',
+    terrainMeta: 'Arazi veri seti',
+    observerHeight: 'Gözlemci yüksekliği',
+    horizonCoverage: 'Ufuk kapsamı',
+    resolution: 'DEM çözünürlüğü',
+  },
+  terrainCompare: {
+    title: 'Geometrik vs arazi görünürlüğü',
+    description:
+      'Aynı Horizons Az/El; düzgün 0° küre ufku ile yerel LOLA arazi ufku karşılaştırması.',
+    geometric: 'Geometrik',
+    terrain: 'Arazi düzeltilmiş',
+    delta: 'Δ (arazi − geometrik)',
+    coverageWarn: 'DEM kapsamı olmayan azimutlar UNKNOWN — açık gökyüzü sayılmaz.',
   },
   notFound: {
     title: 'Haritanın dışında',

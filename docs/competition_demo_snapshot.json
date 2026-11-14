@@ -1,0 +1,49 @@
+{
+  "analysis_id": "40aca886-e33b-4707-82bb-742e73a750d5",
+  "mission_name": "Competition Jury — South Pole Pair",
+  "algorithm_version": "0.3.1-phase3.3",
+  "start_utc": "2026-12-01T00:00:00Z",
+  "end_utc": "2026-12-05T00:00:00Z",
+  "data_quality": "EPHEMERIS_GEOMETRIC",
+  "recommended_site_label": null,
+  "sites": [
+    {
+      "label": "Shackleton Rim Point A",
+      "latitude_deg": -89.68,
+      "longitude_deg": -166.0,
+      "rank": 1,
+      "score": 40.0,
+      "metrics": {
+        "sun_visibility_pct": 100.0,
+        "earth_visibility_pct": 0.0,
+        "joint_visibility_pct": 0.0,
+        "longest_sunlight_hours": 96.0,
+        "longest_darkness_hours": 0.0,
+        "longest_earth_visibility_hours": 0.0,
+        "longest_communication_gap_hours": 96.0,
+        "longest_joint_visibility_hours": 0.0
+      }
+    },
+    {
+      "label": "Connecting Ridge Point B",
+      "latitude_deg": -89.44,
+      "longitude_deg": -141.8,
+      "rank": 1,
+      "score": 40.0,
+      "metrics": {
+        "sun_visibility_pct": 100.0,
+        "earth_visibility_pct": 0.0,
+        "joint_visibility_pct": 0.0,
+        "longest_sunlight_hours": 96.0,
+        "longest_darkness_hours": 0.0,
+        "longest_earth_visibility_hours": 0.0,
+        "longest_communication_gap_hours": 96.0,
+        "longest_joint_visibility_hours": 0.0
+      }
+    }
+  ],
+  "explain_model": "deepseek-flash",
+  "explain_cached_second_call": true,
+  "summary_preview": "Two south-polar candidate sites were compared over a 96-hour window using geometric Sun and Earth visibility from JPL Horizons ephemerides. Both sites show identical visibility metrics and identical scores, so the engine reports a tie with ",
+  "coordinate_note": "Approximate Bussey et al. (2010) Points A/B; APPROXIMATE_REFERENCE — not official Artemis III polygons."
+}

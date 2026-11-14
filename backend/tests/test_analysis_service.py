@@ -98,7 +98,7 @@ def test_compute_from_real_fixtures_matches_sample_elevations() -> None:
     result, timeline, rows = compute_from_ephemerides(req, "test-id", site_ephems)
     assert result.data_quality == "EPHEMERIS_GEOMETRIC"
     assert result.status == "COMPLETED"
-    assert result.algorithm_version.endswith("phase3")
+    assert "phase3" in result.algorithm_version
     assert len(result.sites) == 2
     assert all(s.score is not None and s.rank is not None for s in result.sites)
     assert result.provenance[0].source_id == "jpl-horizons"
@@ -172,9 +172,12 @@ def test_joint_visibility_is_intersection() -> None:
     }
     result, _, _ = compute_from_ephemerides(req, "joint-id", [bodies, bodies])
     m = result.sites[0].metrics
-    assert m.sun_visibility_pct == pytest.approx(50.0)
-    assert m.earth_visibility_pct == pytest.approx(50.0)
-    assert m.joint_visibility_pct == pytest.approx(25.0)
+    # Window [t0, t0+3h): 4 Horizons-style samples, last at end → 0 h hold.
+    # Covered 3 h; sun at 0–1 (2 h); earth at 1–2 (2 h); joint at 1 (1 h).
+    assert m.sun_visibility_pct == pytest.approx(66.667, abs=1e-3)
+    assert m.earth_visibility_pct == pytest.approx(66.667, abs=1e-3)
+    assert m.joint_visibility_pct == pytest.approx(33.333, abs=1e-3)
+    assert m.longest_communication_gap_hours <= 3.0 + 1e-9
 
 
 class FakeHorizons:
@@ -241,7 +244,7 @@ def test_create_analysis_persists_and_caches(client: TestClient) -> None:
         "weights": {"sun_visibility": 40, "earth_visibility": 40, "joint_visibility": 20},
     }
     r1 = client.post("/api/v1/analyses", json=body)
-    assert r1.status_code == 202, r1.text
+    assert r1.status_code == 200, r1.text
     status = r1.json()
     assert status["status"] == "COMPLETED"
     assert status["data_quality"] == "EPHEMERIS_GEOMETRIC"
@@ -264,9 +267,9 @@ def test_create_analysis_persists_and_caches(client: TestClient) -> None:
     listed = client.get("/api/v1/analyses").json()
     assert any(a["id"] == analysis_id for a in listed)
 
-    # Cache hit — no extra Horizons calls
+    # Cache hit — no extra Horizons calls; completed → 200 not 202
     r2 = client.post("/api/v1/analyses", json=body)
-    assert r2.status_code == 202
+    assert r2.status_code == 200
     assert r2.json()["id"] == analysis_id
     assert fake.calls == calls_after_first
 
@@ -339,7 +342,7 @@ def test_live_two_site_analysis_end_to_end(client: TestClient) -> None:
         "weights": {"sun_visibility": 40, "earth_visibility": 40, "joint_visibility": 20},
     }
     r = client.post("/api/v1/analyses", json=body)
-    assert r.status_code == 202, r.text
+    assert r.status_code == 200, r.text
     status = r.json()
     assert status["status"] == "COMPLETED"
     assert status["data_quality"] in {"EPHEMERIS_GEOMETRIC", "PARTIAL"}

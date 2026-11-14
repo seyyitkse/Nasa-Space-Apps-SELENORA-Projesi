@@ -1,5 +1,5 @@
 import { FlaskConical, GitCompareArrows, Loader2, Moon, Radio, RefreshCw, Satellite, Sun } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 
@@ -18,9 +18,14 @@ import { useSyntheticDemo } from '@/features/mission-planner/useSyntheticDemo'
 import { toAnalysisRequest, validatePlanner } from '@/features/mission-planner/validation'
 import { WeightsEditor } from '@/features/mission-planner/WeightsEditor'
 import { CumulativeJointChart, ElevationChart, VisibilityBarChart } from '@/features/site-comparison/Charts'
+import { GeometricTerrainCompare } from '@/features/site-comparison/GeometricTerrainCompare'
 import { ScienceTransparencyPanel } from '@/features/site-comparison/ScienceTransparencyPanel'
 import { ScoreBreakdown } from '@/features/site-comparison/ScoreBreakdown'
-import { VisibilityTimeline } from '@/features/site-comparison/VisibilityTimeline'
+import { buildEpochs } from '@/features/analysis-data/adapter'
+import { StateLanes, StateLegend } from '@/features/analysis-data/StateLanes'
+import type { SiteEpochs } from '@/features/analysis-data/useWorkspaceAnalysis'
+import { ConfidencePanel, RecommendationBanner, WeightLab } from '@/features/site-comparison/LabPanels'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 import { useAnalysis, useTimeline } from '@/hooks/useApi'
 import { useMissionStore } from '@/stores/missionStore'
 import type { AnalysisCreate, AnalysisResult, DemoAnalysisResponse, TimelineResponse } from '@/types/api'
@@ -101,10 +106,21 @@ function ComparisonDashboard({
 
   const weightsValid = Math.abs(weights.sun_visibility + weights.earth_visibility + weights.joint_visibility - 100) < 0.01
   const isSynthetic = result.data_quality === 'SYNTHETIC_DEMO'
+  const cursorT = useWorkspaceStore((s) => s.cursorT)
+  const setCursor = useWorkspaceStore((s) => s.setCursor)
+  const epochSites: SiteEpochs[] = useMemo(
+    () =>
+      result.sites.map((s, index) => {
+        const tl = timeline.sites.find((x) => x.label === s.label) ?? timeline.sites[index]
+        return { label: s.label, index, epochs: tl ? buildEpochs(result, s, tl.points) : [] }
+      }),
+    [result, timeline],
+  )
 
   return (
     <div className="space-y-5">
       {isSynthetic && <SyntheticBanner />}
+      <RecommendationBanner result={result} />
 
       <div className="grid gap-3 md:grid-cols-2">
         {result.sites.map((s, i) => (
@@ -129,6 +145,10 @@ function ComparisonDashboard({
 
       <MetricTiles sites={result.sites} />
 
+      <GeometricTerrainCompare sites={result.sites} />
+
+      <ConfidencePanel result={result} sites={epochSites} />
+
       <div className="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Section title={t('comparison.elevationTitle')} description={timeline.downsampled ? t('comparison.downsampled', { n: timeline.step_minutes }) : undefined}>
           <Tabs defaultValue="sun">
@@ -149,20 +169,31 @@ function ComparisonDashboard({
         </Section>
       </div>
 
-      <Section title={t('comparison.timelineTitle')}>
-        <VisibilityTimeline timelines={timeline.sites} results={result.sites} stepMinutes={timeline.step_minutes} />
+      <Section title={t('lab.sharedLanes')} description={result.horizon_model === 'TERRAIN' ? t('lab.lanesTerrainHint') : t('lab.lanesGeometricHint')}>
+        <div className="space-y-3">
+          <StateLanes
+            sites={epochSites}
+            stepMinutes={timeline.step_minutes}
+            endUtc={result.end_utc}
+            cursorT={cursorT ?? epochSites[0]?.epochs[0]?.t ?? null}
+            onCursor={setCursor}
+          />
+          <StateLegend terrain={result.horizon_model === 'TERRAIN'} />
+        </div>
       </Section>
+
+      <WeightLab key={result.id} result={result} />
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-2">
         <Section title={t('comparison.visibilityBars')}>
           <VisibilityBarChart sites={result.sites} />
         </Section>
-        <Section title={t('comparison.cumulativeTitle')}>
-          <CumulativeJointChart timelines={timeline.sites} stepMinutes={timeline.step_minutes} />
+        <Section title={t('comparison.cumulativeTitle')} description={t('lab.cumulativeHint')}>
+          <CumulativeJointChart sites={epochSites} stepMinutes={timeline.step_minutes} />
         </Section>
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-3">
+      <div className={`grid grid-cols-[minmax(0,1fr)] gap-5 ${allowSyntheticRecompute ? 'lg:grid-cols-3' : 'lg:grid-cols-2'}`}>
         {allowSyntheticRecompute && onRecompute ? (
           <Section title={t('comparison.simulator')} description={t('comparison.simulatorHint')}>
             <WeightsEditor value={weights} onChange={setWeights} compact />
@@ -175,15 +206,7 @@ function ComparisonDashboard({
               {recomputePending ? <Loader2 className="animate-spin" /> : <RefreshCw />} {t('comparison.recompute')}
             </Button>
           </Section>
-        ) : (
-          <Section title={t('comparison.simulator')} description={t('comparison.simulatorRealHint')}>
-            <WeightsEditor value={result.weights} onChange={() => undefined} compact />
-            <p className="mt-3 text-[12px] text-fg-3">{t('comparison.recomputeViaPlanner')}</p>
-            <Button asChild className="mt-3 w-full" variant="secondary">
-              <Link to="/planner">{t('comparison.goPlanner')}</Link>
-            </Button>
-          </Section>
-        )}
+        ) : null}
         <Section title={t('comparison.tradeoffs')}>
           <ul className="space-y-3 text-[13px]">
             {result.sites.map((s, i) => (
@@ -305,6 +328,16 @@ function StoredAnalysisView({ id }: { id: string }) {
         actions={
           <>
             <DataQualityBadge quality={result.data_quality} />
+            <Button asChild size="sm" variant="ghost">
+              <Link to="/simulator" onClick={() => useWorkspaceStore.getState().setAnalysis(result.id)}>
+                {t('nav.simulator')}
+              </Link>
+            </Button>
+            <Button asChild size="sm" variant="ghost">
+              <Link to="/windows" onClick={() => useWorkspaceStore.getState().setAnalysis(result.id)}>
+                {t('nav.windows')}
+              </Link>
+            </Button>
             <Button asChild size="sm" variant="ghost">
               <Link to={`/reports/${result.id}`}>{t('comparison.openReport')}</Link>
             </Button>

@@ -8,6 +8,8 @@ const OverviewPage = lazy(() => import('@/pages/OverviewPage'))
 const ExplorerPage = lazy(() => import('@/pages/ExplorerPage'))
 const PlannerPage = lazy(() => import('@/pages/PlannerPage'))
 const ComparisonPage = lazy(() => import('@/pages/ComparisonPage'))
+const SimulatorPage = lazy(() => import('@/pages/SimulatorPage'))
+const WindowsPage = lazy(() => import('@/pages/WindowsPage'))
 const AnalystPage = lazy(() => import('@/pages/AnalystPage'))
 const ReportsPage = lazy(() => import('@/pages/ReportsPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
@@ -19,6 +21,8 @@ export const routes: RouteObject[] = [
       { index: true, element: <OverviewPage /> },
       { path: 'explorer', element: <ExplorerPage /> },
       { path: 'planner', element: <PlannerPage /> },
+      { path: 'simulator', element: <SimulatorPage /> },
+      { path: 'windows', element: <WindowsPage /> },
       { path: 'comparison', element: <ComparisonPage /> },
       { path: 'comparison/:analysisId', element: <ComparisonPage /> },
       { path: 'analyst', element: <AnalystPage /> },

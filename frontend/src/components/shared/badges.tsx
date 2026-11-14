@@ -7,6 +7,7 @@ import type { ComponentState, DataQuality, IntegrationStatus } from '@/types/api
 const QUALITY_TONE: Record<DataQuality, BadgeProps['tone']> = {
   EPHEMERIS_GEOMETRIC: 'cyan',
   EPHEMERIS_TERRAIN: 'success',
+  LOCAL_TERRAIN_PARTIAL: 'warning',
   SYNTHETIC_DEMO: 'gold',
   PARTIAL: 'warning',
   UNAVAILABLE: 'danger',

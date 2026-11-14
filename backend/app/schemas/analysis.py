@@ -67,7 +67,17 @@ class AnalysisCreate(ApiModel):
         return self
 
     @property
+    def analysis_duration_hours(self) -> float:
+        """Length of the half-open analysis window ``[start_utc, end_utc)``."""
+        return (self.end_utc - self.start_utc).total_seconds() / 3600.0
+
+    @property
     def sample_count(self) -> int:
+        """Horizons-style inclusive STOP estimate: ``floor(span/step) + 1``.
+
+        Duration math uses ``[start, end)`` hold hours, so a sample exactly at
+        ``end_utc`` contributes 0 h even when Horizons returns it.
+        """
         span = (self.end_utc - self.start_utc).total_seconds() / 60
         return int(span // self.time_step_minutes) + 1
 

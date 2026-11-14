@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import numpy as np
 import pytest
@@ -58,6 +58,16 @@ def test_missing_data_fraction() -> None:
     assert not scoring.is_scorable("EPHEMERIS_GEOMETRIC", s.missing_fraction)
     assert not scoring.is_scorable("UNAVAILABLE", 0.0)
     assert scoring.is_scorable("EPHEMERIS_GEOMETRIC", 0.0)
+
+
+def test_hold_hours_zero_at_exclusive_end() -> None:
+    start = datetime(2026, 12, 1, tzinfo=UTC)
+    end = start + timedelta(hours=96)
+    times = [start + timedelta(hours=6 * i) for i in range(17)]
+    hold = visibility.hold_hours_for_samples(times, 360, end)
+    assert hold.sum() == pytest.approx(96.0)
+    assert hold[-1] == 0.0
+    assert hold[0] == pytest.approx(6.0)
 
 
 def test_score_formula_default_weights() -> None:

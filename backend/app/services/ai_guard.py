@@ -14,8 +14,32 @@ from typing import Any
 from app.schemas.analysis import AIMissionReport
 
 _NUMBER = re.compile(r"(?<![\w.])-?\d+(?:[.,]\d+)?")
+# ISO-8601 datetimes in AI prose (provenance copy) are not numeric claims.
+_ISO_DT = re.compile(
+    r"\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:?\d{2})?)?"
+)
 # Small integers (counts, ordinals, "Site 2") are not treated as measurements.
 _TRIVIAL_MAX = 10
+
+# EN + TR phrases that assert a preferred / recommended site.
+_RECOMMEND_PREFIX = re.compile(
+    r"(?:"
+    r"recommend(?:s|ed)?|"
+    r"recommendation|"
+    r"preferred\s+site|"
+    r"best\s+site|"
+    r"ranks?\s*#?\s*1|"
+    r"rank\s*1|"
+    r"first\s+place|"
+    r"öner(?:i(?:len)?|iyor|ir)|"
+    r"tavsiye\s+edi(?:len|yoruz|yor)|"
+    r"tercih\s+edi(?:len|yoruz)|"
+    r"birinci|"
+    r"en\s+uygun|"
+    r"kazanan"
+    r")\s*[:\-]?\s*",
+    flags=re.IGNORECASE,
+)
 
 
 def _walk_numbers(obj: Any) -> Iterable[float]:
@@ -37,7 +61,7 @@ def _walk_numbers(obj: Any) -> Iterable[float]:
 def _allowed_forms(values: Iterable[float]) -> set[str]:
     allowed: set[str] = set()
     for v in values:
-        for digits in (0, 1, 2, 3):
+        for digits in range(0, 7):
             allowed.add(f"{round(v, digits):.{digits}f}")
             allowed.add(f"{round(abs(v), digits):.{digits}f}")
     return allowed
@@ -49,7 +73,8 @@ def _report_text(report: AIMissionReport) -> list[str]:
     parts += list(report.mission_tradeoffs)
     for items in list(report.site_advantages.values()) + list(report.site_disadvantages.values()):
         parts += items
-    return parts
+    # Drop ISO timestamps so fractional seconds are not treated as measurements.
+    return [_ISO_DT.sub(" ", p) for p in parts]
 
 
 def find_unsupported_numbers(report: AIMissionReport, analysis: dict[str, Any]) -> list[str]:
@@ -68,24 +93,29 @@ def find_unsupported_numbers(report: AIMissionReport, analysis: dict[str, Any]) 
 
 
 def ranking_contradicts(report: AIMissionReport, recommended_site_label: str | None) -> bool:
-    """True if the AI text clearly asserts a different single winner."""
+    """True if the AI text clearly asserts a different single winner.
+
+    Tie / no-recommendation cases (`recommended_site_label is None`) never contradict.
+    Mentions of another site without a recommend/prefer phrase are allowed.
+    """
     if not recommended_site_label:
         return False
-    blob = " ".join(_report_text(report)).lower()
-    winner = recommended_site_label.lower()
-    # Look for phrases like "recommend Site B" / "önerilen Site B" when winner is A.
-    # Only flag when another site label from advantages keys is named as recommended.
+    blob = " ".join(_report_text(report))
+    winner = recommended_site_label
     other_labels = {
-        k.lower()
+        k
         for k in list(report.site_advantages) + list(report.site_disadvantages)
-        if k.lower() != winner
+        if k.casefold() != winner.casefold()
     }
-    recommend_patterns = (
-        r"(?:recommend(?:s|ed)?|recommendation|öner(?:i|ilen)|birinci|ranks?\s*#?\s*1|"
-        r"best\s+site|preferred\s+site)\s*[:\-]?\s*"
+    # Also scan free text for known other labels if advantages empty.
+    if not other_labels:
+        return False
+
+    winner_asserted = bool(
+        re.search(_RECOMMEND_PREFIX.pattern + re.escape(winner), blob, flags=re.IGNORECASE)
     )
     for other in other_labels:
-        if re.search(recommend_patterns + re.escape(other), blob, flags=re.IGNORECASE):
-            if not re.search(recommend_patterns + re.escape(winner), blob, flags=re.IGNORECASE):
+        if re.search(_RECOMMEND_PREFIX.pattern + re.escape(other), blob, flags=re.IGNORECASE):
+            if not winner_asserted:
                 return True
     return False
