@@ -20,7 +20,8 @@ import { BODY_COLORS, siteColor } from '@/components/shared/siteColors'
 import { formatUtc, formatUtcDate } from '@/lib/format'
 import type { SiteResult, SiteTimeline } from '@/types/api'
 
-import { cumulativeJointRows, elevationRows } from './derive'
+import type { SiteEpochs } from '../analysis-data/useWorkspaceAnalysis'
+import { cumulativeConfirmedJoint, elevationRows } from './derive'
 
 const AXIS = { stroke: '#64748B', fontSize: 11, fontFamily: 'JetBrains Mono Variable, monospace' }
 const GRID = 'rgba(148,163,184,0.10)'
@@ -83,15 +84,20 @@ export const ElevationChart = memo(function ElevationChart({
   )
 })
 
+/**
+ * Cumulative hours of *confirmed* joint visibility (adapter state VISIBLE for both
+ * bodies — terrain-aware for TERRAIN analyses). UNKNOWN/UNRESOLVED never count.
+ */
 export const CumulativeJointChart = memo(function CumulativeJointChart({
-  timelines,
+  sites,
   stepMinutes,
 }: {
-  timelines: SiteTimeline[]
+  sites: SiteEpochs[]
   stepMinutes: number
 }) {
   const { t } = useTranslation()
-  const data = useMemo(() => cumulativeJointRows(timelines, stepMinutes), [timelines, stepMinutes])
+  const timelines = sites
+  const data = useMemo(() => cumulativeConfirmedJoint(sites, stepMinutes), [sites, stepMinutes])
   return (
     <div className="h-[240px] w-full">
       <ResponsiveContainer width="100%" height="100%">
