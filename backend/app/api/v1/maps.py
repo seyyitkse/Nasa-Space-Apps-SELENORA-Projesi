@@ -7,7 +7,7 @@ from typing import Annotated
 from fastapi import APIRouter, Query, Response
 
 from app.schemas.common import ApiModel
-from app.services import imagery_service, nasa_layer_catalog, raster_preview_service
+from app.services import imagery_service, map_preview_service, nasa_layer_catalog, raster_preview_service
 from app.services.raster_preview_service import (
     LayerNotFoundError,
     LayerUnavailableError,
@@ -176,26 +176,10 @@ def map_preview(
     if None not in (left_m, bottom_m, right_m, top_m):
         bounds = (left_m, bottom_m, right_m, top_m)  # type: ignore[assignment]
     try:
-        layer = nasa_layer_catalog.get_layer(layer_id)
-        if layer is not None and layer.access_mode in {"wms_allowlisted", "wmts_allowlisted"}:
-            # Allow-listed imagery only — never fall through to GeoTIFF preview.
-            png, meta = imagery_service.render_imagery_preview(
-                layer_id,
-                latitude_deg=latitude_deg,
-                longitude_deg=longitude_deg,
-                half_extent_m=half_extent_m,
-                bounds_m=bounds,
-                max_edge_px=max_edge_px,
-            )
-        else:
-            png, meta = raster_preview_service.render_preview_png(
-                layer_id,
-                latitude_deg=latitude_deg,
-                longitude_deg=longitude_deg,
-                half_extent_m=half_extent_m,
-                bounds_m=bounds,
-                max_edge_px=max_edge_px,
-            )
+        png, meta = map_preview_service.render_preview(
+            layer_id, latitude_deg=latitude_deg, longitude_deg=longitude_deg,
+            half_extent_m=half_extent_m, bounds_m=bounds, max_edge_px=max_edge_px,
+        )
     except (MapServiceError, LayerNotFoundError, LayerUnavailableError):
         raise
     except Exception as exc:  # pragma: no cover - network/GDAL surface
@@ -209,6 +193,10 @@ def map_preview(
         "X-SELENORA-Bounds-M": ",".join(f"{v:.3f}" for v in meta.bounds_m),
         "X-SELENORA-Size-Px": f"{meta.width_px}x{meta.height_px}",
         "X-SELENORA-Attribution": meta.attribution[:500],
+        "X-SELENORA-CRS": "IAU2000:30120",
+        "X-SELENORA-Cache": meta.cache_status,
+        "X-SELENORA-Cache-Key": meta.cache_key,
+        "ETag": f'"{meta.cache_key}"',
         "Cache-Control": "public, max-age=300",
     }
     return Response(content=png, media_type="image/png", headers=headers)

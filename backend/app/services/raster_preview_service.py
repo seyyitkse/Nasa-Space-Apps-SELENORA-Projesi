@@ -61,6 +61,8 @@ class PreviewMeta:
     value_min: float
     value_max: float
     nodata_fraction: float
+    cache_status: str = ""
+    cache_key: str = ""
 
 
 def _configure_gdal_curl() -> None:
@@ -182,7 +184,8 @@ def render_preview_png(
             out_shape=(out_h, out_w),
             resampling=Resampling.bilinear,
             boundless=False,
-        ).astype(float)
+            masked=True,
+        ).astype(float).filled(np.nan)
         nodata = ds.nodata
         if nodata is not None and not (isinstance(nodata, float) and np.isnan(nodata)):
             data = np.where(data == nodata, np.nan, data)
@@ -199,10 +202,13 @@ def render_preview_png(
         _ = (c0, r0, c1, r1)  # kept for clarity / future debug
 
     valid = np.isfinite(data)
+    if not np.any(valid):
+        raise LayerUnavailableError("No NASA raster coverage in this window.")
     nodata_fraction = float(1.0 - valid.mean()) if data.size else 1.0
     vmin = float(np.nanmin(data)) if np.any(valid) else float("nan")
     vmax = float(np.nanmax(data)) if np.any(valid) else float("nan")
-    rgb = np.stack([_stretch_to_uint8(data)] * 3, axis=-1)
+    gray = _stretch_to_uint8(data)
+    rgba = np.stack([gray, gray, gray, np.where(valid, 255, 0).astype(np.uint8)], axis=-1)
 
     try:
         from PIL import Image
@@ -212,7 +218,7 @@ def render_preview_png(
             details={"hint": "pip install pillow"},
         ) from exc
 
-    img = Image.fromarray(rgb, mode="RGB")
+    img = Image.fromarray(rgba, mode="RGBA")
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)
     meta = PreviewMeta(

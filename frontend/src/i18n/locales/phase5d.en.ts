@@ -246,8 +246,12 @@ const phase5dEn = {
       'Photography: real LROC WAC south-polar mosaic from ASU Lunaserv, warped by the server into SELENORA’s stereographic map. Compare with LOLA hillshade using opacity. Illumination is fixed at image acquisition — not your mission date.',
     helpUnavailable:
       'Hillshade is shaded relief computed from NASA LOLA heights. LROC photography will appear here once the server provides a verified imagery layer.',
+    staticShort: 'Static LROC photograph; not illumination at your mission date.',
     staticIllumination:
       'Official LROC WAC South Pole Summer Mosaic (WAC_ROI_SOUTH_SUMMER) — a static summer mosaic. Lighting does not change with the 2026/2027 mission timeline.',
+    retry: 'Retry LROC',
+    pendingFallback: 'LROC is loading. Genuine NASA LOLA hillshade remains available.',
+    failedFallback: 'LROC could not be loaded for this view. Showing available NASA LOLA hillshade / cached overview. Retry or select Hillshade.',
     loading: 'Loading LROC photography for this map window…',
   },
   artemis5e: {

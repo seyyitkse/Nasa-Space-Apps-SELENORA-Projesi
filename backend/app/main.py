@@ -96,6 +96,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             "X-SELENORA-Size-Px",
             "X-SELENORA-Layer-Role",
             "X-SELENORA-Attribution",
+            "X-SELENORA-CRS",
+            "X-SELENORA-Cache",
+            "X-SELENORA-Cache-Key",
         ],
         max_age=600,
     )

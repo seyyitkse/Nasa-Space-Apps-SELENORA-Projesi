@@ -1,4 +1,3 @@
-import { useQueries } from '@tanstack/react-query'
 import { Crosshair, ExternalLink, Flag, Info } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -11,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { MissionTimelineDock } from '@/features/analysis-data/MissionTimelineDock'
 import { CoordinateForm, SiteList } from '@/features/lunar-explorer/ExplorerPanels'
 import { BasemapControl, type BasemapChoice, pickBasemapLayers } from '@/features/lunar-explorer/BasemapControl'
-import { isRenderable, LayerDock, type PreviewStatus } from '@/features/lunar-explorer/LayerDock'
+import { LayerDock } from '@/features/lunar-explorer/LayerDock'
 import {
   DEFAULT_LAYERS,
   LunarMap,
@@ -20,25 +19,26 @@ import {
   type MapSite,
   tilesExtent,
 } from '@/features/lunar-explorer/LunarMap'
-import { isInMapRegion, lonLatToXY, mapHalfExtent } from '@/features/lunar-explorer/projection'
+import { isInMapRegion, lonLatToXY } from '@/features/lunar-explorer/projection'
 import { type DetailTarget, SiteInspector } from '@/features/lunar-explorer/SiteInspector'
 import { useSites } from '@/hooks/useApi'
 import { formatCoord } from '@/lib/format'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  contractApi,
   PREVIEW_BOUNDS_SNAP_M,
   PREVIEW_MAX_HALF_EXTENT_M,
-  type RasterPreview,
   useArtemisRegions,
   useCapabilities,
   useMapLayers,
   useTerrainCatalog,
 } from '@/services/contracts'
 
+import { useExplorerPreviews } from '@/features/lunar-explorer/useExplorerPreviews'
+
 import { resolveSite, useMissionStore } from '@/stores/missionStore'
 
 type MapViewState = {
+  interacted?: boolean
   center: [number, number]
   halfExtent: number
   halfWidthM: number
@@ -67,14 +67,7 @@ export default function ExplorerPage() {
   const catalog = useTerrainCatalog(caps.has('terrainCatalog'))
   const mapLayers = useMapLayers(caps.has('mapLayers'))
   const artemis = useArtemisRegions(caps.has('artemisRegions'))
-  // Seed ≈88°S window (matches LunarMap focusLat) so the first preview fills the start view.
-  const seedHalf = Math.min(Math.ceil(mapHalfExtent(-88) / PREVIEW_BOUNDS_SNAP_M) * PREVIEW_BOUNDS_SNAP_M, PREVIEW_MAX_HALF_EXTENT_M)
-  const [viewLive, setViewLive] = useState<MapViewState | null>({
-    center: [0, 0],
-    halfExtent: seedHalf,
-    halfWidthM: seedHalf,
-    halfHeightM: seedHalf,
-  })
+  const [viewLive, setViewLive] = useState<MapViewState | null>(null)
   // Debounce pan/zoom so we do not hammer /maps/preview on every wheel tick.
   const [view, setView] = useState(viewLive)
   useEffect(() => {
@@ -83,7 +76,6 @@ export default function ExplorerPage() {
   }, [viewLive])
   const mapRef = useRef<LunarMapHandle>(null)
   const basemapPrimed = useRef(false)
-  const tilesFitted = useRef(false)
 
   const [params, setParams] = useSearchParams()
   const selectedId = params.get('site')
@@ -145,8 +137,8 @@ export default function ExplorerPage() {
     setSelectedId(created.id)
   }
 
-  const tiles = catalog.data?.tiles ?? []
-  const layerList = mapLayers.data?.items ?? []
+  const tiles = useMemo(() => catalog.data?.tiles ?? [], [catalog.data])
+  const layerList = useMemo(() => mapLayers.data?.items ?? [], [mapLayers.data])
   const basemaps = pickBasemapLayers(layerList)
   const basemapChoice: BasemapChoice =
     basemaps.photo && layers.rasters[basemaps.photo.id] ? 'photo' : basemaps.hillshade && layers.rasters[basemaps.hillshade.id] ? 'hillshade' : 'none'
@@ -173,15 +165,6 @@ export default function ExplorerPage() {
       return { ...prev, rasters: r }
     })
   }, [layerList])
-  // Once LOLA footprints arrive, frame the scientifically validated tiles (meaningful imagery scale).
-  useEffect(() => {
-    if (tilesFitted.current || tiles.length === 0) return
-    const ext = tilesExtent(tiles)
-    if (!ext) return
-    tilesFitted.current = true
-    const id = window.setTimeout(() => mapRef.current?.fitExtent(ext), 120)
-    return () => window.clearTimeout(id)
-  }, [tiles])
   const photoId = basemaps.photo?.id
   const hillId = basemaps.hillshade?.id
   // Memoised so the map does not restyle on every render.
@@ -191,31 +174,16 @@ export default function ExplorerPage() {
     if (hillId) o[hillId] = basemapOpacity
     return o
   }, [photoId, hillId, basemapOpacity])
-  const bounds = previewBounds(view)
-  const enabledIds = layerList.filter((l) => isRenderable(l) && layers.rasters[l.id] && caps.has('mapPreview')).map((l) => l.id)
-  const previewQueries = useQueries({
-    queries: enabledIds.map((id) => ({
-      queryKey: ['map-preview', id, bounds],
-      queryFn: () => contractApi.mapPreview(id, bounds!),
-      enabled: bounds !== null,
-      staleTime: 10 * 60_000,
-      retry: 0,
-      placeholderData: (prev: RasterPreview | undefined) => prev,
-    })),
-  })
-  const previews = previewQueries.map((q) => q.data).filter((d): d is RasterPreview => Boolean(d))
-  const previewStatus: Record<string, PreviewStatus> = Object.fromEntries(
-    enabledIds.map((id, i) => {
-      const q = previewQueries[i]!
-      return [id, q.isFetching ? 'loading' : q.error ? 'error' : q.data ? 'ready' : 'idle'] as const
-    }),
-  )
-  const anyRaster = previews.length > 0
+  const bounds = useMemo(() => previewBounds(view), [view])
+  const imagery = useExplorerPreviews(layerList, layers, bounds, caps.has('mapPreview'), photoId, hillId, Boolean(view?.interacted))
+  const { previews, previewStatus, anyRaster } = imagery
+  const enabledIds = Object.keys(layers.rasters).filter((id) => layers.rasters[id])
   // Reflect the real requested stereo BBOX (width×height); not a fixed 100 km caption.
-  const previewWindowSize = bounds
+  const shownBounds = imagery.displayedPreviews.at(-1)?.extent
+  const previewWindowSize = shownBounds
     ? (() => {
-        const w = (bounds[2]! - bounds[0]!) / 1000
-        const h = (bounds[3]! - bounds[1]!) / 1000
+        const w = (shownBounds[2]! - shownBounds[0]!) / 1000
+        const h = (shownBounds[3]! - shownBounds[1]!) / 1000
         const rw = Math.round(w)
         const rh = Math.round(h)
         return rw === rh ? String(rw) : `${rw}×${rh}`
@@ -240,8 +208,8 @@ export default function ExplorerPage() {
           <ErrorState error={error} onRetry={() => void refetch()} />
         </div>
       )}
-      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[290px_minmax(0,1fr)_320px]">
-        <div className="order-2 space-y-5 xl:order-1">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 2xl:grid-cols-[290px_minmax(0,1fr)_320px]">
+        <div className="order-2 space-y-5 2xl:order-1">
           <LayerDock
             layers={layers}
             onChange={setLayers}
@@ -331,16 +299,17 @@ export default function ExplorerPage() {
           )}
         </div>
 
-        <section className="order-1 xl:order-2" aria-label={t('explorer.title')}>
-          <div className="sel-card relative h-[60vh] min-h-[380px] overflow-hidden xl:h-[calc(100dvh-230px)] xl:min-h-[600px]">
+        <section className="order-1 2xl:order-2" aria-label={t('explorer.title')}>
+          <div className="sel-card relative h-[60vh] min-h-[480px] overflow-hidden sm:min-h-[380px] 2xl:h-[calc(100dvh-230px)] 2xl:min-h-[600px]">
             <LunarMap
               ref={mapRef}
               sites={mapSites}
               selectedId={selectedId}
               picked={picked}
-              layers={layers}
+              layers={imagery.effectiveLayers}
               tiles={tiles}
               previews={previews}
+              onRasterStatus={imagery.onRasterStatus}
               rasterOpacity={rasterOpacity}
               onView={setViewLive}
               marks={marks}
@@ -355,11 +324,11 @@ export default function ExplorerPage() {
               }}
               onCursor={setCursor}
             />
-            {anyRaster && previewWindowSize !== null && (
+            {anyRaster && previewWindowSize !== null && !imagery.photoFailed && !imagery.fallback && (
               <div className="pointer-events-none absolute top-3 left-3 max-w-[calc(100%-4rem)] rounded-lg border border-line-strong bg-bg/85 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur sm:max-w-sm">
                 {t('explorer2.previewNote', { size: previewWindowSize })}
-                {basemapChoice === 'photo' && <div className="mt-0.5 text-[10px] text-warning/90">{t('lroc.staticIllumination')}</div>}
-                <div className="mt-0.5 truncate text-[10px] text-fg-3">{previews.map((p) => p.attribution.split(';')[0]).join(' · ')}</div>
+                {basemapChoice === 'photo' && <div className="mt-0.5 text-[10px] text-warning/90"><span className="sm:hidden">{t('lroc.staticShort')}</span><span className="hidden sm:inline">{t('lroc.staticIllumination')}</span></div>}
+                <div className="mt-0.5 truncate text-[10px] text-fg-3">{[...new Set(imagery.displayedPreviews.map((p) => p.attribution.split(';')[0]))].join(' · ')}</div>
               </div>
             )}
             {!anyRaster && enabledIds.length > 0 && Object.values(previewStatus).some((s) => s === 'loading') && (
@@ -368,10 +337,15 @@ export default function ExplorerPage() {
                 <span>{t('lroc.loading')}</span>
               </div>
             )}
-            {!anyRaster && enabledIds.length > 0 && Object.values(previewStatus).some((s) => s === 'error') && (
-              <div className="pointer-events-none absolute top-3 left-3 flex max-w-[calc(100%-4rem)] items-start gap-2 rounded-lg border border-danger/40 bg-bg/85 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur sm:max-w-sm">
-                <Info className="mt-px size-3.5 shrink-0 text-danger" aria-hidden />
-                <span>{t('explorer2.previewFailed')}</span>
+            {imagery.photoFailed && (
+              <div className="absolute top-3 right-14 z-20 max-w-xs rounded-lg border border-warning/40 bg-bg/95 p-3 text-xs text-fg-2" role="alert">
+                <p>{t('lroc.failedFallback')}</p>
+                <button type="button" className="mt-2 rounded border border-line-strong px-3 py-1 text-cyan" onClick={imagery.retry}>{t('lroc.retry')}</button>
+              </div>
+            )}
+            {imagery.fallback && !imagery.photoFailed && anyRaster && (
+              <div className="pointer-events-none absolute top-3 right-14 max-w-xs rounded-lg border border-line bg-bg/90 px-3 py-2 text-[11px] text-fg-2" role="status">
+                {t('lroc.pendingFallback')}
               </div>
             )}
             {!anyRaster && enabledIds.length === 0 && (
@@ -420,7 +394,7 @@ export default function ExplorerPage() {
           />
         </div>
 
-        <div className="order-4 xl:col-span-3">
+        <div className="order-4 2xl:col-span-3">
           <MissionTimelineDock />
         </div>
       </div>

@@ -107,7 +107,7 @@ const phase5aEn = {
     artemisTitle: 'Artemis III candidate regions',
     artemisNote: 'Official NASA region names only. No footprints are drawn: NASA has not published digitised polygons, and SELENORA does not trace them from graphics.',
     previewNote:
-      'Raster preview rendered by the backend for a {{size}} km stereo window around the view centre (matches current viewport BBOX, capped; visualization only, not used for scoring).',
+      'NASA basemap · {{size}} km georeferenced image window. Visualization only; not used for site scoring.',
   },
   sim: {
     title: 'Sun & Earth Horizon Simulator',

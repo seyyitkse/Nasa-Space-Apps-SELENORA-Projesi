@@ -177,8 +177,8 @@ LAYERS: tuple[NasaLayer, ...] = (
         resolution_m=None,
         units="unitless DN (visual mosaic)",
         crs_summary=(
-            "Upstream EPSG:4326 WMS → warped to SELENORA south polar stereo "
-            "(a=b=1737400 m, lon_0=0)"
+            "Direct IAU2000:30120 WMS; lunar south polar stereo "
+            "(a=b=1737400 m, lon_0=0, k=1)"
         ),
         attribution=(
             "LROC WAC South Pole Summer Mosaic (WAC_ROI_SOUTH_SUMMER) via ASU Lunaserv "

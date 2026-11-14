@@ -1,0 +1,33 @@
+{
+  "firstRasterMs": "701.9",
+  "rasters": {
+    "startup:hillshade": {
+      "bounds": [
+        -64000,
+        -64000,
+        64000,
+        64000
+      ],
+      "cache": "HIT",
+      "elapsedMs": 701.9000000059605,
+      "layer": "ldem-80s-80mpp-hill",
+      "loadMs": 201.4000000059605,
+      "requestMs": 140.89999999850988,
+      "status": "ready"
+    },
+    "startup:photo": {
+      "bounds": [
+        -64000,
+        -64000,
+        64000,
+        64000
+      ],
+      "cache": "HIT",
+      "elapsedMs": 842.3000000044703,
+      "layer": "lroc-wac-south-summer",
+      "loadMs": 277.6000000014901,
+      "requestMs": 192,
+      "status": "ready"
+    }
+  }
+}

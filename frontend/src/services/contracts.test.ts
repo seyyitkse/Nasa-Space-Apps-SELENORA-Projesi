@@ -22,10 +22,12 @@ describe('Phase 5B contract adapters', () => {
   it('requires valid X-SELENORA-Bounds-M before placing a preview', () => {
     expect(parseBoundsHeader('-22347.488,-29415.262,17652.512,10584.738')).toEqual([-22347.488, -29415.262, 17652.512, 10584.738])
     expect(parseBoundsHeader('1,2,3')).toBeNull()
+    expect(parseBoundsHeader('3,2,1,4')).toBeNull()
+    expect(parseBoundsHeader('1,4,3,2')).toBeNull()
     expect(parseBoundsHeader(undefined)).toBeNull()
   })
 
-  it('parses X-SELENORA-Size-Px for ImageStatic imageSize', () => {
+  it('parses X-SELENORA-Size-Px as actual PNG dimensions', () => {
     expect(parseSizePxHeader('768x512')).toEqual([768, 512])
     expect(parseSizePxHeader('bad')).toBeUndefined()
     expect(parseSizePxHeader(undefined)).toBeUndefined()

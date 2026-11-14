@@ -1,0 +1,19 @@
+{
+  "firstRasterMs": "13598.4",
+  "rasters": {
+    "startup:photo": {
+      "bounds": [
+        -64000,
+        -64000,
+        64000,
+        64000
+      ],
+      "cache": "MISS",
+      "elapsedMs": 13598.39999999851,
+      "layer": "lroc-wac-south-summer",
+      "loadMs": 56.39999999850989,
+      "requestMs": 13253.5,
+      "status": "ready"
+    }
+  }
+}

@@ -149,7 +149,7 @@ def test_imagery_sources_do_not_advertise_unaligned_trek(client: TestClient) -> 
     assert by_id["moon-trek-wac-global"]["preview_enabled"] is False
     assert by_id["moon-trek-wac-global"]["alignment_status"] == "REFERENCE_ONLY"
     assert by_id["lroc-wac-south-summer"]["preview_enabled"] is True
-    assert by_id["lroc-wac-south-summer"]["alignment_status"] == "AVAILABLE_WARPED_STEREO"
+    assert by_id["lroc-wac-south-summer"]["alignment_status"] == "AVAILABLE_NATIVE_STEREO"
 
     # Reject open-proxy style: unknown layer
     bad = client.get(
@@ -181,7 +181,7 @@ def test_imagery_preview_warps_allowlisted_wms(client: TestClient) -> None:
     from PIL import Image
     import io
 
-    img = Image.new("RGB", (64, 64), color=(120, 80, 40))
+    img = Image.new("RGB", (128, 128), color=(120, 80, 40))
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     fake_png = buf.getvalue()

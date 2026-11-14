@@ -183,14 +183,20 @@ export interface MapLayerList {
 
 export interface RasterPreview {
   layerId: string
-  url: string
+  blob: Blob
+  /** Stable slot for a startup overview or a viewport image of the same layer. */
+  renderKey?: string
+  renderOrder?: number
   /** Bounds actually rendered by the backend (X-SELENORA-Bounds-M). */
   extent: [number, number, number, number]
   sizePx: string
-  /** Parsed from X-SELENORA-Size-Px for OpenLayers ImageStatic (prevents stretch). */
+  /** Actual decoded PNG dimensions; OpenLayers reads the native image geometry. */
   imageSize?: [number, number]
   role: string
   attribution: string
+  cacheStatus?: string
+  requestMs?: number
+  cacheKey?: string
 }
 
 export function parseSizePxHeader(v: string | undefined | null): [number, number] | undefined {
@@ -216,6 +222,7 @@ export async function readPngSize(blob: Blob): Promise<[number, number] | undefi
 }
 
 /** Backend cap for preview windows (MAP_SERVICE_ERROR above this). Phase 5F raised to 400 km for polar overview. */
+export const PREVIEW_PROCESSING_VERSION = 'phase5f1-polar-direct-v1'
 export const PREVIEW_MAX_HALF_EXTENT_M = 400_000
 /** Snap preview BBOX edges to this grid (metres) so React Query keys stay stable while panning. */
 export const PREVIEW_BOUNDS_SNAP_M = 2_000
@@ -224,6 +231,7 @@ export function parseBoundsHeader(v: string | undefined | null): [number, number
   if (!v) return null
   const parts = v.split(',').map(Number)
   if (parts.length !== 4 || parts.some((n) => !Number.isFinite(n))) return null
+  if (parts[2]! <= parts[0]! || parts[3]! <= parts[1]!) return null
   return parts as [number, number, number, number]
 }
 
@@ -383,21 +391,28 @@ export const contractApi = {
       })
       .then((r) => r.data),
   mapLayers: () => api.get<MapLayerList>(ROUTES.mapLayers).then((r) => r.data),
-  mapPreview: async (layerId: string, bounds: [number, number, number, number], maxEdgePx = 768): Promise<RasterPreview> => {
+  mapPreview: async (layerId: string, bounds: [number, number, number, number], maxEdgePx = 768, signal?: AbortSignal): Promise<RasterPreview> => {
+    const started = performance.now()
     const [left_m, bottom_m, right_m, top_m] = bounds
     // Coarser max_edge for very wide polar windows keeps payload bounded.
     const span = Math.max(right_m - left_m, top_m - bottom_m)
     const edge = span > 200_000 ? Math.min(maxEdgePx, 512) : maxEdgePx
     const r = await api.get<Blob>(ROUTES.mapPreview, {
-      params: { layer_id: layerId, left_m, bottom_m, right_m, top_m, max_edge_px: edge },
+      params: { layer_id: layerId, left_m, bottom_m, right_m, top_m, max_edge_px: edge, preview_version: PREVIEW_PROCESSING_VERSION },
       responseType: 'blob',
-      timeout: 120_000,
+      signal,
+      timeout: 90_000,
     })
     if (!(r.data instanceof Blob) || r.data.size < 32 || !String(r.headers['content-type'] ?? r.data.type).includes('image')) {
       throw new Error('Preview response was not an image PNG.')
     }
-    // Prefer backend placement headers; fall back to the requested stereo BBOX (same window the server rendered).
-    const extent = parseBoundsHeader(r.headers['x-selenora-bounds-m'] as string | undefined) ?? bounds
+    // Only direct LROC is guaranteed to return the full requested BBOX. A local
+    // raster may be clipped; never stretch a clipped image over the requested window.
+    const extent = parseBoundsHeader(r.headers['x-selenora-bounds-m'] as string | undefined)
+      ?? (layerId === 'lroc-wac-south-summer' ? bounds : null)
+    if (!extent) throw new Error('Raster geographic placement headers are missing or invalid.')
+    const crs = r.headers['x-selenora-crs'] as string | undefined
+    if (crs && crs !== 'IAU2000:30120') throw new Error('Raster CRS does not match the lunar map.')
     const sizePx = String(r.headers['x-selenora-size-px'] ?? '')
     let imageSize = parseSizePxHeader(sizePx)
     if (!imageSize) {
@@ -406,12 +421,15 @@ export const contractApi = {
     }
     return {
       layerId,
-      url: URL.createObjectURL(r.data),
+      blob: r.data,
+      requestMs: performance.now() - started,
       extent,
       sizePx: sizePx || (imageSize ? `${imageSize[0]}x${imageSize[1]}` : ''),
       imageSize,
       role: String(r.headers['x-selenora-layer-role'] ?? ''),
       attribution: String(r.headers['x-selenora-attribution'] ?? ''),
+      cacheStatus: String(r.headers['x-selenora-cache'] ?? ''),
+      cacheKey: String(r.headers['x-selenora-cache-key'] ?? ''),
     }
   },
   artemisRegions: () => api.get<ArtemisRegions>(ROUTES.artemisRegions).then((r) => r.data),
@@ -466,7 +484,7 @@ export function useObserverSeries(
 export function useMapPreview(layerId: string, bounds: [number, number, number, number] | null, enabled: boolean) {
   return useQuery({
     queryKey: ['map-preview', layerId, bounds],
-    queryFn: () => contractApi.mapPreview(layerId, bounds!),
+    queryFn: ({ signal }) => contractApi.mapPreview(layerId, bounds!, 768, signal),
     enabled: enabled && bounds !== null,
     staleTime: 10 * 60_000,
     gcTime: 10 * 60_000,

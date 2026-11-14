@@ -242,11 +242,15 @@ const phase5dTr: typeof phase5dEn = {
     photoUnavailable:
       'Fotoğraf kullanılamıyor: sunucu henüz koordinatlandırılmış bir LROC görüntü katmanı yayınlamıyor. Yerine dekoratif görüntü konmaz.',
     helpAvailable:
-      'Fotoğraf: ASU Lunaserv LROC WAC güney kutup mozaiği; sunucu SELENORA stereografik haritasına yeniden projekte eder. Opaklıkla LOLA gölgeli kabartmayla karşılaştırın. Aydınlatma görüntü alındığı andadır — görev tarihinize göre değişmez.',
+      'Fotoğraf: ASU Lunaserv LROC WAC güney kutup mozaiği; sunucu eşleşen Ay kutup projeksiyonunda ister. Opaklıkla LOLA gölgeli kabartmayla karşılaştırın. Aydınlatma görüntü alındığı andadır — görev tarihinize göre değişmez.',
     helpUnavailable:
       'Gölgeli kabartma NASA LOLA yüksekliklerinden hesaplanır. LROC fotoğrafı, sunucu doğrulanmış bir görüntü katmanı sağladığında burada görünecek.',
+    staticShort: 'Statik LROC fotoğrafı; görev tarihindeki aydınlatma değildir.',
     staticIllumination:
       'Resmî LROC WAC Güney Kutbu Yaz Mozaiği (WAC_ROI_SOUTH_SUMMER) — statik yaz mozaiği. Aydınlatma 2026/2027 görev zaman çizelgesiyle değişmez.',
+    retry: 'LROC’u yeniden dene',
+    pendingFallback: 'LROC yükleniyor. Gerçek NASA LOLA gölgeli kabartma altlığı kullanılabilir.',
+    failedFallback: 'Bu görünüm için LROC yüklenemedi. Mevcut NASA LOLA gölgeli kabartma / önbellekli genel görünüm gösteriliyor. Yeniden deneyin veya Gölgeli kabartma’yı seçin.',
     loading: 'Bu harita penceresi için LROC fotoğrafı yükleniyor…',
   },
   artemis5e: {

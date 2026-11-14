@@ -83,7 +83,8 @@ export function BasemapControl({
       {!photo && <p className="text-[10.5px] leading-snug text-fg-3">{t('lroc.photoShort')}</p>}
       {choice === 'photo' && photo && (
         <p className="text-[10.5px] leading-snug text-warning/90" role="note">
-          {t('lroc.staticIllumination')}
+          <span className="sm:hidden">{t('lroc.staticShort')}</span>
+          <span className="hidden sm:inline">{t('lroc.staticIllumination')}</span>
         </p>
       )}
       {choice === 'photo' && photo?.attribution && (

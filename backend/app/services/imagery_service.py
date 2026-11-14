@@ -1,7 +1,7 @@
 """Allow-listed lunar imagery fetches (Phase 5E).
 
-Only pre-approved WMS/WMTS endpoints may be contacted. Responses are warped into
-SELENORA's south-polar stereographic CRS so Explorer can place PNGs with
+Only pre-approved WMS/WMTS endpoints may be contacted. LROC is requested directly
+in SELENORA's matching lunar polar CRS so Explorer can place PNGs with
 ``X-SELENORA-Bounds-M``. This is **not** an open URL proxy.
 """
 
@@ -9,21 +9,15 @@ from __future__ import annotations
 
 import io
 import logging
-import time
+import math
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlencode
 
 import numpy as np
-from rasterio.enums import Resampling
-from rasterio.transform import from_bounds
-from rasterio.warp import reproject
 
 from app.science.lunar_projection import (
-    MOON_LONLAT,
-    MOON_POLAR_STEREO_S,
     lonlat_to_stereo,
-    stereo_to_lonlat,
 )
 from app.services.raster_preview_service import (
     LayerNotFoundError,
@@ -44,10 +38,9 @@ TREK_WAC_WMTS_TEMPLATE = (
 MAX_HALF_EXTENT_M = 400_000.0
 MAX_EDGE_PX = 768
 MIN_EDGE_PX = 64
-REQUEST_TIMEOUT_S = 45.0
-_CACHE: dict[str, tuple[float, bytes, PreviewMeta]] = {}
-_CACHE_TTL_S = 300.0
-_CACHE_MAX = 32
+REQUEST_TIMEOUT_S = 30.0
+# Verified in live GetCapabilities; control points are checked against LOLA.
+NATIVE_POLAR_CRS = "IAU2000:30120"
 
 
 @dataclass(frozen=True, slots=True)
@@ -76,19 +69,19 @@ SOURCES: tuple[ImagerySource, ...] = (
         protocol="WMS",
         endpoint=LUNASERV_WMS,
         remote_layer_name="luna_wac_roi_south_summer",
-        crs_native="EPSG:4326 (requested) → warped to SELENORA south polar stereo",
+        crs_native="IAU2000:30120 — south polar stereographic, R=1737400 m, lon_0=0, k=1",
         tile_format="image/png",
         attribution=(
             "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). "
             "NASA/GSFC/Arizona State University."
         ),
         product_page="https://data.lroc.im-ldi.com/lroc/view_rdr/WAC_ROI_SOUTH_SUMMER",
-        alignment_status="AVAILABLE_WARPED_STEREO",
+        alignment_status="AVAILABLE_NATIVE_STEREO",
         preview_enabled=True,
         notes=(
-            "GetCapabilities verified 2026-11-14. Previews are fetched as EPSG:4326 "
-            "WMS GetMap for the stereo window's lon/lat envelope, then warped into "
-            "SELENORA polar stereographic (a=b=1737400). MAP_VISUALIZATION_ONLY."
+            "GetCapabilities verified 2026-11-14. Direct IAU2000:30120 GetMap uses "
+            "the exact SELENORA metre bounds and output dimensions. No geographic "
+            "envelope, antimeridian seam or client reprojection. MAP_VISUALIZATION_ONLY."
         ),
         polar_coverage="South-polar summer WAC mosaic (Lunaserv layer luna_wac_roi_south_summer)",
     ),
@@ -149,39 +142,6 @@ def get_source(layer_id: str) -> ImagerySource | None:
     return None
 
 
-def _cache_get(key: str) -> tuple[bytes, PreviewMeta] | None:
-    hit = _CACHE.get(key)
-    if hit is None:
-        return None
-    expires, png, meta = hit
-    if time.time() > expires:
-        _CACHE.pop(key, None)
-        return None
-    return png, meta
-
-
-def _cache_put(key: str, png: bytes, meta: PreviewMeta) -> None:
-    if len(_CACHE) >= _CACHE_MAX:
-        oldest = min(_CACHE.items(), key=lambda kv: kv[1][0])[0]
-        _CACHE.pop(oldest, None)
-    _CACHE[key] = (time.time() + _CACHE_TTL_S, png, meta)
-
-
-def _stereo_window_lonlat_bbox(
-    left: float, bottom: float, right: float, top: float
-) -> tuple[float, float, float, float]:
-    xs = np.linspace(left, right, 5)
-    ys = np.linspace(bottom, top, 5)
-    lons: list[float] = []
-    lats: list[float] = []
-    for x in xs:
-        for y in ys:
-            lon, lat = stereo_to_lonlat(float(x), float(y))
-            lons.append(lon)
-            lats.append(lat)
-    return min(lons), min(lats), max(lons), max(lats)
-
-
 def _http_get(url: str) -> bytes:
     import urllib.error
     import urllib.request
@@ -215,82 +175,22 @@ def _http_get(url: str) -> bytes:
 
 
 def _wms_getmap_png(
-    layer: str, west: float, south: float, east: float, north: float, width: int, height: int
+    layer: str, left: float, bottom: float, right: float, top: float, width: int, height: int
 ) -> bytes:
-    if abs(east - west) < 1e-6:
-        west, east = west - 1.0, east + 1.0
-    if abs(north - south) < 1e-6:
-        south, north = south - 0.05, north + 0.05
+    """An exact projected BBOX, including windows crossing geographic ±180°.
+
+    IAU2000:30120 has a=b=1737400, lat_0=-90, lon_0=0 and k=1.
+    These axes are identical to SELENORA/LOLA. WMS 1.1.1 uses x,y order.
+    No degree padding or geographic WMS fallback is permitted here.
+    """
     params = {
-        "SERVICE": "WMS",
-        "VERSION": "1.1.1",
-        "REQUEST": "GetMap",
-        "LAYERS": layer,
-        "STYLES": "",
-        "FORMAT": "image/png",
-        "TRANSPARENT": "true",
-        "SRS": "EPSG:4326",
-        "BBOX": f"{west},{south},{east},{north}",
-        "WIDTH": str(width),
-        "HEIGHT": str(height),
+        "SERVICE": "WMS", "VERSION": "1.1.1", "REQUEST": "GetMap",
+        "LAYERS": layer, "STYLES": "", "FORMAT": "image/png",
+        "TRANSPARENT": "true", "SRS": NATIVE_POLAR_CRS,
+        "BBOX": ",".join(format(v, ".15g") for v in (left, bottom, right, top)),
+        "WIDTH": str(width), "HEIGHT": str(height),
     }
     return _http_get(f"{LUNASERV_WMS}?{urlencode(params)}")
-
-
-def _encode_rgb_png(rgb: np.ndarray) -> bytes:
-    try:
-        from PIL import Image
-    except ImportError as exc:  # pragma: no cover
-        raise LayerUnavailableError(
-            "Pillow is required to encode PNG previews.",
-            details={"hint": "pip install pillow"},
-        ) from exc
-    img = Image.fromarray(rgb, mode="RGB")
-    buf = io.BytesIO()
-    img.save(buf, format="PNG", optimize=True)
-    return buf.getvalue()
-
-
-def _warp_lonlat_png_to_stereo(
-    png_bytes: bytes,
-    west: float,
-    south: float,
-    east: float,
-    north: float,
-    left: float,
-    bottom: float,
-    right: float,
-    top: float,
-    out_w: int,
-    out_h: int,
-) -> np.ndarray:
-    from rasterio.io import MemoryFile
-
-    with MemoryFile(png_bytes) as mem, mem.open() as src:
-        bands = src.count
-        data = src.read()
-    height, width = data.shape[1], data.shape[2]
-    src_transform = from_bounds(west, south, east, north, width, height)
-    dst = np.zeros((bands, out_h, out_w), dtype=np.uint8)
-    dst_transform = from_bounds(left, bottom, right, top, out_w, out_h)
-    for b in range(bands):
-        reproject(
-            source=data[b],
-            destination=dst[b],
-            src_transform=src_transform,
-            src_crs=MOON_LONLAT,
-            dst_transform=dst_transform,
-            dst_crs=MOON_POLAR_STEREO_S,
-            resampling=Resampling.bilinear,
-            src_nodata=0,
-            dst_nodata=0,
-        )
-    rgb = np.transpose(dst, (1, 2, 0))
-    if rgb.shape[2] == 4:
-        rgb = rgb[:, :, :3]
-    elif rgb.shape[2] == 1:
-        rgb = np.repeat(rgb, 3, axis=2)
-    return rgb
 
 
 def render_imagery_preview(
@@ -305,7 +205,7 @@ def render_imagery_preview(
     source = get_source(layer_id)
     if source is None:
         raise LayerNotFoundError(f"Unknown imagery layer '{layer_id}'.")
-    if not source.preview_enabled or source.alignment_status != "AVAILABLE_WARPED_STEREO":
+    if not source.preview_enabled or source.alignment_status != "AVAILABLE_NATIVE_STEREO":
         raise LayerUnavailableError(
             f"Imagery layer '{layer_id}' is not advertised for polar-stereo preview "
             f"(alignment_status={source.alignment_status}).",
@@ -329,48 +229,36 @@ def render_imagery_preview(
         if max(right - left, top - bottom) > 2 * MAX_HALF_EXTENT_M:
             raise MapServiceError("Requested stereo window too large for imagery preview.")
 
+    if not all(math.isfinite(v) for v in (left, bottom, right, top)):
+        raise MapServiceError("Bounds must be finite.")
     width_m = right - left
     height_m = top - bottom
     if width_m <= 0 or height_m <= 0:
         raise MapServiceError("Invalid stereo bounds.")
+    # Each dimension follows the physical aspect ratio, even for a thin window.
     scale = max(width_m, height_m) / max_edge_px
-    out_w = max(MIN_EDGE_PX, int(round(width_m / scale)))
-    out_h = max(MIN_EDGE_PX, int(round(height_m / scale)))
-
-    cache_key = f"{layer_id}:{left:.0f}:{bottom:.0f}:{right:.0f}:{top:.0f}:{out_w}x{out_h}"
-    cached = _cache_get(cache_key)
-    if cached is not None:
-        return cached
-
-    west, south, east, north = _stereo_window_lonlat_bbox(left, bottom, right, top)
-    pad = 0.15 * max(east - west, north - south, 0.2)
-    w0, s0 = west - pad, max(south - pad, -90.0)
-    e0, n0 = east + pad, min(north + pad, -60.0)
-    wms_png = _wms_getmap_png(
-        source.remote_layer_name or "",
-        w0,
-        s0,
-        e0,
-        n0,
-        width=min(1024, out_w * 2),
-        height=min(1024, out_h * 2),
+    out_w = max(1, int(round(width_m / scale)))
+    out_h = max(1, int(round(height_m / scale)))
+    png = _wms_getmap_png(
+        source.remote_layer_name or "", left, bottom, right, top, out_w, out_h,
     )
-    rgb = _warp_lonlat_png_to_stereo(
-        wms_png, w0, s0, e0, n0, left, bottom, right, top, out_w, out_h
-    )
-    png = _encode_rgb_png(rgb)
+    from PIL import Image
+
+    with Image.open(io.BytesIO(png)) as image:
+        image.load()
+        if image.format != "PNG" or image.size != (out_w, out_h):
+            raise LayerUnavailableError("Upstream image dimensions do not match the requested polar window.")
+        # Black is valid lunar shadow. Only the source alpha denotes missing data.
+        alpha = np.asarray(image.convert("RGBA"))[:, :, 3]
+        nodata_fraction = float(np.mean(alpha == 0))
+        if nodata_fraction == 1.0:
+            raise LayerUnavailableError("LROC has no photographic coverage in this window.")
     meta = PreviewMeta(
-        layer_id=layer_id,
-        role="MAP_VISUALIZATION_ONLY",
-        width_px=out_w,
-        height_px=out_h,
-        bounds_m=(left, bottom, right, top),
-        resolution_m=None,
-        source_access="wms_allowlisted",
-        attribution=source.attribution,
-        value_min=0.0,
-        value_max=255.0,
-        nodata_fraction=float(np.mean(np.all(rgb == 0, axis=2))),
+        layer_id=layer_id, role="MAP_VISUALIZATION_ONLY",
+        width_px=out_w, height_px=out_h, bounds_m=(left, bottom, right, top),
+        resolution_m=max(width_m / out_w, height_m / out_h),
+        source_access="wms_allowlisted", attribution=source.attribution,
+        value_min=0.0, value_max=255.0, nodata_fraction=nodata_fraction,
     )
-    _cache_put(cache_key, png, meta)
+    # Return the original PNG bytes, including its alpha; never invent/stretch pixels.
     return png, meta
