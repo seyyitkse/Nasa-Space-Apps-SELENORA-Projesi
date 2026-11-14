@@ -53,7 +53,7 @@ def test_get_site_and_404_shape(client: TestClient) -> None:
 def test_data_sources_status_is_honest(client: TestClient) -> None:
     items = {d["id"]: d for d in client.get("/api/v1/data-sources").json()["items"]}
     assert items["jpl-horizons"]["integration_status"] == "INTEGRATED"
-    assert items["lro-lola"]["integration_status"] == "PLANNED"
+    assert items["lro-lola"]["integration_status"] in {"INTEGRATED", "NOT_CONFIGURED"}
     assert items["deepseek"]["integration_status"] == "NOT_CONFIGURED"
     # Never leak secrets in API responses
     assert "api_key" not in str(items).lower()

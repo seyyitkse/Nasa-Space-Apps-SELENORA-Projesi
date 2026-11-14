@@ -1,34 +1,53 @@
-"""LRO / LOLA topography integration — interface only (Phase 4).
+"""LRO / LOLA topography integration (Phase 4).
 
-Planned responsibilities (see docs/DATA_SOURCES.md):
-* Load a south-polar LOLA DEM (polar stereographic GeoTIFF) via Rasterio.
-* Sample terrain elevation at a site.
-* Compute a local horizon profile: max elevation angle of terrain per azimuth.
-* Feed the profile to the visibility engine (``EPHEMERIS_TERRAIN`` quality).
-
-Until implemented, callers must treat terrain as unavailable and label results
-``EPHEMERIS_GEOMETRIC`` — never silently pretend terrain was considered.
+Uses local NASA PGDA 5 m/pix GeoTIFFs under ``data/raw/lola/``. Horizon
+profiles are computed in ``app.science.horizon_profile`` via
+``app.services.terrain_data_service``.
 """
 
 from __future__ import annotations
 
-from typing import Protocol
-
 import numpy as np
 
-
-class HorizonProfileProvider(Protocol):
-    def horizon_elevation_deg(
-        self, latitude_deg: float, longitude_deg: float, azimuth_deg: np.ndarray
-    ) -> np.ndarray:
-        """Terrain horizon elevation (deg) for each azimuth (deg, clockwise from north)."""
-        ...
+from app.services import terrain_data_service
 
 
 class GeometricHorizon:
-    """Smooth-sphere horizon: 0° everywhere. Used until LOLA is integrated."""
+    """Smooth-sphere horizon: 0° everywhere (Phase 2/3 geometric mode)."""
 
     def horizon_elevation_deg(
         self, latitude_deg: float, longitude_deg: float, azimuth_deg: np.ndarray
     ) -> np.ndarray:
         return np.zeros_like(np.asarray(azimuth_deg, dtype=float))
+
+
+class LolaHorizon:
+    """LOLA-derived local terrain horizon (requires covering DEM on disk)."""
+
+    def __init__(self, *, observer_height_m: float = 2.0) -> None:
+        self.observer_height_m = observer_height_m
+        self._profile = None
+        self._lat = None
+        self._lon = None
+
+    def horizon_elevation_deg(
+        self, latitude_deg: float, longitude_deg: float, azimuth_deg: np.ndarray
+    ) -> np.ndarray:
+        if self._profile is None or self._lat != latitude_deg or self._lon != longitude_deg:
+            profile, _, _ = terrain_data_service.get_horizon_profile(
+                latitude_deg,
+                longitude_deg,
+                observer_height_m=self.observer_height_m,
+            )
+            self._profile = profile
+            self._lat = latitude_deg
+            self._lon = longitude_deg
+        out = np.empty(len(azimuth_deg), dtype=float)
+        for i, az in enumerate(np.asarray(azimuth_deg, dtype=float)):
+            h, ok = self._profile.elevation_at_azimuth(float(az))
+            out[i] = h if ok else np.nan
+        return out
+
+
+def lola_available() -> bool:
+    return len(terrain_data_service.list_dem_tiles()) > 0

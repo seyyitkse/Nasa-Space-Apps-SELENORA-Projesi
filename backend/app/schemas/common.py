@@ -7,7 +7,8 @@ from pydantic import BaseModel, ConfigDict, Field
 # Data-quality vocabulary used across every analysis output.
 DataQuality = Literal[
     "EPHEMERIS_GEOMETRIC",  # JPL Horizons ephemeris, geometric (smooth-sphere) horizon
-    "EPHEMERIS_TERRAIN",  # JPL Horizons ephemeris + LOLA-derived local horizon
+    "EPHEMERIS_TERRAIN",  # JPL Horizons + LOLA with complete requested-range horizon coverage
+    "LOCAL_TERRAIN_PARTIAL",  # JPL Horizons + LOLA; DEM does not cover full horizon range
     "SYNTHETIC_DEMO",  # simplified analytic model — NOT real data
     "PARTIAL",  # some inputs missing; results incomplete
     "UNAVAILABLE",  # no usable data

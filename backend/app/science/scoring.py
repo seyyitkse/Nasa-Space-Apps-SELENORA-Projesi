@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+# LOCAL_TERRAIN_PARTIAL deliberately excluded — incomplete DEM range must not
+# drive a deterministic site recommendation.
 SCORABLE_QUALITIES = {"EPHEMERIS_GEOMETRIC", "EPHEMERIS_TERRAIN", "SYNTHETIC_DEMO"}
 METRIC_KEYS = {
     "sun_visibility": "sun_visibility_pct",

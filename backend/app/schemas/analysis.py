@@ -106,6 +106,39 @@ class ScoreContribution(ApiModel):
     contribution: float
 
 
+class TerrainSiteMeta(ApiModel):
+    """LOLA horizon provenance for one site (present when horizon_model=TERRAIN)."""
+
+    dem_file: str | None = None
+    dem_site_id: str | None = None
+    resolution_m: float | None = None
+    horizon_coverage_fraction: float | None = None  # complete requested-range fraction
+    any_data_fraction: float | None = None
+    complete_coverage_fraction: float | None = None
+    median_valid_range_m: float | None = None
+    min_valid_range_m: float | None = None
+    max_range_m: float | None = None
+    true_north_grid_azimuth_deg: float | None = None
+    observer_height_m: float | None = None
+    surface_z_m: float | None = None
+    dataset_version: str | None = None
+    sun_unknown_fraction: float | None = None
+    earth_unknown_fraction: float | None = None
+    unknown_hours: float | None = None
+    known_sample_fraction: float | None = None
+
+
+class GeometricVsTerrain(ApiModel):
+    """Side-by-side geometric (0°) vs terrain-adjusted visibility for one site."""
+
+    geometric: VisibilityMetrics
+    longest_darkness_hours_delta: float
+    longest_communication_gap_hours_delta: float
+    sun_visibility_pct_delta: float
+    earth_visibility_pct_delta: float
+    joint_visibility_pct_delta: float
+
+
 class SiteResult(ApiModel):
     label: str
     latitude_deg: float
@@ -118,6 +151,8 @@ class SiteResult(ApiModel):
     darkness_windows: list[Interval]
     communication_gaps: list[Interval]
     joint_windows: list[Interval]
+    terrain: TerrainSiteMeta | None = None
+    geometric_comparison: GeometricVsTerrain | None = None
 
 
 class Provenance(ApiModel):

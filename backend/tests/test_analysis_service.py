@@ -114,6 +114,59 @@ def test_compute_from_real_fixtures_matches_sample_elevations() -> None:
     assert len(rows) == 2
 
 
+def test_compute_terrain_mode_two_lola_sites() -> None:
+    """P0: TERRAIN path on real Site04/Site01 coverage with fixture ephemerides."""
+    from app.services import terrain_data_service
+
+    if len(terrain_data_service.list_dem_tiles()) < 2:
+        pytest.skip("Local LOLA GeoTIFFs missing")
+
+    sun = _samples_from_fixture("horizons_sun_shackleton_a_2026-12-01.json")
+    earth = _samples_from_fixture("horizons_earth_shackleton_a_2026-12-01.json")
+    sun_b = [
+        EphemerisSample(s.time_utc, (s.azimuth_deg + 40.0) % 360.0, s.elevation_deg - 1.0)
+        for s in sun
+    ]
+    earth_b = [
+        EphemerisSample(s.time_utc, (s.azimuth_deg + 20.0) % 360.0, s.elevation_deg + 2.0)
+        for s in earth
+    ]
+    req = _req(
+        horizon_model="TERRAIN",
+        sites=[
+            SiteInput(label="Shackleton A", latitude_deg=-89.68, longitude_deg=-166.0),
+            SiteInput(label="Connecting B", latitude_deg=-89.44, longitude_deg=-141.8),
+        ],
+    )
+    site_ephems = [
+        {
+            "SUN": _ephem("SUN", sun, -89.68, -166.0),
+            "EARTH": _ephem("EARTH", earth, -89.68, -166.0),
+        },
+        {
+            "SUN": _ephem("SUN", sun_b, -89.44, -141.8),
+            "EARTH": _ephem("EARTH", earth_b, -89.44, -141.8),
+        },
+    ]
+    result, _timeline, _rows = compute_from_ephemerides(req, "terrain-id", site_ephems)
+    assert result.horizon_model == "TERRAIN"
+    # 12 km rays on 16×16 km tiles → honest partial label; no deterministic ranking.
+    assert result.data_quality == "LOCAL_TERRAIN_PARTIAL"
+    assert "phase4.1" in result.algorithm_version
+    assert result.recommended_site_label is None
+    assert any(p.source_id == "lro-lola" for p in result.provenance)
+    for site in result.sites:
+        assert site.terrain is not None
+        assert site.score is None and site.rank is None
+        assert site.terrain.any_data_fraction is not None
+        assert site.terrain.any_data_fraction >= 0.8
+        assert site.terrain.complete_coverage_fraction is not None
+        assert site.terrain.complete_coverage_fraction < 0.99
+        assert site.terrain.true_north_grid_azimuth_deg is not None
+        assert site.geometric_comparison is not None
+        assert site.metrics.longest_darkness_hours <= req.analysis_duration_hours + 1e-6
+
+
 def test_partial_data_refuses_ranking() -> None:
     t0 = datetime(2026, 6, 1, tzinfo=UTC)  # different season from Dec 2026 fixtures
     sun = [
@@ -304,12 +357,13 @@ def test_create_analysis_horizons_failure(client: TestClient) -> None:
     app.dependency_overrides.pop(horizons_client, None)
 
 
-def test_terrain_horizon_still_501(client: TestClient) -> None:
+def test_terrain_horizon_uncovered_returns_422(client: TestClient) -> None:
+    """Points outside local LOLA 5 m tiles must not silently fall back to clear sky."""
     body = {
         "mission_name": "Terrain Study",
         "sites": [
-            {"label": "A", "latitude_deg": -89.0, "longitude_deg": 0.0},
-            {"label": "B", "latitude_deg": -88.0, "longitude_deg": 10.0},
+            {"label": "A", "latitude_deg": -85.0, "longitude_deg": 0.0},
+            {"label": "B", "latitude_deg": -84.0, "longitude_deg": 10.0},
         ],
         "start_utc": "2026-12-01T00:00:00Z",
         "end_utc": "2026-12-02T00:00:00Z",
@@ -318,8 +372,8 @@ def test_terrain_horizon_still_501(client: TestClient) -> None:
         "weights": {"sun_visibility": 40, "earth_visibility": 40, "joint_visibility": 20},
     }
     r = client.post("/api/v1/analyses", json=body)
-    assert r.status_code == 501
-    assert r.json()["error"]["details"]["phase"] == 4
+    assert r.status_code == 422
+    assert r.json()["error"]["code"] == "TERRAIN_UNAVAILABLE"
 
 
 @pytest.mark.live
