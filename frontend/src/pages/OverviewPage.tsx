@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/misc'
 import { useIsScientist } from '@/stores/modeStore'
 import { DataSourcesCard, MissionOverviewCard, SystemHealthCard } from '@/features/dashboard/DashboardCards'
 import { EngineModeCard, RecentAnalyses } from '@/features/dashboard/HomeWorkspace'
-import { MoonIllustration } from '@/features/dashboard/MoonIllustration'
+import { MoonHero } from '@/features/moon-globe/MoonHero'
 
 // OpenLayers loads only for the preview, after the hero has rendered.
 const SouthPolePreview = lazy(() => import('@/features/dashboard/SouthPolePreview'))
@@ -74,7 +74,7 @@ export default function OverviewPage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           >
-            <MoonIllustration caption={t('overview.illustration')} />
+            <MoonHero />
           </motion.div>
         </div>
       </section>

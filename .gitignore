@@ -30,3 +30,7 @@ Thumbs.db
 .vscode/*
 !.vscode/extensions.json
 !.vscode/settings.json
+
+# NASA SVS 14959 Moon GLB (13.8 MB) — installed by `npm run fetch:moon`, verified by SHA-256
+frontend/public/nasa/svs-14959/*.glb
+frontend/public/nasa/svs-14959/*.part
