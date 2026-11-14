@@ -5,6 +5,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 
 const backend = process.env.SELENORA_BACKEND_URL ?? 'http://127.0.0.1:8000'
+const devPort = Number(process.env.SELENORA_WEB_PORT ?? 5173)
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -13,11 +14,13 @@ export default defineConfig({
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },
   server: {
-    port: 5173,
+    port: devPort,
     // Dev proxy: the browser talks to the Vite origin; no API keys ever reach the client.
     proxy: {
       '/api': { target: backend, changeOrigin: true },
       '/health': { target: backend, changeOrigin: true },
+      // Capability detection: the UI enables contracted features only if the live schema lists them.
+      '/openapi.json': { target: backend, changeOrigin: true },
     },
   },
   preview: {
@@ -25,6 +28,8 @@ export default defineConfig({
     proxy: {
       '/api': { target: backend, changeOrigin: true },
       '/health': { target: backend, changeOrigin: true },
+      // Capability detection: the UI enables contracted features only if the live schema lists them.
+      '/openapi.json': { target: backend, changeOrigin: true },
     },
   },
   build: {

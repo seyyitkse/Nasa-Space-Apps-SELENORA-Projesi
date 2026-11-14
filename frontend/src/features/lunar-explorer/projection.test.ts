@@ -43,3 +43,18 @@ describe('lunar south-polar stereographic projection', () => {
     expect(isInMapRegion(-70)).toBe(false)
   })
 })
+
+describe('agreement with backend PyProj (+proj=stere +lat_0=-90 +lon_0=0, R=1737.4 km)', () => {
+  // Reference values printed by backend/app/science/lunar_projection.lonlat_to_stereo (PyProj) on 2026-11-14.
+  it.each([
+    [-166.0, -89.68, -2347.488, -9415.262],
+    [129.78, -89.67, 7690.244, -6402.723],
+    [2.9, -86.0, 6139.083, 121187.293],
+    [-87.1, -88.5, -45429.37, 2301.353],
+    [45, -80, 214964.427, 214964.427],
+  ])('lon=%s lat=%s → x=%s y=%s (±1 mm)', (lon, lat, x, y) => {
+    const [px, py] = lonLatToXY(lon, lat)
+    expect(Math.abs(px - x)).toBeLessThan(0.001)
+    expect(Math.abs(py - y)).toBeLessThan(0.001)
+  })
+})

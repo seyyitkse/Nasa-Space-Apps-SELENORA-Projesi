@@ -1,11 +1,11 @@
-# SELENORA — Frontend ↔ Backend Data Contract (Phase 5B)
+# SELENORA — Frontend ↔ Backend Data Contract (Phase 5C integrated)
 
-**Audience:** Claude (Frontend Phase 5A) + Cursor (Backend Phase 5B)  
-**Backend branch:** `feature/phase5b-nasa-data-services`  
+**Audience:** Integrated SPA + API (`feature/phase5c-integration`)  
+**Merged from:** Phase 5B NASA data services + Phase 5A frontend experience  
 **Preserved science:** Geometric `0.3.1-phase3.3` · Terrain `0.4.1-phase4.1-validation`  
 **Date:** 2026-11-14
 
-This document is the integration contract. Frontend should consume these APIs; backend owns schemas and scientific labels.
+This document is the authoritative integrated contract. Frontend consumes these APIs; backend owns schemas and scientific labels.
 
 ---
 
@@ -148,3 +148,58 @@ Always surface layer `attribution` / response headers for LOLA/PGDA and Horizons
 - Frontend React edits (Claude Phase 5A owns UI).
 - Automatic multi-GB DEM downloads.
 - Enabling TERRAIN scoring from Product 90 without a new science validation phase.
+
+---
+
+## Phase 5A frontend consumption status (appended by the frontend, 2026-11-14)
+
+The SPA detects routes from the live `GET /openapi.json` (`frontend/src/services/contracts.ts → useCapabilities`)
+and only calls a route that the running backend lists. Missing routes produce a labelled UNAVAILABLE state.
+Fixtures appear only in unit tests.
+
+| Route | Frontend use | Status (verified against a running Phase 5B backend, isolated DB copy) |
+|---|---|---|
+| `GET /api/v1/maps/layers` | Explorer layer dock; role badges (Science DEM / Visualization only); `REFERENCE_DOC` rendered as links | ✅ consumed |
+| `GET /api/v1/maps/preview` | Raster overlay for the current view (≤ 50 km half-extent, snapped to 1 km); image placed **only** at `X-SELENORA-Bounds-M` (refused if header missing) | ✅ consumed (LDEM hillshade verified: Shackleton bowl aligns with marker) |
+| `GET /api/v1/maps/elevation` | — (Explorer uses `/terrain/coverage` for point heights) | not used yet |
+| `GET /api/v1/maps/mesh` | — (3D viewer not built) | not used yet |
+| `GET /api/v1/terrain/catalog` | LOLA tile footprints drawn from `bounds_m` | ✅ consumed |
+| `GET /api/v1/terrain/coverage` | Explorer inspector: surface height, tile, stereo x/y | ✅ consumed |
+| `GET /api/v1/terrain/horizon-profile` | Simulator 360° panorama (`n_azimuth=360`): no-data bins → UNKNOWN gaps, `complete_coverage=false` → "partial ray" shading | ✅ consumed |
+| `GET /api/v1/ephemeris/observer-series` | Simulator per-epoch Sun/Earth azimuth + live terrain state, fetched in 24 h chunks aligned to the stored analysis grid; matched by exact timestamp; elevation compared with stored timeline (Δ shown) | ✅ consumed (Δ = 0.0000° on test analysis) |
+| `GET /api/v1/artemis/regions` | Explorer panel: names + official links only, no geometry | ✅ consumed |
+
+### Remaining frontend requests
+
+**R1 — per-sample stored states: `GET /api/v1/analyses/{id}/epochs` (P0 for exact lanes/heatmaps).**
+`TimelinePoint` still lacks azimuth and per-sample terrain state. The frontend therefore derives terrain
+states from `darkness_windows` / `communication_gaps` (which contain only *known* non-visible samples):
+- inside a window → BLOCKED (geometric > 0°) or BELOW_HORIZON;
+- outside → VISIBLE only if the site's `*_unknown_fraction == 0` and the list has < 50 windows; otherwise
+  **UNRESOLVED** ("visible or unknown");
+- samples at/after `end_utc` are excluded (zero-duration hold, never in a window).
+
+Note: for a terrain-blocked body that is also below 0°, the derived label is BELOW_HORIZON while the
+backend per-epoch label is BLOCKED (e.g. Earth −1.93° under a −1.27° terrain horizon). The Simulator prefers
+the live `observer-series` state when available. Exposing the stored per-sample `sun_state` / `earth_state`
+(+ azimuths, already persisted in `VisibilityTimeline`) would remove both the ambiguity and the live
+Horizons round-trip:
+
+```json
+{ "analysis_id": "uuid", "horizon_model": "TERRAIN",
+  "sites": [ { "label": "…", "samples": [
+    { "t": "2026-12-01T00:00:00Z", "sun_azimuth_deg": 86.07, "sun_elevation_deg": 1.49,
+      "earth_azimuth_deg": 172.67, "earth_elevation_deg": -1.93,
+      "sun_terrain_horizon_deg": 12.66, "earth_terrain_horizon_deg": -1.27,
+      "sun_state": "BLOCKED", "earth_state": "BLOCKED" } ] } ] }
+```
+
+**R2 — imagery basemap.** `moon-trek` is `REFERENCE_DOC` only, so the "Lunar image basemap" switch stays
+unavailable. A previewable LROC/WAC south-polar mosaic layer (same preview contract) would enable it.
+
+**R3 — preview window cap.** `/maps/preview` rejects half-extents > 50 km. At polar zoom the UI shows only a
+100 km window around the view centre (labelled). A coarse whole-cap preview (e.g. ≤ 400 km half-extent at
+low `max_edge_px`) would let the overview show context.
+
+**R4 — 3D.** `/maps/mesh` exists. The frontend has not built the optional viewer yet (P2). It will show the
+mesh `warning`, resolution and vertical exaggeration when implemented.

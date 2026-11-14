@@ -1,19 +1,18 @@
-import { ArrowRight, Compass, Sparkles } from 'lucide-react'
+import { ArrowRight, Compass, Sparkles, SunMoon } from 'lucide-react'
+import { lazy, Suspense } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 
 import { staggerChild, staggerParent } from '@/components/shared/PageTransition'
 import { Button } from '@/components/ui/button'
-import {
-  AnalysisStatusCard,
-  DataSourcesCard,
-  ExampleSitesCard,
-  MissionOverviewCard,
-  PlannerAccessCard,
-  SystemHealthCard,
-} from '@/features/dashboard/DashboardCards'
+import { Skeleton } from '@/components/ui/misc'
+import { DataSourcesCard, MissionOverviewCard, SystemHealthCard } from '@/features/dashboard/DashboardCards'
+import { EngineModeCard, RecentAnalyses } from '@/features/dashboard/HomeWorkspace'
 import { MoonIllustration } from '@/features/dashboard/MoonIllustration'
+
+// OpenLayers loads only for the preview, after the hero has rendered.
+const SouthPolePreview = lazy(() => import('@/features/dashboard/SouthPolePreview'))
 
 export default function OverviewPage() {
   const { t } = useTranslation()
@@ -54,6 +53,11 @@ export default function OverviewPage() {
                   <Compass /> {t('overview.ctaExplore')}
                 </Link>
               </Button>
+              <Button asChild variant="ghost" size="lg">
+                <Link to="/simulator">
+                  <SunMoon /> {t('nav.simulator')}
+                </Link>
+              </Button>
             </motion.div>
             <motion.div
               variants={staggerChild}
@@ -73,20 +77,27 @@ export default function OverviewPage() {
         </div>
       </section>
 
-      {/* ---------------- Dashboard ---------------- */}
+      {/* ---------------- Live mission workspace ---------------- */}
+      <section className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]" aria-label={t('home.workspace')}>
+        <Suspense fallback={<Skeleton className="h-[360px]" />}>
+          <SouthPolePreview />
+        </Suspense>
+        <EngineModeCard />
+      </section>
+
+      <RecentAnalyses />
+
+      {/* ---------------- Mission draft & sources ---------------- */}
       <motion.section
         variants={staggerParent}
         initial="hidden"
         animate="show"
-        className="grid gap-5 md:grid-cols-2 xl:grid-cols-3"
+        className="grid grid-cols-[minmax(0,1fr)] gap-5 md:grid-cols-2 xl:grid-cols-3"
         aria-label="Mission dashboard"
       >
         <MissionOverviewCard />
-        <PlannerAccessCard />
         <SystemHealthCard />
-        <ExampleSitesCard />
         <DataSourcesCard />
-        <AnalysisStatusCard />
       </motion.section>
     </div>
   )
