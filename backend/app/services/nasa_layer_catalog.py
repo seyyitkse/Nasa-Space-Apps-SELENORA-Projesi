@@ -169,7 +169,7 @@ LAYERS: tuple[NasaLayer, ...] = (
         id="lroc-wac-south-summer",
         title="LROC WAC South Pole Summer Mosaic (Lunaserv)",
         provider="ASU LROC / Lunaserv",
-        product_page="https://data.lroc.im-ldi.com/lroc/",
+        product_page="https://data.lroc.im-ldi.com/lroc/view_rdr/WAC_ROI_SOUTH_SUMMER",
         source_url="https://webmap.lroc.asu.edu/lunaserv/wms",
         access_mode="wms_allowlisted",
         role="MAP_VISUALIZATION_ONLY",
@@ -181,12 +181,16 @@ LAYERS: tuple[NasaLayer, ...] = (
             "(a=b=1737400 m, lon_0=0)"
         ),
         attribution=(
-            "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). "
-            "NASA/GSFC/Arizona State University."
+            "LROC WAC South Pole Summer Mosaic (WAC_ROI_SOUTH_SUMMER) via ASU Lunaserv "
+            "(https://webmap.lroc.asu.edu/). Product: "
+            "https://data.lroc.im-ldi.com/lroc/view_rdr/WAC_ROI_SOUTH_SUMMER. "
+            "NASA/GSFC/Arizona State University. Static mosaic — not mission-date lighting."
         ),
         notes=(
-            "Phase 5E allow-listed WMS layer luna_wac_roi_south_summer. "
-            "Use GET /maps/preview or /maps/imagery/sources. Not used for TERRAIN scoring."
+            "Phase 5E allow-listed WMS layer luna_wac_roi_south_summer "
+            "(official RDR WAC_ROI_SOUTH_SUMMER). "
+            "Use GET /maps/preview or /maps/imagery/sources. Not used for TERRAIN scoring. "
+            "Illumination is baked into the summer mosaic and does not change with analysis epochs."
         ),
         approx_bytes=None,
         accept_ranges=None,

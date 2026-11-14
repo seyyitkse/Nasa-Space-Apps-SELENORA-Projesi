@@ -247,7 +247,7 @@ const phase5dEn = {
     helpUnavailable:
       'Hillshade is shaded relief computed from NASA LOLA heights. LROC photography will appear here once the server provides a verified imagery layer.',
     staticIllumination:
-      'Static LROC reference mosaic — lighting does not change with the 2026/2027 mission timeline.',
+      'Official LROC WAC South Pole Summer Mosaic (WAC_ROI_SOUTH_SUMMER) — a static summer mosaic. Lighting does not change with the 2026/2027 mission timeline.',
     loading: 'Loading LROC photography for this map window…',
   },
   artemis5e: {

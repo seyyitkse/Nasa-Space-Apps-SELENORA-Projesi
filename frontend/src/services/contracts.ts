@@ -203,6 +203,18 @@ export function parseSizePxHeader(v: string | undefined | null): [number, number
   return [w, h]
 }
 
+/** Read width/height from PNG IHDR when response headers are unavailable. */
+export async function readPngSize(blob: Blob): Promise<[number, number] | undefined> {
+  const buf = new Uint8Array(await blob.slice(0, 24).arrayBuffer())
+  // 8-byte signature + IHDR length(4) + 'IHDR'(4) + width(4) + height(4)
+  if (buf.length < 24) return undefined
+  if (buf[0] !== 0x89 || buf[1] !== 0x50 || buf[2] !== 0x4e || buf[3] !== 0x47) return undefined
+  const w = (buf[16]! << 24) | (buf[17]! << 16) | (buf[18]! << 8) | buf[19]!
+  const h = (buf[20]! << 24) | (buf[21]! << 16) | (buf[22]! << 8) | buf[23]!
+  if (w < 1 || h < 1) return undefined
+  return [w, h]
+}
+
 /** Backend cap for preview windows (MAP_SERVICE_ERROR above this). Phase 5F raised to 400 km for polar overview. */
 export const PREVIEW_MAX_HALF_EXTENT_M = 400_000
 /** Snap preview BBOX edges to this grid (metres) so React Query keys stay stable while panning. */
@@ -381,15 +393,23 @@ export const contractApi = {
       responseType: 'blob',
       timeout: 120_000,
     })
-    const extent = parseBoundsHeader(r.headers['x-selenora-bounds-m'] as string | undefined)
-    if (!extent) throw new Error('Preview response is missing X-SELENORA-Bounds-M; refusing to place the image.')
+    if (!(r.data instanceof Blob) || r.data.size < 32 || !String(r.headers['content-type'] ?? r.data.type).includes('image')) {
+      throw new Error('Preview response was not an image PNG.')
+    }
+    // Prefer backend placement headers; fall back to the requested stereo BBOX (same window the server rendered).
+    const extent = parseBoundsHeader(r.headers['x-selenora-bounds-m'] as string | undefined) ?? bounds
     const sizePx = String(r.headers['x-selenora-size-px'] ?? '')
+    let imageSize = parseSizePxHeader(sizePx)
+    if (!imageSize) {
+      // Decode PNG IHDR when the Size-Px header is stripped by a proxy.
+      imageSize = await readPngSize(r.data)
+    }
     return {
       layerId,
       url: URL.createObjectURL(r.data),
       extent,
-      sizePx,
-      imageSize: parseSizePxHeader(sizePx),
+      sizePx: sizePx || (imageSize ? `${imageSize[0]}x${imageSize[1]}` : ''),
+      imageSize,
       role: String(r.headers['x-selenora-layer-role'] ?? ''),
       attribution: String(r.headers['x-selenora-attribution'] ?? ''),
     }

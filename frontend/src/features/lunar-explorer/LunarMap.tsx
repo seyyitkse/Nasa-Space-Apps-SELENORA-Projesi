@@ -78,7 +78,7 @@ interface Props {
   onCursor?: (pos: { lat: number; lon: number } | null) => void
   ariaLabel: string
   interactive?: boolean
-  /** Latitude bound of the initial view (default ≈ −84.5°). */
+  /** Latitude bound of the initial view (default ≈ −88° — Shackleton / ridge scale). */
   focusLat?: number
   ref?: Ref<LunarMapHandle>
 }
@@ -123,20 +123,21 @@ function buildGraticule(): Feature[] {
   return features
 }
 
-const gridStyle = new Style({ stroke: new Stroke({ color: 'rgba(148,163,184,0.16)', width: 1 }) })
-const boundaryStyle = new Style({ stroke: new Stroke({ color: 'rgba(86,217,233,0.35)', width: 1.2, lineDash: [4, 6] }) })
-const regionStyle = new Style({ fill: new Fill({ color: 'rgba(21,31,50,0.55)' }) })
+const gridStyle = new Style({ stroke: new Stroke({ color: 'rgba(148,163,184,0.22)', width: 1 }) })
+const boundaryStyle = new Style({ stroke: new Stroke({ color: 'rgba(86,217,233,0.4)', width: 1.2, lineDash: [4, 6] }) })
+/** Subtle disc UNDER rasters only — never a mask above imagery. */
+const regionStyle = new Style({ fill: new Fill({ color: 'rgba(12,20,36,0.35)' }) })
 
-function graticuleStyle(f: Feature): Style {
+function graticuleLineStyle(f: Feature): Style | undefined {
   const kind = f.get('kind') as string
-  if (kind === 'region') return regionStyle
+  if (kind === 'region') return undefined
   if (kind === 'boundary') return boundaryStyle
   if (kind === 'grid-label')
     return new Style({
       text: new Text({
         text: f.get('text') as string,
         font: '500 10px "JetBrains Mono Variable", monospace',
-        fill: new Fill({ color: 'rgba(148,163,184,0.75)' }),
+        fill: new Fill({ color: 'rgba(148,163,184,0.8)' }),
       }),
     })
   return gridStyle
@@ -174,7 +175,7 @@ export function LunarMap({
   onCursor,
   ariaLabel,
   interactive = true,
-  focusLat = -84.5,
+  focusLat = -88,
   ref,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -182,6 +183,7 @@ export function LunarMap({
   const siteSource = useRef(new VectorSource())
   const pickSource = useRef(new VectorSource())
   const tileSource = useRef(new VectorSource())
+  const regionLayer = useRef<VectorLayer | null>(null)
   const graticuleLayer = useRef<VectorLayer | null>(null)
   const tileLayer = useRef<VectorLayer | null>(null)
   const rasterLayers = useRef(new Map<string, ImageLayer<ImageStatic>>())
@@ -201,9 +203,19 @@ export function LunarMap({
 
   useEffect(() => {
     if (!containerRef.current) return
+    const allGrat = buildGraticule()
+    const regionFeats = allGrat.filter((f) => f.get('kind') === 'region')
+    const lineFeats = allGrat.filter((f) => f.get('kind') !== 'region')
+    // z-order: region fill (0) < rasters (2) < grid/labels (5) < coverage (6) < sites (10)
+    const region = new VectorLayer({
+      source: new VectorSource({ features: regionFeats }),
+      style: regionStyle,
+      zIndex: 0,
+    })
+    regionLayer.current = region
     const grat = new VectorLayer({
-      source: new VectorSource({ features: buildGraticule() }),
-      style: (f) => graticuleStyle(f as Feature),
+      source: new VectorSource({ features: lineFeats }),
+      style: (f) => graticuleLineStyle(f as Feature),
       zIndex: 5,
     })
     graticuleLayer.current = grat
@@ -294,7 +306,7 @@ export function LunarMap({
 
     const map = new OlMap({
       target: containerRef.current,
-      layers: [grat, coverage, siteLayer, pickLayer],
+      layers: [region, grat, coverage, siteLayer, pickLayer],
       controls: interactive
         ? defaultControls({ attribution: false, rotate: false }).extend([new ScaleLine({ units: 'metric', minWidth: 80 })])
         : [],
@@ -309,13 +321,13 @@ export function LunarMap({
         showFullExtent: true,
       }),
     })
+    // Min zoom = full 80°S disc; start zoomed to focusLat (~88°S ridge/Shackleton scale).
     map.getView().fit([-HALF, -HALF, HALF, HALF], { padding: [16, 16, 16, 16] })
     const fitZoom = map.getView().getZoom() ?? 1
     map.getView().setMinZoom(fitZoom - 0.5)
-    // 5 m/px LOLA tiles need deep zoom; allow down to ~1 m per screen pixel.
     map.getView().setMaxZoom(map.getView().getZoomForResolution(1) ?? fitZoom + 12)
     const focus = mapHalfExtent(focusLat)
-    map.getView().fit([-focus, -focus, focus, focus], { padding: [16, 16, 16, 16] })
+    map.getView().fit([-focus, -focus, focus, focus], { padding: [12, 12, 12, 12] })
 
     if (interactive) {
       map.on('singleclick', (evt) => {
@@ -424,7 +436,8 @@ export function LunarMap({
       const layer = existing.get(p.layerId)
       if (layer) layer.setSource(source)
       else {
-        const created = new ImageLayer({ source, opacity: 0.85, zIndex: 1 + k })
+        // Above region fill (0), below graticule lines (5) so grid stays readable on imagery.
+        const created = new ImageLayer({ source, opacity: 0.85, zIndex: 2 + k })
         existing.set(p.layerId, created)
         map.addLayer(created)
       }
@@ -434,6 +447,7 @@ export function LunarMap({
   // Restyle on selection / layer toggles.
   useEffect(() => {
     siteSource.current.changed()
+    regionLayer.current?.setVisible(layers.graticule)
     graticuleLayer.current?.setVisible(layers.graticule)
     tileLayer.current?.setVisible(layers.coverage)
     for (const [id, layer] of rasterLayers.current) {

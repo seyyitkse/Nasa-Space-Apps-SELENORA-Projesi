@@ -106,18 +106,33 @@ South-polar stereographic CRS (`a=b=1737400`) and `X-SELENORA-Bounds-M` placemen
 | `ExplorerPage` | Aspect-aware `previewBounds(halfWidthM, halfHeightM)`; 280 ms debounce on pan/zoom; seed polar window at max half-extent. |
 | `LunarMap` | Emit viewport `halfWidthM` / `halfHeightM` from `size × resolution`; pass `imageSize` into `ImageStatic`. |
 
-#### Verification (API `:8002`, SPA `:5176`)
+#### Verification (dedicated ports — **API `:8030`, SPA `:5180`**)
+
+> **Port collision warning:** `5176` was simultaneously serving **Phase 5D** (`…/phase5d/frontend` vite `--strictPort`) and an older Phase 5F process. Screenshots that still showed a fixed ~100 km island and a **disabled Photo** button were taken against **Phase 5D**, not this branch. Use **http://127.0.0.1:5180** only.
 
 | Check | Result |
 |-------|--------|
-| Hillshade 400 km window | `200`, `X-SELENORA-Size-Px=512x512`, `Bounds-M=-200000…200000` |
-| LROC non-square window | `200`, e.g. `621x768` with matching stereo bounds (no stretch) |
-| Zoom-to-LOLA (~40 km) Photo | LROC WAC fills the map; Site04 footprint + markers align |
-| Zoom-to-LOLA Hillshade | LOLA hillshade fills viewport; Barker attribution |
-| Polar overview | ~400 km-class window; outside coverage stays empty graticule (no fake Moon fill) |
-| Photo ↔ Hillshade ↔ Off | Working toggle with opacity |
+| `GET /api/v1/maps/layers` via `:5180` proxy | 10 items; `lroc-wac-south-summer` `kind=imagery` `access_mode=wms_allowlisted` |
+| `GET /api/v1/maps/imagery/sources` | `lroc-wac-south-summer` `preview_enabled=true`, product page `WAC_ROI_SOUTH_SUMMER` |
+| LROC preview ±30 km | `200`, `768x768`, bounds `-30000…30000` |
+| Hillshade preview ±30 km | `200`, `750x750`, same bounds |
+| UI Photo (5180) | Enabled + checked; overlay shows **dynamic** window (e.g. `44×84 km`); static mosaic disclaimer |
+| UI Hillshade (5180) | Toggle works; Shackleton / LOLA footprints align |
+| Radix Stored analysis | Dark listbox open with readable options |
 
-Screenshots: `docs/screenshots/phase5f/02-mobile-hillshade-wide.png`, `03-mobile-hillshade-lola-zoom.png`, `04-mobile-photo-lola-zoom.png`, `07-desktop-map-hillshade-clip.png`, plus API PNGs `api-hillshade-400km.png`, `api-lroc-aspect.png`, `api-lroc-40km.png`.
+Screenshots: `12-ui-photo-5180.png`, `13-ui-hillshade-select-5180.png`, `10-api-photo-60km.png`, `11-api-hillshade-60km.png`, provenance `VERIFY_PORTS_AND_SOURCES.txt`.
+
+#### Follow-up map compositing fixes (same Phase 5F branch)
+
+| Issue | Root cause | Fix |
+|-------|------------|-----|
+| Circular disc “on top of” imagery | Graticule **region fill** shared `zIndex: 5` with grid lines, above rasters (`zIndex: 1`) | Split region fill to `zIndex: 0`; rasters `zIndex: 2+`; grid/labels stay `5` |
+| Photo disabled on wrong SPA | Catalogue from Phase 5D / dead proxy → no `imagery` layer | Dedicated `:5180`→`:8030`; auto-select LROC when catalogue-live |
+| Fixed “100 km” caption | Stale SPA **or** old square 50 km half-extent | Dynamic `{{size}}` from real BBOX (`44×84 km` etc.) |
+| Initial empty polar disc | Start zoom too wide (`focusLat=-84.5`) | Default `focusLat=-88`; auto-fit LOLA tiles once catalog loads |
+| CORS header visibility | `expose_headers` omitted `X-SELENORA-*` | Expose Bounds-M / Size-Px / Attribution; SPA also falls back to requested BBOX + PNG IHDR size |
+
+LROC product: [WAC_ROI_SOUTH_SUMMER](https://data.lroc.im-ldi.com/lroc/view_rdr/WAC_ROI_SOUTH_SUMMER) via Lunaserv WMS `luna_wac_roi_south_summer` (static summer mosaic — not mission-date lighting).
 
 ---
 

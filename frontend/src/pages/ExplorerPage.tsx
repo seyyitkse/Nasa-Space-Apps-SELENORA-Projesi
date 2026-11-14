@@ -20,7 +20,7 @@ import {
   type MapSite,
   tilesExtent,
 } from '@/features/lunar-explorer/LunarMap'
-import { isInMapRegion, lonLatToXY } from '@/features/lunar-explorer/projection'
+import { isInMapRegion, lonLatToXY, mapHalfExtent } from '@/features/lunar-explorer/projection'
 import { type DetailTarget, SiteInspector } from '@/features/lunar-explorer/SiteInspector'
 import { useSites } from '@/hooks/useApi'
 import { formatCoord } from '@/lib/format'
@@ -67,13 +67,13 @@ export default function ExplorerPage() {
   const catalog = useTerrainCatalog(caps.has('terrainCatalog'))
   const mapLayers = useMapLayers(caps.has('mapLayers'))
   const artemis = useArtemisRegions(caps.has('artemisRegions'))
-  // Seed a polar window so basemap previews can fetch before the first OpenLayers moveend
-  // (mobile browsers sometimes delay rendercomplete until after the first interaction).
+  // Seed ≈88°S window (matches LunarMap focusLat) so the first preview fills the start view.
+  const seedHalf = Math.min(Math.ceil(mapHalfExtent(-88) / PREVIEW_BOUNDS_SNAP_M) * PREVIEW_BOUNDS_SNAP_M, PREVIEW_MAX_HALF_EXTENT_M)
   const [viewLive, setViewLive] = useState<MapViewState | null>({
     center: [0, 0],
-    halfExtent: PREVIEW_MAX_HALF_EXTENT_M,
-    halfWidthM: PREVIEW_MAX_HALF_EXTENT_M,
-    halfHeightM: PREVIEW_MAX_HALF_EXTENT_M,
+    halfExtent: seedHalf,
+    halfWidthM: seedHalf,
+    halfHeightM: seedHalf,
   })
   // Debounce pan/zoom so we do not hammer /maps/preview on every wheel tick.
   const [view, setView] = useState(viewLive)
@@ -82,6 +82,8 @@ export default function ExplorerPage() {
     return () => window.clearTimeout(t)
   }, [viewLive])
   const mapRef = useRef<LunarMapHandle>(null)
+  const basemapPrimed = useRef(false)
+  const tilesFitted = useRef(false)
 
   const [params, setParams] = useSearchParams()
   const selectedId = params.get('site')
@@ -154,6 +156,32 @@ export default function ExplorerPage() {
     if (basemaps.hillshade) r[basemaps.hillshade.id] = c === 'hillshade'
     setLayers({ ...layers, rasters: r })
   }
+  // Prefer LROC photo when the Phase 5E allow-listed layer is catalogue-live; else hillshade.
+  useEffect(() => {
+    if (basemapPrimed.current || layerList.length === 0) return
+    const pick = pickBasemapLayers(layerList)
+    if (!pick.photo && !pick.hillshade) return
+    basemapPrimed.current = true
+    setLayers((prev) => {
+      const r = { ...prev.rasters }
+      if (pick.photo) {
+        r[pick.photo.id] = true
+        if (pick.hillshade) r[pick.hillshade.id] = false
+      } else if (pick.hillshade) {
+        r[pick.hillshade.id] = true
+      }
+      return { ...prev, rasters: r }
+    })
+  }, [layerList])
+  // Once LOLA footprints arrive, frame the scientifically validated tiles (meaningful imagery scale).
+  useEffect(() => {
+    if (tilesFitted.current || tiles.length === 0) return
+    const ext = tilesExtent(tiles)
+    if (!ext) return
+    tilesFitted.current = true
+    const id = window.setTimeout(() => mapRef.current?.fitExtent(ext), 120)
+    return () => window.clearTimeout(id)
+  }, [tiles])
   const photoId = basemaps.photo?.id
   const hillId = basemaps.hillshade?.id
   // Memoised so the map does not restyle on every render.
@@ -183,7 +211,16 @@ export default function ExplorerPage() {
     }),
   )
   const anyRaster = previews.length > 0
-  const previewWindowKm = bounds ? (bounds[2] - bounds[0]) / 1000 : null
+  // Reflect the real requested stereo BBOX (width×height); not a fixed 100 km caption.
+  const previewWindowSize = bounds
+    ? (() => {
+        const w = (bounds[2]! - bounds[0]!) / 1000
+        const h = (bounds[3]! - bounds[1]!) / 1000
+        const rw = Math.round(w)
+        const rh = Math.round(h)
+        return rw === rh ? String(rw) : `${rw}×${rh}`
+      })()
+    : null
   const cursorXY = cursor && cursor.lat <= 0 ? lonLatToXY(cursor.lon, cursor.lat) : null
 
   return (
@@ -318,9 +355,9 @@ export default function ExplorerPage() {
               }}
               onCursor={setCursor}
             />
-            {anyRaster && previewWindowKm !== null && (
+            {anyRaster && previewWindowSize !== null && (
               <div className="pointer-events-none absolute top-3 left-3 max-w-[calc(100%-4rem)] rounded-lg border border-line-strong bg-bg/85 px-3 py-2 text-[11px] leading-snug text-fg-2 backdrop-blur sm:max-w-sm">
-                {t('explorer2.previewNote', { km: previewWindowKm.toFixed(0) })}
+                {t('explorer2.previewNote', { size: previewWindowSize })}
                 {basemapChoice === 'photo' && <div className="mt-0.5 text-[10px] text-warning/90">{t('lroc.staticIllumination')}</div>}
                 <div className="mt-0.5 truncate text-[10px] text-fg-3">{previews.map((p) => p.attribution.split(';')[0]).join(' · ')}</div>
               </div>

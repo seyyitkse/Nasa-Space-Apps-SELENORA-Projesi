@@ -246,7 +246,7 @@ const phase5dTr: typeof phase5dEn = {
     helpUnavailable:
       'Gölgeli kabartma NASA LOLA yüksekliklerinden hesaplanır. LROC fotoğrafı, sunucu doğrulanmış bir görüntü katmanı sağladığında burada görünecek.',
     staticIllumination:
-      'Sabit LROC referans mozaiği — aydınlatma 2026/2027 görev zaman çizelgesiyle değişmez.',
+      'Resmî LROC WAC Güney Kutbu Yaz Mozaiği (WAC_ROI_SOUTH_SUMMER) — statik yaz mozaiği. Aydınlatma 2026/2027 görev zaman çizelgesiyle değişmez.',
     loading: 'Bu harita penceresi için LROC fotoğrafı yükleniyor…',
   },
   artemis5e: {

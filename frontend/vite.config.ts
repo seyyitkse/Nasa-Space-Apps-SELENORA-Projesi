@@ -21,6 +21,8 @@ export default defineConfig({
   },
   server: {
     port: devPort,
+    // Fail loudly if another worktree/agent already owns the port (no silent steal).
+    strictPort: true,
     // Dev proxy: the browser talks to the Vite origin; no API keys ever reach the client.
     proxy: {
       '/api': { target: backend, changeOrigin: true },

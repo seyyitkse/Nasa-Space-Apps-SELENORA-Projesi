@@ -82,7 +82,7 @@ SOURCES: tuple[ImagerySource, ...] = (
             "LROC WAC mosaics via ASU Lunaserv (https://webmap.lroc.asu.edu/). "
             "NASA/GSFC/Arizona State University."
         ),
-        product_page="https://data.lroc.im-ldi.com/lroc/",
+        product_page="https://data.lroc.im-ldi.com/lroc/view_rdr/WAC_ROI_SOUTH_SUMMER",
         alignment_status="AVAILABLE_WARPED_STEREO",
         preview_enabled=True,
         notes=(

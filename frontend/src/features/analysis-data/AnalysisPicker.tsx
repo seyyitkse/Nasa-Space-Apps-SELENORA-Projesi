@@ -37,7 +37,8 @@ export function AnalysisPicker({
       <div className="min-w-0 flex-1">
         <Label htmlFor="ws-analysis">{t('lab.analysis')}</Label>
         <Select
-          value={current?.id ?? undefined}
+          key={current?.id ?? 'none'}
+          value={current?.id}
           onValueChange={(id) => setAnalysis(id || null)}
           disabled={disabled}
         >

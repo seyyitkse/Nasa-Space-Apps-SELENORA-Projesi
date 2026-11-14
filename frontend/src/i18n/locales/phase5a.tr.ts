@@ -107,7 +107,8 @@ const phase5aTr: typeof phase5aEn = {
     referenceGroup: 'Referans (yalnızca bağlantı)',
     artemisTitle: 'Artemis III aday bölgeleri',
     artemisNote: 'Yalnızca resmî NASA bölge adları. Sınır çizilmez: NASA sayısallaştırılmış poligon yayınlamadı ve SELENORA bunları görsellerden çizmez.',
-    previewNote: 'Görünüm merkezi çevresinde {{km}} km pencere için backend tarafından üretilen raster önizleme (yalnızca görselleştirme, puanlamada kullanılmaz).',
+    previewNote:
+      'Görünüm merkezi çevresinde {{size}} km stereo pencere için backend raster önizlemesi (güncel viewport BBOX, üst sınırlı; yalnızca görselleştirme, puanlamada kullanılmaz).',
   },
   sim: {
     title: 'Güneş ve Dünya Ufuk Simülatörü',
