@@ -1,0 +1,13 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> frontend@0.0.0 dev
+> vite --host 127.0.0.1 --port 5173
+
+
+  VITE v8.3.8  ready in 387 ms
+
+  ➜  Local:   http://127.0.0.1:5173/
+12:56:58 [vite] (client) [optimizer] bundling dependencies...
+12:59:11 [vite] (client) [console.warn] THREE.Clock: This module has been deprecated. Please use THREE.Timer instead.
+12:59:11 [vite] (client) [console.error] Attempted to synchronously unmount a root while React was already rendering. React cannot finish unmounting the root until the current render has completed, which may lead to a race condition.
+12:59:11 [vite] (client) [console.error] Attempted to synchronously unmount a root while React was already rendering. React cannot finish unmounting the root until the current render has completed, which may lead to a race condition.
