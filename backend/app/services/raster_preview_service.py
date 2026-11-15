@@ -68,8 +68,13 @@ class PreviewMeta:
 def _configure_gdal_curl() -> None:
     os.environ.setdefault("GDAL_DISABLE_READDIR_ON_OPEN", "EMPTY_DIR")
     os.environ.setdefault("CPL_VSIL_CURL_ALLOWED_EXTENSIONS", ".tif,.TIF,.tiff,.TIFF")
-    os.environ.setdefault("GDAL_HTTP_TIMEOUT", "60")
+    os.environ.setdefault("GDAL_HTTP_TIMEOUT", "45")
+    os.environ.setdefault("GDAL_HTTP_CONNECTTIMEOUT", "15")
     os.environ.setdefault("GDAL_HTTP_MAX_RETRY", "2")
+    os.environ.setdefault("GDAL_CACHEMAX", "256")
+    os.environ.setdefault("CPL_VSIL_CURL_CACHE_SIZE", str(64 * 1024 * 1024))
+    os.environ.setdefault("VSI_CACHE", "TRUE")
+    os.environ.setdefault("VSI_CACHE_SIZE", str(64 * 1024 * 1024))
 
 
 def _open_path_for_layer(layer: NasaLayer) -> str:
@@ -300,22 +305,36 @@ def build_mesh(
     longitude_deg: float,
     half_extent_m: float = 2_000.0,
     step_m: float = 50.0,
-    layer_id: str = "lola-site04-5mpp-surf",
+    layer_id: str = "auto",
 ) -> dict[str, Any]:
     """Downsampled XYZ grid for optional 3D preview (not a full LOD engine).
 
     Phase 5E: returns explicit grid dimensions, NoData mask, reference elevation,
     extent, and source metadata. Values are real DEM samples only (never invented).
+
+    Phase 7D: ``layer_id="auto"`` (default) prefers local Product 78 5 m tiles, then
+    verified Product 90 elevation COGs. Hillshade / imagery are rejected.
     """
     if step_m < 10.0 or step_m > 500.0:
         raise MapServiceError("step_m must be in [10, 500].")
     if half_extent_m > 5_000.0:
         raise MapServiceError("Mesh half_extent_m capped at 5000 m.")
-    layer = get_layer(layer_id)
-    if layer is None:
-        raise LayerNotFoundError(f"Unknown layer id '{layer_id}'.")
-    if layer.kind not in {"elevation", "hillshade"}:
-        raise MapServiceError(f"Layer '{layer_id}' (kind={layer.kind}) cannot build an elevation mesh.")
+
+    from app.services.dem_mesh_resolver import resolve_elevation_for_mesh
+
+    resolved = resolve_elevation_for_mesh(
+        latitude_deg,
+        longitude_deg,
+        step_m=step_m,
+        layer_id=layer_id,
+        allow_remote=True,
+    )
+    layer = resolved.layer
+    if layer.kind != "elevation":
+        raise MapServiceError(
+            f"Layer '{layer.id}' (kind={layer.kind}) cannot build a physical elevation mesh."
+        )
+
     pt = lonlat_to_stereo(longitude_deg, latitude_deg)
     left, bottom, right, top = (
         pt.x_m - half_extent_m,
@@ -328,6 +347,8 @@ def build_mesh(
     nx, ny = int(xs.size), int(ys.size)
     if nx * ny > 20_000:
         raise MapServiceError("Mesh too dense; increase step_m or reduce half_extent_m.")
+    if layer.access_mode == "vsicurl_window":
+        _configure_gdal_curl()
     path = _open_path_for_layer(layer)
     grid_x, grid_y = np.meshgrid(xs, ys)
     coords = list(zip(grid_x.ravel().tolist(), grid_y.ravel().tolist()))
@@ -336,19 +357,39 @@ def build_mesh(
         nodata = ds.nodata
         if nodata is not None:
             samples = np.where(samples == nodata, np.nan, samples)
+        samples = np.where(~np.isfinite(samples), np.nan, samples)
         # Outside raster extent → NaN
         outside = []
         for x, y in coords:
-            outside.append(not (ds.bounds.left <= x <= ds.bounds.right and ds.bounds.bottom <= y <= ds.bounds.top))
+            outside.append(
+                not (
+                    ds.bounds.left <= x <= ds.bounds.right
+                    and ds.bounds.bottom <= y <= ds.bounds.top
+                )
+            )
         samples = np.where(outside, np.nan, samples)
     z = samples.reshape(ny, nx)
     nodata_mask = ~np.isfinite(z)
     valid = z[np.isfinite(z)]
-    z_ref = float(np.nanmedian(valid)) if valid.size else None
-    z_min = float(np.nanmin(valid)) if valid.size else None
-    z_max = float(np.nanmax(valid)) if valid.size else None
+    if valid.size == 0:
+        raise LayerUnavailableError(
+            "DEM window intersected the raster but every sample was NoData. "
+            "No fabricated heights are returned.",
+            details={"layer_id": layer.id},
+        )
+    z_ref = float(np.nanmedian(valid))
+    z_min = float(np.nanmin(valid))
+    z_max = float(np.nanmax(valid))
+    tier_note = (
+        "Local Product 78 5 m LOLA tile (science-validated local DEM)."
+        if resolved.coverage_tier == "LOCAL_5MPP"
+        else (
+            "Remote PGDA Product 90 LOLA elevation COG (map visualization only — "
+            "not used for operational TERRAIN horizon scoring)."
+        )
+    )
     return {
-        "layer_id": layer_id,
+        "layer_id": layer.id,
         "role": layer.role,
         "kind": layer.kind,
         "crs_summary": layer.crs_summary,
@@ -358,7 +399,14 @@ def build_mesh(
         ),
         "attribution": layer.attribution,
         "source_url": layer.source_url,
+        "product_page": resolved.product_page,
         "access_mode": layer.access_mode,
+        "coverage_tier": resolved.coverage_tier,
+        "native_resolution_m": resolved.native_resolution_m,
+        "dem_site_id": resolved.dem_site_id,
+        "dem_file": resolved.dem_file,
+        "surface_z_m": resolved.surface_z_m,
+        "coverage_message": resolved.message,
         "origin_lonlat_deg": [longitude_deg, latitude_deg],
         "origin_stereo_m": [pt.x_m, pt.y_m],
         "extent_m": {
@@ -382,6 +430,7 @@ def build_mesh(
         "half_extent_m": half_extent_m,
         "warning": (
             "Downsampled preview mesh only — not a flight-dynamics surface model. "
-            "NoData cells are null in z_m and true in nodata_mask; values are never fabricated."
+            "NoData cells are null in z_m and true in nodata_mask; values are never fabricated. "
+            + tier_note
         ),
     }

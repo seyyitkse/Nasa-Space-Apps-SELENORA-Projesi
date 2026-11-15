@@ -1,0 +1,17 @@
+{
+  "captured_at": "2026-11-15T13:30:00+03:00",
+  "frontend": "http://127.0.0.1:5190",
+  "backend": "http://127.0.0.1:8030",
+  "screenshots": [
+    "01-missions-layer-standard-moon.png",
+    "02-apollo11-detail.png",
+    "03-clps-tr-i18n.png",
+    "04-mobile-375.png"
+  ],
+  "api_probes": {
+    "missions_total": 17,
+    "mesh_remote_neg88_5": {"coverage_tier":"REMOTE_PGDA90","native_resolution_m":40,"surface_z_m":-1421.3,"nodata_fraction":0},
+    "mesh_local_site04": {"coverage_tier":"LOCAL_5MPP","native_resolution_m":5,"dem_site_id":"Site04"},
+    "horizon_outside_local": {"http":422,"code":"TERRAIN_UNAVAILABLE"}
+  }
+}

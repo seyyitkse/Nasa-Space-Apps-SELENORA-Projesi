@@ -214,7 +214,8 @@ const phase5dTr: typeof phase5dEn = {
     load: '3D araziyi yükle',
     noEndpoint: 'Sunucu /maps/mesh sağlamıyor; 3D arazi gösterilmiyor.',
     webglMissing: 'Tarayıcınızda WebGL yok; 3D görünüm gösterilemiyor. Tüm 2D sonuçlar kullanılabilir.',
-    notCovered: '{{site}} yerel NASA LOLA 5 m karolarının dışında. SELENORA yapay arazi oluşturmaz; bu nokta için 3D görünüm yok.',
+    notCovered:
+      '{{site}} için doğrulanmış NASA DEM yükselti verisi yok (yerel 5 m karolar ve uzak Product 90 COG’lar kullanılamıyor veya başarısız). SELENORA arazi yüksekliği uydurmaz.',
     extent: 'Alan',
     extentOption: '{{km}} × {{km}} km · {{step}} m ağ',
     exaggeration: 'Dikey abartma',
@@ -228,11 +229,15 @@ const phase5dTr: typeof phase5dEn = {
     heightScale: 'Yükseklik (LOLA yüzeyi)',
     observerZ: 'nokta {{z}} m',
     resolution: 'Ağ aralığı',
+    nativeRes: 'Yerel DEM',
     source: 'Kaynak',
+    tier: 'Kapsam katmanı',
     extentShort: 'Alan',
     noData: 'Veri yok hücreleri',
     heightRef:
-      '5 m DEM’in nokta örnekleri. Gözlemcinin gözüne (+2 m) göre, Ay eğriliği çıkarılarak gösterilir; sunucunun ufuk hesabında kullandığı referansla aynı.',
+      'Yerel 5 m DEM’in nokta örnekleri. Gözlemcinin gözüne (+2 m) göre, Ay eğriliği çıkarılarak gösterilir; sunucunun ufuk hesabında kullandığı referansla aynı.',
+    heightRefRemote:
+      'Doğrulanmış NASA PGDA Product 90 LOLA yükselti COG nokta örnekleri (harita görselleştirme). Operasyonel TERRAIN ufuk skorunda kullanılmaz. Yükseklikler hillshade veya fotoğraftan uydurulmaz.',
     sunTitle: 'Bu anda Güneş',
     directionNote:
       'Çizgi, NASA/JPL Horizons’a göre Güneş’in yönünü gösterir (azimut gerçek kuzeyden harita ızgarasına çevrildi). Görsel bir göstergedir: gölge veya aydınlatma simüle edilmez.',
