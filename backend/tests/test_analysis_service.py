@@ -409,6 +409,7 @@ def test_live_two_site_analysis_end_to_end(client: TestClient) -> None:
 
 
 def test_cache_key_includes_data_source_contract() -> None:
+    weights = {"sun_visibility": 40.0, "earth_visibility": 40.0, "joint_visibility": 20.0}
     key = analysis_cache_key(
         sites=[(-89.68, -166.0), (-85.0, 0.0)],
         start_utc=datetime(2026, 12, 1, tzinfo=UTC),
@@ -417,6 +418,7 @@ def test_cache_key_includes_data_source_contract() -> None:
         horizon_model="GEOMETRIC",
         algorithm_version="0.3.0-phase3",
         data_source_version=DATA_SOURCE_CONTRACT,
+        weights=weights,
     )
     other = analysis_cache_key(
         sites=[(-89.68, -166.0), (-85.0, 0.0)],
@@ -426,5 +428,6 @@ def test_cache_key_includes_data_source_contract() -> None:
         horizon_model="GEOMETRIC",
         algorithm_version="0.3.0-phase3",
         data_source_version="synthetic-v1",
+        weights=weights,
     )
     assert key != other

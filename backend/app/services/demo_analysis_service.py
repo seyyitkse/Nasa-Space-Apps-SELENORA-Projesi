@@ -52,6 +52,7 @@ def build_synthetic_analysis(req: AnalysisCreate) -> DemoAnalysisResponse:
         horizon_model="GEOMETRIC",
         algorithm_version=ALGORITHM_VERSION,
         data_source_version="synthetic-v1",
+        weights=weights,
     )
     analysis_id = f"demo-{key[:12]}"
 

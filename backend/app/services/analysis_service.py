@@ -131,6 +131,7 @@ def _cache_key_for(req: AnalysisCreate) -> str:
             if req.horizon_model == "TERRAIN"
             else DATA_SOURCE_CONTRACT
         ),
+        weights=req.weights.model_dump(),
     )
 
 
