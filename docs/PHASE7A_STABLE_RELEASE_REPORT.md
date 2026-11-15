@@ -3,101 +3,110 @@
 **Branch:** `release/phase7a-stable`  
 **Worktree:** `.worktrees/release-phase7a`  
 **Base:** `origin/main` @ `8ba4b5f489ff395d39a392bce7383676c31ce524`  
-**Prepared:** 2026-11-15 (local)
+**Verified:** 2026-11-15 (local re-run of the gates and a bounded browser pass)
 
 ## Scope (no new phases)
 
-This RC is strictly the Phase 7A unified integration + release hardening (M3/M5) already verified on:
+This RC is the Phase 7A unified integration plus release hardening (M3/M5). No Phase 7B/7C worktrees were modified and no new feature phase was created.
 
-- Phase 7A integration source: `feature/phase7a-unified-integration` @ `4e665ba41a28a4f3830adb132ed733d33c27848b`
-- Release hardening source: `feature/phase7a-release-hardening` @ `e8e6a87b07a3368d58b68d21da2e70c814253d16`
-
-No Phase 7B/7C worktrees were modified and no new feature phases were created.
-
-## Git ancestry and integration method
-
-- **Non-destructive merge into RC branch**: `4dca827` (“Merge Phase 7A release hardening”)
-  - Merged `feature/phase7a-release-hardening` (contains `e8e6a87…`, which contains/descends from `4e665ba…`).
-- **Conflict(s) resolved**:
-  - `docs/FRONTEND_DATA_REQUIREMENTS.md` — resolved by **preserving both** the Phase 5C verification section and the newer Phase 5D/5F appended requirements (removed merge markers).
+- Integration source: `feature/phase7a-unified-integration` @ `4e665ba41a28a4f3830adb132ed733d33c27848b` (ancestor of this branch)
+- Hardening source: `feature/phase7a-release-hardening` @ `e8e6a87b07a3368d58b68d21da2e70c814253d16` (ancestor of this branch)
+- Merge already present; it was not repeated: `4dca827` “Merge Phase 7A release hardening”
+- Conflict kept from that merge: `docs/FRONTEND_DATA_REQUIREMENTS.md` preserved both the Phase 5C verification section and the later Phase 5D/5F requirements
 
 ## Release validation gates
 
-### Backend — `pytest`
+Re-run in this worktree on 2026-11-15. `npm ci` was not repeated; `frontend/node_modules` was already present.
 
-Executed using the existing venv:
+### Backend — pytest
 
-- **Interpreter**: `backend/.venv/Scripts/python.exe`
-- **Command**: `python -m pytest -ra --maxfail=1`
-- **Local LOLA**: enabled by adding junction(s) so `app.services.terrain_data_service.DEFAULT_LOLA_DIR` (`<repo-root>/data/raw/lola/`) is present in the release worktree.
+- **Interpreter:** root repo `backend/.venv/Scripts/python.exe` (the release worktree has no `.venv`)
+- **`PYTHONPATH`:** this worktree’s `backend` (confirmed `app.__file__` resolved there)
+- **Command:** `python -m pytest -ra --tb=line`  
+  `backend/pyproject.toml` `addopts` is `-q -m 'not live'`, so live tests are deselected by default
+- **Local LOLA:** existing junctions left in place (`data/raw/lola` and `backend/data/raw/lola` → repo `data/raw/lola`). They were not deleted.
 
-Result (release worktree):
+Result:
 
-- **Passed**: 210
-- **Skipped**: 1
-- **Deselected**: 3
+- **Passed:** 210
+- **Skipped:** 1
+- **Deselected:** 3
+- **Duration:** 31.05s
+- **Exit code:** 0
 
-Skipped (explicit):
+Skipped:
 
-- `tests/test_phase5e_epochs_imagery.py:95` — *“Covered by uncovered TERRAIN create test when DEM present”*
+- `tests/test_phase5e_epochs_imagery.py:95` — “Covered by uncovered TERRAIN create test when DEM present”
 
-Deselected (explicit reason: `backend/pyproject.toml` sets `addopts = "-q -m 'not live'"`):
+Deselected (`pytest -m live -o addopts=` collects exactly these three):
 
-- `backend/tests/test_integrations.py:217` — `test_live_horizons_sun_elevation_at_south_pole` (real JPL Horizons)
-- `backend/tests/test_analysis_service.py:379` — `test_live_two_site_analysis_end_to_end` (real JPL Horizons)
-- `backend/tests/test_maps_phase5b.py:170` — `test_live_vsicurl_hillshade_preview` (remote Product 90)
+- `tests/test_integrations.py::test_live_horizons_sun_elevation_at_south_pole`
+- `tests/test_analysis_service.py::test_live_two_site_analysis_end_to_end`
+- `tests/test_maps_phase5b.py::test_live_vsicurl_hillshade_preview`
 
-### Frontend — lint, tests, typecheck, production build
+### Frontend — lint, vitest, tsc, production build
 
-Executed in `frontend/`:
+Executed in this worktree’s `frontend/`:
 
-- **Install**: `npm ci` (**0 vulnerabilities**)
-- **Lint**: `npm run lint` (completed; warnings emitted by oxlint, no failure)
-- **Unit tests**: `npx vitest run`
-  - **Test Files**: 28 passed
-  - **Tests**: 195 passed
-- **TypeScript + production build**: `npm run build` (`tsc -b && vite build`) — succeeded
+| Gate | Command | Result |
+| --- | --- | --- |
+| Lint | `npm run lint` (`oxlint`) | Exit 0. Warnings only (fast-refresh export rules, React Compiler memoization, refs during render). Not a failure. |
+| Unit tests | `npx vitest run` | 28 files passed, 195 tests passed, 12.48s. jsdom logged `HTMLCanvasElement.getContext()` “Not implemented”; tests still passed. |
+| Typecheck | `npx tsc -b --pretty false` | Exit 0 |
+| Production build | `npx vite build` | Exit 0, built in 1.05s |
 
-Notes:
+### Secrets and large-file audit
 
-- Vitest logs include `HTMLCanvasElement.getContext()` “Not implemented” messages under jsdom for canvas/WebGL-related code; tests still passed.
+- Tracked files larger than 1 MB: **none**
+- Tracked filenames matching `.env`, credentials, private keys, or `*.pem`: **none**
+- Content search found only documentation placeholders (`DEEPSEEK_API_KEY=sk-...` in `README.md`) and test doubles (`"test-key"`, `DEEPSEEK_API_KEY=None`). No live key was found in tracked files.
+- The RC API process was started with an empty `DEEPSEEK_API_KEY`. `/health` reported `ai_analyst` as `NOT_CONFIGURED`.
 
-## Browser acceptance (Mission Control → … → Windows)
+### API check used during the browser session (not a browser claim)
 
-**Status: NOT fully executed in this RC run.**
+`GET /health` on `127.0.0.1:8000` returned 200. `terrain_model` was `READY` (“LOLA 5 m/pix DEM horizon available”). `ai_analyst` was `NOT_CONFIGURED`.
 
-- The dev servers were started successfully (backend responded on `/health`, frontend served on `http://127.0.0.1:5173/`).
-- Attempted to capture browser screenshots via Cursor browser tooling, but screenshot capture repeatedly timed out; to avoid stalling the release process, this RC **does not claim** the full interactive acceptance journey was completed end-to-end during this run.
+`GET /api/v1/terrain/horizon-profile?latitude_deg=-90&longitude_deg=0` returned **HTTP 422** with `error.code` `AZIMUTH_UNDEFINED_AT_POLE`. That is the M3 pole guard. A near-pole success case and a full live Horizons analysis were **not** run.
 
-Evidence available in-repo (from the integrated Phase 7A work already merged here):
+## Browser acceptance
 
-- `docs/screenshots/phase7a-integration/phase7a-int-01-mission-control.png`
-- `docs/screenshots/phase7a-integration/phase7a-int-02-polar-map.png`
-- `docs/screenshots/phase7a-integration/phase7a-int-03-moon.png`
-- `docs/screenshots/phase7a-integration/phase7a-int-05-windows.png`
-- `docs/screenshots/phase7a-integration/phase7a-int-06-simulator.png`
-- `docs/screenshots/phase7a/01-simulator-terrain-live-en.jpg`
-- `docs/screenshots/phase7a/02-windows-geometric-mobile-tr.jpg`
+Dev servers for this pass: backend `http://127.0.0.1:8000` (root venv, this worktree on `PYTHONPATH`, temp SQLite outside the repo) and frontend `http://127.0.0.1:5173`. The UI showed **API online v0.1.0** and Scientist mode.
 
-Manual re-validation recommended before merging to `main`:
+Screenshots: `docs/screenshots/phase7a-stable-rc1/`.
 
-- Mission Control → NASA polar map → 3D Moon → custom point → Planner A/B → Analysis → Comparison → Simulator → Phase 7A Events → Windows
-- Verify toggles: **Standard/High Moon**, **TR/EN**, **mobile 375px**
-- Verify science guards: **M3 HTTP 422 at exact poles**, **MOON_ME transforms**, **GEOMETRIC**, **TERRAIN incl UNKNOWN coverage**, persistence / stale-analysis recovery.
+| Step | What happened |
+| --- | --- |
+| Mission Control (`/`) | Loaded. `01-mission-control.png` |
+| Lunar Explorer (`/explorer`) | South-polar LROC photo, LOLA Site04 footprint, Shackleton / de Gerlache labels. `02-explorer.png` |
+| 3D Moon (`/moon`) | Page loaded. Banner: NASA 3D model is **not installed** in this worktree; flat NASA map fallback shown. Standard/High globe toggle was **not** exercised. `03-moon.png` |
+| Custom point | “Create new point” was visible. The control was **not** used. |
+| Mission Planner (`/planner`) | A/B selects rendered (Shackleton Rim — Point A and Malapert Massif). “Run ephemeris analysis” was **not** clicked. `04-planner.png` |
+| Site Comparison (`/comparison`) | Empty state first (`05-comparison.png`). “Run synthetic preview” then showed a dashboard explicitly badged **SYNTHETIC_DEMO**, with the warning that it is not JPL Horizons. `05b-comparison-synthetic.png` |
+| Horizon Simulator (`/simulator`) | Empty state: “No stored analyses yet”. `06-simulator.png` |
+| Mission Windows (`/windows`) | Empty state: “No stored analyses yet”. Phase 7A events panel did **not** render, because it is mounted only after a stored analysis. `07-windows.png` |
+| TR | Language control switched the Windows page to Turkish. `08-windows-tr.png` |
+| Mobile 375px | Mission Control was reloaded with a 375×812 CSS viewport, Turkish, hamburger menu. The screenshot canvas is wider than the layout column. `09-mission-control-mobile-tr.png` |
 
-## Scientific/engineering limitations (known, unchanged)
+**Not executed in this RC browser pass** (do not treat these as passed):
 
-- TERRAIN mode depends on local LOLA DEM coverage; incomplete ray coverage must remain **UNKNOWN** (never inferred clear sky).
-- Remote/“live” integrations (Horizons / remote hillshade previews) are intentionally excluded from default CI runs (`-m 'not live'`) and require explicit opt-in.
+- Live JPL Horizons “Run ephemeris analysis”
+- Stored-analysis Horizon Simulator (Sun/Earth samples, GEOMETRIC vs TERRAIN)
+- Phase 7A operational events on Simulator or Windows
+- Custom research point from the 3D Moon
+- Standard/High Moon toggle (`npm run fetch:moon` was not run; the GLB is absent here)
+- Persistence / stale-analysis recovery
+- A near-pole horizon-profile success call (`|latitude| < 90`)
 
-## Readiness decision
+Older screenshots under `docs/screenshots/phase7a-integration/` and `docs/screenshots/phase7a/` remain historical evidence from the integrated branches. They are not a substitute for the steps left unchecked above.
 
-**RC1 is acceptable to open a PR against `main`** based on:
+## Known limitations (unchanged)
 
-- Successful non-destructive merge onto `origin/main` base
-- Backend + frontend automated gates passing (with explicit skipped/deselected accounted for)
+- TERRAIN mode depends on local LOLA coverage. Incomplete ray coverage stays **UNKNOWN**.
+- Live Horizons and remote hillshade tests stay out of the default pytest run (`-m 'not live'`).
+- AI explanation stays off until `DEEPSEEK_API_KEY` is set. It does not compute science results.
 
-**Blocking for merge to `main`**:
+## Readiness
 
-- Full interactive browser acceptance journey was **not re-run** during this RC due to screenshot tooling timeouts; a short manual pass is recommended before merge.
+**Open the pull request.** Automated gates passed with the skip and the three live deselections accounted for, the pole 422 guard responded on the RC API, and the main shell pages rendered against that API.
 
+**Do not merge yet.** This RC browser pass never stored a live analysis, so Simulator, Mission Windows, and the Phase 7A events panel were only seen in their empty state. The NASA 3D globe asset is also missing in this worktree, so the 3D Moon step is a flat-map fallback. A short live Planner run (then Simulator events and Windows) is the remaining check before merge.
