@@ -1,6 +1,0 @@
-INFO:     Started server process [66200]
-INFO:     Waiting for application startup.
-INFO  [alembic.runtime.migration] Context impl SQLiteImpl.
-INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
-INFO  [alembic.runtime.migration] Running upgrade  -> 20261114_0001, Phase 3 schema: analysis JSON payloads + AI report metadata.
-INFO  [alembic.runtime.migration] Running upgrade 20261114_0001 -> 20261115_0002, Phase 7C same-site date scenario persistence.
