@@ -73,7 +73,17 @@ Step through stored epochs for Sun/Earth against the geometric 0° horizon or a 
 
 **Critical limit:** remote DEM fallback supports **3D visualization and provenance only**. It does **not** extend the validated TERRAIN horizon / scoring engine. Outside local 5 m tiles, horizon requests remain `TERRAIN_UNAVAILABLE` rather than inventing a clear sky.
 
-![Horizon Simulator 3D LOLA terrain mesh with Sun and Earth direction indicators](docs/assets/readme/04-horizon-simulator-terrain.png)
+**Full Horizon Simulator** — EN · Scientist mode · local NASA LOLA Product 78 mesh (4 × 4 km · 50 m) with live Sun/Earth direction indicators:
+
+![Full Horizon Simulator: 3D LOLA terrain mesh with Sun and Earth direction indicators](docs/assets/readme/04-horizon-simulator-terrain.png)
+
+[Open full-resolution Horizon Simulator screenshot](docs/assets/readme/04-horizon-simulator-terrain.png)
+
+**Scientific evidence close-up** — readable HEIGHT (LOLA surface), Sun VISIBLE/BLOCKED status, mesh provenance and Barker et al. citation:
+
+![Horizon Simulator scientific evidence close-up: HEIGHT, Sun status and LOLA provenance](docs/assets/readme/04b-horizon-scientific-evidence.png)
+
+[Open full-resolution scientific evidence close-up](docs/assets/readme/04b-horizon-scientific-evidence.png)
 
 ![Phase 7D remote Product 90 DEM mesh for a custom point outside local 5 m coverage](docs/assets/readme/12-phase7d-remote-dem.png)
 
@@ -312,8 +322,8 @@ Broader DEM horizon science, expanded catalogs, and deployment packaging may con
 
 | Role | Name |
 | --- | --- |
-| Team Leader | Ahmet Seyyit KÖSE |
-| Team Member | Nursena ÇAMKÖMÜRÜ |
+| Team Leader | Ahmet Seyyit KOSE |
+| Team Member | Nursena CAMKOMURU |
 
 **AI-assisted development:** Implementation, review and documentation used AI coding tools (including Cursor, Claude, Codex and ZCode workflows). Scientific computations use deterministic code and verified NASA/JPL inputs — not fabricated model outputs. The optional DeepSeek layer only explains stored evidence packages.
 
