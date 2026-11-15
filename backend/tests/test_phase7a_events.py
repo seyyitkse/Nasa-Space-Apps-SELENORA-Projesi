@@ -53,7 +53,7 @@ def test_confirmed_visible_to_not_visible_is_a_bracketed_set() -> None:
     assert nxt.transition.bracket_minutes == 60
     assert (nxt.countdown.earliest_minutes, nxt.countdown.latest_minutes) == (60, 120)
     assert nxt.countdown.may_have_occurred is False
-    assert nxt.earlier_events_excluded is True
+    assert nxt.unknown_gap_before is False
     assert result.next_change is not None and result.next_change.transition is nxt.transition
 
 
@@ -88,7 +88,7 @@ def test_unknown_between_two_different_known_states_is_never_a_rise_or_set() -> 
     assert result.next_confirmed_event is None  # nothing is confirmed across UNKNOWN
     assert result.next_change is not None
     assert result.next_change.transition.kind is ev.EventKind.BECOMES_UNKNOWN
-    assert result.next_change.earlier_events_excluded is None
+    assert result.next_change.unknown_gap_before is None
 
     resolves = ev.find_transitions(obs)[1]
     assert resolves.kind is ev.EventKind.RESOLVES_TO_NOT_VISIBLE
@@ -114,12 +114,12 @@ def test_confirmed_event_after_unknown_gap_cannot_exclude_earlier_events() -> No
     nxt = result.next_confirmed_event
     assert nxt is not None and nxt.transition.kind is ev.EventKind.SET
     assert (nxt.transition.before.t, nxt.transition.after.t) == (at(3), at(4))
-    assert nxt.earlier_events_excluded is False
+    assert nxt.unknown_gap_before is True
     # Same series, reference after the gap: the gap no longer lies in between.
     later = ev.evaluate_track(series("VUVVN"), at(2))
     assert later.status is ev.TrackStatus.EVENT_CONFIRMED
     assert later.next_confirmed_event is not None
-    assert later.next_confirmed_event.earlier_events_excluded is True
+    assert later.next_confirmed_event.unknown_gap_before is False
 
 
 def test_entire_interval_unknown_is_insufficient_data() -> None:
@@ -184,12 +184,15 @@ def test_event_in_the_first_bracket() -> None:
     assert (nxt.transition.before.t, nxt.transition.after.t) == (at(0), at(1))
 
 
-def test_reference_outside_the_sampled_span_is_rejected() -> None:
+def test_reference_outside_the_sampled_span_assumes_no_state() -> None:
     obs = series("VVN")
-    with pytest.raises(ValueError):
-        ev.evaluate_track(obs, T0 - timedelta(minutes=1))
-    with pytest.raises(ValueError):
-        ev.evaluate_track(obs, at(2) + timedelta(minutes=1))
+    for ref in (T0 - timedelta(minutes=1), at(2) + timedelta(minutes=1)):
+        result = ev.evaluate_track(obs, ref)
+        assert result.status is ev.TrackStatus.REFERENCE_OUTSIDE_SAMPLES
+        assert result.current is None
+        assert result.next_change is None and result.next_confirmed_event is None
+        with pytest.raises(ValueError):
+            ev.reference_index(obs, ref)
     with pytest.raises(ValueError):
         ev.evaluate_track(obs, datetime(2026, 12, 1, 0, 30))  # naive
 

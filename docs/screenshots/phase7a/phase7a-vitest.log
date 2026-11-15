@@ -43,8 +43,8 @@ Not implemented: HTMLCanvasElement's getContext() method: without installing the
 Not implemented: HTMLCanvasElement's getContext() method: without installing the @napi-rs/canvas npm package
 
  Test Files  24 passed (24)
-      Tests  150 passed (150)
-   Start at  09:12:03
-   Duration  11.68s (environment 47%, setup 20%, import 19%, tests 10%, transform 4%, worker 1%)
+      Tests  151 passed (151)
+   Start at  09:21:00
+   Duration  10.83s (environment 52%, import 19%, setup 14%, tests 11%, transform 3%, worker 1%)
 
 exit=0

@@ -406,7 +406,7 @@ export default function SimulatorPage() {
               </div>
             </div>
 
-            <OperationalEventsPanel analysisId={result.id} siteIndex={safeIndex} cursorMs={epoch?.t ?? cursorT} startUtc={result.start_utc} endUtc={result.end_utc} />
+            <OperationalEventsPanel analysisId={result.id} siteIndex={safeIndex} siteCoord={site} cursorMs={epoch?.t ?? cursorT} startUtc={result.start_utc} endUtc={result.end_utc} />
 
             <Card id="terrain-3d">
               <CardHeader>

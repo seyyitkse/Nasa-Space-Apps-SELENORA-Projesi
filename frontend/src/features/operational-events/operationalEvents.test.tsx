@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import en from '@/i18n/locales/phase7a.en'
 import tr from '@/i18n/locales/phase7a.tr'
 
-import { clockInsideSamples, countdownAt, countdownFromServer, formatSpan, spanParts, stateLabelKey, usableReference } from './logic'
+import { clockInsideSamples, countdownAt, countdownFromServer, formatSpan, pickSite, spanParts, stateLabelKey, usableReference } from './logic'
 import { OperationalEventsView } from './OperationalEventsPanel'
 import type { BodyEvents, EventSample, EventsResponse, EventTrack, VisibilityEvent } from './types'
 
@@ -34,7 +34,7 @@ function event(kind: VisibilityEvent['kind'], start: string, end: string, extra:
     elevation_rate_deg_per_hour: null,
     approx_disc_crossing_hours: null,
     countdown: null,
-    earlier_events_excluded: confirmed ? true : null,
+    unknown_gap_before: confirmed ? false : null,
     ...extra,
   }
 }
@@ -72,7 +72,7 @@ function payload(sun: BodyEvents, earth: BodyEvents, extra: Partial<EventsRespon
     reference_utc: '2026-12-01T00:00:00Z',
     reference_mode: 'WINDOW_START',
     generated_at_utc: '2026-11-15T00:00:00Z',
-    events_contract_version: '7a.1',
+    events_contract_version: '7a.2',
     event_time_semantics: '',
     sites: [{ site_index: 0, label: 'A', latitude_deg: -89.68, longitude_deg: -166, landing_site_id: null, dem_site_id: null, terrain_complete_coverage_fraction: null, sun, earth }],
     provenance: [],
@@ -146,6 +146,20 @@ describe('operational events · presentation logic', () => {
   })
 })
 
+describe('operational events · site matching', () => {
+  const sites = [
+    { label: 'A', latitude_deg: -89.68, longitude_deg: -166 },
+    { label: 'B', latitude_deg: -89.44, longitude_deg: -141.8 },
+  ]
+  it('matches by coordinates before index, and clamps the index fallback', () => {
+    expect(pickSite(sites, 0, { latitude_deg: -89.44, longitude_deg: -141.8 })?.label).toBe('B')
+    expect(pickSite(sites, 1, { latitude_deg: 10, longitude_deg: 10 })?.label).toBe('B')
+    expect(pickSite(sites, 9)?.label).toBe('B')
+    expect(pickSite(sites, -3)?.label).toBe('A')
+    expect(pickSite([], 0)).toBeUndefined()
+  })
+})
+
 describe('operational events · localization', () => {
   const keys = (o: object, p = ''): string[] =>
     Object.entries(o).flatMap(([k, v]) => (typeof v === 'object' && v !== null ? keys(v as object, `${p}${k}.`) : [`${p}${k}`]))
@@ -174,6 +188,7 @@ describe('operational events · view', () => {
 
     expect(screen.queryByTestId('track-SUN-TERRAIN')).not.toBeInTheDocument()
     expect(screen.queryByText('Behind terrain')).not.toBeInTheDocument()
+    expect(screen.getByTestId('events-site')).toHaveTextContent('Site: A')
     expect(screen.getByTestId('reference-mode')).toHaveTextContent('start of the analysis window (not the current time)')
     expect(screen.getByText('Durations are measured from the reference time, not from now.')).toBeInTheDocument()
   })
@@ -186,7 +201,7 @@ describe('operational events · view', () => {
       countdown: { earliest_minutes: 120, latest_minutes: 180, may_have_occurred: false },
     })
     const laterSet = event('SET', '2026-12-01T09:00:00Z', '2026-12-01T10:00:00Z', {
-      earlier_events_excluded: false,
+      unknown_gap_before: true,
       countdown: { earliest_minutes: 540, latest_minutes: 600, may_have_occurred: false },
       after: sample('2026-12-01T10:00:00Z', 'NOT_VISIBLE', { not_visible_reason: 'TERRAIN_OCCULTED' }),
     })

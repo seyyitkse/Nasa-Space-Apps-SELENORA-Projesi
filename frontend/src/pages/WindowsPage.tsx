@@ -236,7 +236,7 @@ export default function WindowsPage() {
               </CardContent>
             </Card>
 
-            <OperationalEventsPanel analysisId={result.id} siteIndex={idx} cursorMs={cursorT} startUtc={result.start_utc} endUtc={result.end_utc} />
+            <OperationalEventsPanel analysisId={result.id} siteIndex={idx} siteCoord={site} cursorMs={cursorT} startUtc={result.start_utc} endUtc={result.end_utc} />
 
             <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-3">
               <IntervalList title={t('windows.joint')} items={site.joint_windows} tone="violet" from={from} to={to} onPick={pick} />

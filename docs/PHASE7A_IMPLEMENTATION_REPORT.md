@@ -8,6 +8,7 @@
 | Scope | Phase 7A only. **7B / 7C not started.** Not merged, not pushed. |
 | Spec | `docs/PHASE7_OPERATIONAL_WINDOWS_DESIGN.md` §4, with the corrections listed in §5 below |
 | Date | 2026-11-15 |
+| Commits | `e9f7baa` (implementation), follow-up hardening commit on top (see §12) |
 
 ## 1. Base verification
 
@@ -21,7 +22,7 @@ Baseline gates on untouched `f01d2b4` (before any 7A change):
 | Gate | Baseline | After 7A |
 |---|---|---|
 | Backend pytest | 170 passed, 1 skipped | **200 passed, 1 skipped** (+30) |
-| Frontend Vitest | 141 passed (23 files) | **150 passed (24 files)** (+9) |
+| Frontend Vitest | 141 passed (23 files) | **151 passed (24 files)** (+10) |
 | `tsc -b` | clean | clean |
 | `vite build` | pass | pass |
 | oxlint | 0 errors, 42 warnings | 0 errors, 42 warnings (none in 7A files) |
@@ -74,7 +75,7 @@ Not touched: `analysis_service.py`, `visibility.py`, `terrain_visibility.py`, `s
 - Errors: `404 NOT_FOUND` (unknown or not-completed analysis), `422` as above, `501` when the
   stored analysis has no persisted timelines (inherited from `/epochs`).
 
-Response shape (contract version `7a.1`):
+Response shape (contract version `7a.2`):
 
 ```text
 EventsResponse {
@@ -91,7 +92,8 @@ BodyEvents { body: SUN | EARTH, nominal_angular_radius_deg,
              geometric: EventTrack, terrain: EventTrack | null }   # terrain only for TERRAIN analyses
 EventTrack {
   horizon: GEOMETRIC | TERRAIN,
-  status: EVENT_CONFIRMED | UNKNOWN_AHEAD | NO_EVENT_IN_WINDOW | UNKNOWN_AT_REFERENCE | INSUFFICIENT_DATA,
+  status: EVENT_CONFIRMED | UNKNOWN_AHEAD | NO_EVENT_IN_WINDOW | UNKNOWN_AT_REFERENCE |
+          INSUFFICIENT_DATA | REFERENCE_OUTSIDE_SAMPLES,
   current: EventSample?,              # last stored sample at or before the reference
   next_change: VisibilityEvent?,      # first change of any kind (may be BECOMES_UNKNOWN)
   next_confirmed_event: VisibilityEvent?,   # first RISE/SET between adjacent known samples
@@ -109,7 +111,8 @@ VisibilityEvent {
   last_known_before_unknown?, differs_from_last_known?, unknown_samples_before,
   elevation_rate_deg_per_hour?, approx_disc_crossing_hours?,   # geometric RISE/SET only
   countdown?: { earliest_minutes, latest_minutes, may_have_occurred },   # next_* only
-  earlier_events_excluded?            # RISE/SET in next_* only
+  unknown_gap_before?                 # RISE/SET in next_* only: UNKNOWN samples lie between
+                                      # the reference and the bracket
 }
 EventSample { t, state: VISIBLE | NOT_VISIBLE | UNKNOWN, elevation_deg?, horizon_deg?,
               not_visible_reason?: BELOW_GEOMETRIC_HORIZON | TERRAIN_OCCULTED,
@@ -131,14 +134,17 @@ There is deliberately no single "event time" field anywhere in the contract (gua
    last known sample attached. It is never reported as a set. `VISIBLE → UNKNOWN … → VISIBLE`
    yields `differs_from_last_known = false`.
 5. **Confirmed event after an UNKNOWN run.** Still reported in `next_confirmed_event`, with
-   `earlier_events_excluded = false` and track status `UNKNOWN_AHEAD`.
+   `unknown_gap_before = true` and track status `UNKNOWN_AHEAD`: an earlier unobserved event
+   cannot be ruled out. `unknown_gap_before = false` only says there were no UNKNOWN samples in
+   between; it does not claim that nothing happened between equal samples (see 3 and 7).
 6. **Countdown is a range.** `earliest_minutes … latest_minutes` from the reference. If the
    reference is inside the bracket, `earliest = 0` and `may_have_occurred = true`. On the bracket
    start exactly, the event is still strictly ahead.
 7. **No fabrication.** `NO_EVENT_IN_WINDOW` means no state change at any sampled epoch after the
    reference; `no_change_through_utc` is the last stored sample, not "forever".
    `UNKNOWN_AT_REFERENCE` gives no countdown. A track that is entirely `UNKNOWN` (or has fewer
-   than two samples) is `INSUFFICIENT_DATA`.
+   than two samples) is `INSUFFICIENT_DATA`. If the reference lies outside one site's own
+   samples, that track is `REFERENCE_OUTSIDE_SAMPLES` and no state is assumed.
 8. **Geometric vs terrain.** A GEOMETRIC analysis gets a geometric track only; its not-visible
    state is `BELOW_GEOMETRIC_HORIZON` and is never called terrain-blocked (conceptually aligned
    with audit finding H3). A TERRAIN analysis gets both tracks, labelled; terrain not-visible is
@@ -173,16 +179,17 @@ file; the two Shackleton fixtures are real JPL Horizons responses.
 | No transition in interval | `test_no_transition_reports_no_event_in_window_not_a_fabricated_one` |
 | UNKNOWN between two valid states | `test_unknown_between_two_different_known_states_is_never_a_rise_or_set`, `test_unknown_between_equal_known_states_confirms_nothing`, `test_confirmed_event_after_unknown_gap_cannot_exclude_earlier_events` |
 | Entire interval UNKNOWN | `test_entire_interval_unknown_is_insufficient_data`, `test_unknown_at_reference_gives_no_countdown` |
-| Interval boundaries | `test_reference_exactly_on_a_sample_and_inside_a_bracket`, `test_event_in_the_last_bracket_and_reference_on_the_last_sample`, `test_event_in_the_first_bracket`, `test_reference_outside_the_sampled_span_is_rejected` |
+| Interval boundaries | `test_reference_exactly_on_a_sample_and_inside_a_bracket`, `test_event_in_the_last_bracket_and_reference_on_the_last_sample`, `test_event_in_the_first_bracket`, `test_reference_outside_the_sampled_span_assumes_no_state` |
 | Different time resolutions | `test_brackets_are_nested_across_time_resolutions_and_contain_the_true_crossing` (10 / 60 / 360 min), `test_irregular_sample_spacing_uses_real_timestamps_not_the_nominal_step` |
 | Geometric vs terrain | `test_geometric_analysis_has_no_terrain_track_and_never_says_terrain_blocked`, `test_terrain_analysis_reports_both_tracks_with_separate_classification`, `test_terrain_unknown_reason_distinguishes_missing_dem`, `test_events_endpoint_with_real_lola_terrain` |
 | No false exact timestamp | `test_contract_has_no_single_event_timestamp_field` |
 | No event fabrication | `test_no_event_fabrication_on_random_series` (300 seeded random series), `test_events_endpoint_on_real_horizons_fixtures_reports_no_event` |
 | Reference modes / API errors | `test_reference_mode_never_labels_window_start_as_now`, `test_events_endpoint_brackets_and_reference_parameter`, `test_events_endpoint_unknown_analysis_is_404`, `test_events_route_is_advertised_in_openapi` |
 
-Frontend (9): span formatting, live range countdown and "may already have happened", state
-labels (geometric never "terrain"), reference validity, EN/TR key parity, geometric view,
-terrain + UNKNOWN view, live tick with a stable `aria-live` region, Turkish rendering.
+Frontend (10): span formatting, live range countdown and "may already have happened", state
+labels (geometric never "terrain"), reference validity, site matching by coordinates, EN/TR key
+parity, geometric view, terrain + UNKNOWN view, live tick with a stable `aria-live` region,
+Turkish rendering.
 
 ## 7. Behaviour on real data (isolated instance)
 
@@ -214,6 +221,18 @@ New real TERRAIN analysis `4b949d29` (live JPL Horizons + local LOLA, Points A/B
 The terrain Sun track is entirely UNKNOWN in this window, so no terrain sunrise or sunset is
 offered. The geometric Earth rise is not echoed on the terrain track.
 
+Second real TERRAIN analysis `0da734bb` (live JPL Horizons + local LOLA, Points A/B,
+2026‑12‑01 → 2026‑12‑15, 60 min, `LOCAL_TERRAIN_PARTIAL`), reference = window start. This one has
+mixed known / unknown terrain samples:
+
+| Site | Sun, terrain track | Earth, terrain track |
+|---|---|---|
+| A | `UNKNOWN_AHEAD`: behind terrain, then `BECOMES_UNKNOWN` in 10 Dec 07:00 – 08:00 (`TERRAIN_COVERAGE_INCOMPLETE`); 113 of 337 samples UNKNOWN; no confirmed event | `NO_EVENT_IN_WINDOW` (behind terrain) |
+| B | `UNKNOWN_AHEAD`: `BECOMES_UNKNOWN` in 7 Dec 12:00 – 13:00; 180 of 337 samples UNKNOWN; no confirmed event | `NO_EVENT_IN_WINDOW` (behind terrain) |
+
+This is the design document's "BLOCKED → UNKNOWN: clears known terrain, not a sunrise" case on
+real data: it is reported as a change into UNKNOWN, with no rise.
+
 ## 8. UI verification (real browser, isolated session)
 
 - `/simulator`, TERRAIN analysis, EN, desktop: panel renders below the simulator grid; Sun and
@@ -222,6 +241,12 @@ offered. The geometric Earth rise is not echoed on the terrain track.
   Screenshot `docs/screenshots/phase7a/01-simulator-terrain-live-en.jpg`.
 - Switching to "Selected time" refetches with `reference_utc=<selected sample>` (network log) and
   shows "Durations are measured from the reference time, not from now."
+- Mixed terrain track (`0da734bb`, EN, desktop): "Behind terrain" → "State becomes unknown
+  between 10 Dec, 07:00 UTC and 10 Dec, 08:00 UTC", "This is not a rise or a set…", "113 of 337
+  samples are unknown". The site label is shown ("Site: Shackleton Rim - Point A").
+- Playback / scrubbing: during 8 s of Simulator playback the panel sent **0** `/events` requests
+  and **1** after pausing; 25 rapid keyboard steps on the lanes produced **1** request. No 429 on
+  any route. (Before the follow-up commit every cursor step would have triggered a request.)
 - `/windows`, GEOMETRIC analysis, TR, 375 px: no horizontal overflow (document width 375, 0
   overflowing elements), 36 px toggle targets, "Live" disabled with an explanatory hint because
   the current time is outside the window. Screenshot `02-windows-geometric-mobile-tr.jpg`.
@@ -242,7 +267,7 @@ offered. The geometric Earth rise is not echoed on the terrain track.
 | **H4** — active-analysis mismatch between pages | The panel follows the workspace analysis (`result.id`), like Simulator and Windows. It inherits whatever H4 fixes. |
 | **M2** — 5° azimuth bins, nearest-bin terrain horizon | Unverified audit finding. Terrain event brackets can be created or shifted by bin boundaries. Stated in `limitations`; engine untouched. |
 | **M1** — terrain beyond the local DEM range is not modelled | Stated in `limitations`. |
-| Merge surface | Existing files touched: `backend/app/api/v1/__init__.py`, `frontend/src/i18n/locales/{en,tr}.ts`, `SimulatorPage.tsx`, `WindowsPage.tsx`. All are small additive edits; conflicts with the H1–H4 branches should be limited to import blocks. |
+| Merge surface | Existing files touched: `backend/app/api/v1/__init__.py`, `frontend/src/i18n/locales/{en,tr}.ts`, `SimulatorPage.tsx`, `WindowsPage.tsx`, `docs/API_CONTRACT.md` (appended section). Checked with `git merge-tree --write-tree` on 2026‑11‑15: against `feature/phase6c-science-hardening@6e7ac1e` — **clean**; against `feature/phase6c1-mission-control-map@61faa8e` — **2 conflicts**, both in `frontend/src/i18n/locales/{en,tr}.ts`, where each branch adds one `import phaseX` line and one `...phaseX` spread at the same position (keep both). Those branch tips may have moved since; re-check at integration time. Codex's H3/H4 branch was not available locally and was not checked. |
 | Environment | None new. No new Python or npm dependency, no migration, no new environment variable. |
 
 ## 10. Known limitations
@@ -255,9 +280,41 @@ offered. The geometric Earth rise is not echoed on the terrain track.
   (10 sites × 4321 samples) this is the same cost as `/epochs` itself. No caching was added.
 - API `limitations` text is English only; the panel's own explanations are TR/EN.
 - Dates in the panel use the app's existing `formatUtc` (English month names in both languages).
+- In "Selected time" mode the panel follows the time cursor 400 ms after it settles and does not
+  refetch during playback; while it lags it is marked `aria-busy` and dimmed.
+- Not exercised in the browser: switching analyses on a throttled network. The guard is in code
+  (previous data is kept only within the same analysis, and a payload whose `analysis_id` differs
+  from the page's analysis is not rendered) but only the code path was reviewed.
+- Site matching uses coordinates first (unique per analysis) and the array index as a fallback;
+  `site_index` in the response is the stored order, which the database does not formally
+  guarantee.
 
 ## 11. Not done (by instruction)
 
 No merge, no push, no Phase 7B/7C work, no change to H1/H2 code, no edit in any other worktree.
-The session's `.claude/launch.json` in the main checkout was extended temporarily for the isolated
-preview and restored to its committed state afterwards.
+
+Side effects outside the commit (all local, none in another agent's worktree):
+
+- `.claude/launch.json` in the main checkout was extended twice with two temporary preview
+  entries (ports 8017 / 5197) and restored with `git checkout` each time; the main checkout is
+  clean.
+- `.worktrees/phase7a/data/raw/lola` is a **directory junction** to the main checkout's
+  `data/raw/lola` (read-only use, gitignored). Remove it with `rmdir` / `Remove-Item` on the
+  junction itself — **never with a recursive delete**, which would delete the real LOLA rasters.
+- `.worktrees/phase7a/data/cache/horizons_terrain/` holds horizon caches written by the tests
+  and the isolated backend (gitignored).
+- A copy of `backend/data/selenora.db` lives in the session's temp folder. Two real TERRAIN
+  analyses (`4b949d29`, `0da734bb`) were created **in that copy only**, using live JPL Horizons
+  requests for Points A/B. No working database was written.
+
+## 12. Follow-up hardening (second commit)
+
+After review of `e9f7baa`:
+
+| Change | Why |
+|---|---|
+| `earlier_events_excluded` → `unknown_gap_before` (inverted meaning), contract `7a.1` → `7a.2` | The old name claimed more than sampled data can support |
+| New track status `REFERENCE_OUTSIDE_SAMPLES` | A site whose samples do not cover the reference returned a 500 path in principle; now an explicit status |
+| Panel holds the reference during playback and debounces cursor moves (400 ms) | Every cursor step triggered an `/events` request against a 120 req/min shared limiter |
+| Previous payload kept only within the same analysis; `analysis_id` checked before rendering; `aria-busy` while lagging | Avoid showing one analysis's events under another |
+| Site matched by coordinates, site label shown | Index order is not a schema guarantee |

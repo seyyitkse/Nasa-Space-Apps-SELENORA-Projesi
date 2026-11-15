@@ -28,6 +28,7 @@ TrackStatus = Literal[
     "NO_EVENT_IN_WINDOW",
     "UNKNOWN_AT_REFERENCE",
     "INSUFFICIENT_DATA",
+    "REFERENCE_OUTSIDE_SAMPLES",
 ]
 NotVisibleReason = Literal["BELOW_GEOMETRIC_HORIZON", "TERRAIN_OCCULTED"]
 UnknownReason = Literal[
@@ -83,9 +84,11 @@ class VisibilityEvent(ApiModel):
     """Geometric RISE/SET only: ≈ 2ρ / |rate|. The disc-centre event is not an instant."""
     countdown: EventCountdown | None = None
     """Present only on ``next_change`` / ``next_confirmed_event``."""
-    earlier_events_excluded: bool | None = None
-    """RISE/SET in ``next_*`` only. False when UNKNOWN samples lie between the
-    reference and the bracket, so an earlier unobserved event cannot be excluded."""
+    unknown_gap_before: bool | None = None
+    """RISE/SET in ``next_*`` only. True when UNKNOWN samples lie between the
+    reference and the bracket, so an earlier unobserved event cannot be ruled out.
+    False only means no UNKNOWN samples in between — not that nothing happened
+    between equal samples."""
 
 
 class EventTrack(ApiModel):

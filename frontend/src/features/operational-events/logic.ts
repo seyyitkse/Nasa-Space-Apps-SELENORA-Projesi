@@ -83,6 +83,22 @@ export function stateTone(key: StateLabelKey): 'success' | 'neutral' | 'danger' 
   return 'neutral'
 }
 
+/**
+ * Pick the payload site for the page's site. Coordinates are the unique key of a
+ * site within an analysis; the index is only a fallback.
+ */
+export function pickSite<S extends { latitude_deg: number; longitude_deg: number }>(
+  sites: S[],
+  siteIndex: number,
+  coord?: { latitude_deg: number; longitude_deg: number },
+): S | undefined {
+  if (coord) {
+    const hit = sites.find((s) => Math.abs(s.latitude_deg - coord.latitude_deg) < 1e-6 && Math.abs(s.longitude_deg - coord.longitude_deg) < 1e-6)
+    if (hit) return hit
+  }
+  return sites[Math.min(Math.max(siteIndex, 0), sites.length - 1)]
+}
+
 /** Whether the wall clock lies inside the stored samples (live countdown allowed). */
 export function clockInsideSamples(clockMs: number, firstSampleUtc: string, lastSampleUtc: string): boolean {
   return clockMs >= Date.parse(firstSampleUtc) && clockMs <= Date.parse(lastSampleUtc)

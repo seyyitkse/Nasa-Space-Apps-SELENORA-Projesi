@@ -1,4 +1,4 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 
 import { api } from '@/services/apiClient'
 import { useCapabilities } from '@/services/contracts'
@@ -29,7 +29,9 @@ export function useOperationalEvents(analysisId: string | undefined, referenceUt
     queryKey: ['operational-events', analysisId ?? '', referenceUtc ?? 'auto'],
     queryFn: () => fetchEvents(analysisId!, referenceUtc),
     enabled: Boolean(analysisId) && enabled,
-    placeholderData: keepPreviousData,
+    // Keep the previous payload only while the reference moves within the SAME analysis;
+    // never show another analysis's events under the new one.
+    placeholderData: (previous, previousQuery) => (previousQuery?.queryKey[1] === (analysisId ?? '') ? previous : undefined),
     refetchInterval: referenceUtc ? false : 60_000,
     retry: 1,
   })

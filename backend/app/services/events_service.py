@@ -26,7 +26,7 @@ from app.schemas.events import (
 from app.science import events as ev
 from app.services import epochs_service, terrain_data_service
 
-EVENTS_CONTRACT_VERSION = "7a.1"
+EVENTS_CONTRACT_VERSION = "7a.2"
 MAX_TRANSITIONS_PER_TRACK = 500
 
 # Nominal apparent angular radii as seen from the Moon (deg). Used only for the
@@ -152,7 +152,7 @@ def _event(
                 may_have_occurred=nxt.countdown.may_have_occurred,
             )
         ),
-        earlier_events_excluded=None if nxt is None else nxt.earlier_events_excluded,
+        unknown_gap_before=None if nxt is None else nxt.unknown_gap_before,
     )
 
 

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/misc'
 import { formatUtc } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 import { useEventsCapability, useOperationalEvents } from './api'
 import {
@@ -16,6 +17,7 @@ import {
   type CountdownRange,
   countdownFromServer,
   formatSpan,
+  pickSite,
   stateLabelKey,
   stateTone,
   usableReference,
@@ -95,7 +97,7 @@ function EventBlock({
             {event.after.unknown_reason && ` ${t('events7a.because', { reason: t(`events7a.unknownReason.${event.after.unknown_reason}`) })}`}
           </li>
         )}
-        {event.earlier_events_excluded === false && <li className="text-warning">{t('events7a.earlierNotExcluded')}</li>}
+        {event.unknown_gap_before === true && <li className="text-warning">{t('events7a.earlierNotExcluded')}</li>}
       </ul>
     </div>
   )
@@ -105,6 +107,7 @@ function EventBlock({
 function trackSummary(t: T, body: EventBody, track: EventTrack): string {
   const horizon = track.horizon
   if (track.status === 'INSUFFICIENT_DATA') return tx(t, 'events7a.status.INSUFFICIENT_DATA')
+  if (track.status === 'REFERENCE_OUTSIDE_SAMPLES') return tx(t, 'events7a.status.REFERENCE_OUTSIDE_SAMPLES')
   if (track.status === 'UNKNOWN_AT_REFERENCE') return tx(t, 'events7a.status.UNKNOWN_AT_REFERENCE')
   if (track.status === 'NO_EVENT_IN_WINDOW')
     return tx(t, 'events7a.status.NO_EVENT_IN_WINDOW', { time: track.no_change_through_utc ? formatUtc(track.no_change_through_utc) : '' })
@@ -184,8 +187,8 @@ function TrackBlock({ body, track, rangeFor }: { body: EventBody; track: EventTr
           </p>
         </div>
       )}
-      {track.status === 'INSUFFICIENT_DATA' && (
-        <p className="rounded-lg border border-warning/30 bg-warning/[0.06] p-3 text-[12.5px] text-fg">{t('events7a.status.INSUFFICIENT_DATA')}</p>
+      {(track.status === 'INSUFFICIENT_DATA' || track.status === 'REFERENCE_OUTSIDE_SAMPLES') && (
+        <p className="rounded-lg border border-warning/30 bg-warning/[0.06] p-3 text-[12.5px] text-fg">{t(`events7a.status.${track.status}`)}</p>
       )}
 
       {track.unknown_sample_count > 0 && (
@@ -251,23 +254,29 @@ function BodyColumn({ events, rangeFor }: { events: BodyEvents; rangeFor: (e: Vi
 export function OperationalEventsView({
   data,
   siteIndex,
+  siteCoord,
   live,
   clockMs,
 }: {
   data: EventsResponse
   siteIndex: number
+  /** Page site coordinates; preferred over the index for matching. */
+  siteCoord?: { latitude_deg: number; longitude_deg: number }
   /** Live countdown from `clockMs`; only honoured when the backend reference is NOW. */
   live: boolean
   clockMs: number
 }) {
   const { t } = useTranslation()
-  const site = data.sites[Math.min(Math.max(siteIndex, 0), data.sites.length - 1)]
+  const site = pickSite(data.sites, siteIndex, siteCoord)
   const ticking = live && data.reference_mode === 'NOW'
   const rangeFor = (e: VisibilityEvent) => (ticking ? countdownAt(e, clockMs) : countdownFromServer(e))
   if (!site) return null
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-fg-2">
+        <span className="font-medium text-fg" data-testid="events-site">
+          {t('events7a.site')}: {site.label}
+        </span>
         <Badge tone={data.horizon_model === 'TERRAIN' ? 'gold' : 'cyan'}>{data.horizon_model}</Badge>
         <span data-testid="reference-mode">{t(`events7a.ref.mode.${data.reference_mode}`)}</span>
         <span className="font-mono text-[11px] text-fg-3">{formatUtc(data.reference_utc)}</span>
@@ -306,6 +315,7 @@ export function OperationalEventsView({
 export function OperationalEventsPanel({
   analysisId,
   siteIndex,
+  siteCoord,
   cursorMs,
   startUtc,
   endUtc,
@@ -313,6 +323,7 @@ export function OperationalEventsPanel({
 }: {
   analysisId: string | undefined
   siteIndex: number
+  siteCoord?: { latitude_deg: number; longitude_deg: number }
   cursorMs: number | null
   startUtc: string | undefined
   endUtc: string | undefined
@@ -332,8 +343,20 @@ export function OperationalEventsPanel({
     return () => window.clearInterval(id)
   }, [])
 
-  const reference = live ? undefined : usableReference(cursorMs, startUtc, endUtc)
+  // The cursor can move many times per second (playback, dragging). Follow it only
+  // once it has settled, and not at all during playback, so the API is not flooded.
+  const playing = useWorkspaceStore((s) => s.playing)
+  const [settledCursor, setSettledCursor] = useState(cursorMs)
+  useEffect(() => {
+    if (playing) return
+    const id = window.setTimeout(() => setSettledCursor(cursorMs), 400)
+    return () => window.clearTimeout(id)
+  }, [cursorMs, playing])
+
+  const reference = live ? undefined : usableReference(settledCursor, startUtc, endUtc)
   const query = useOperationalEvents(analysisId, reference, capability.available === true)
+  const data = query.data && query.data.analysis_id === analysisId ? query.data : undefined
+  const busy = Boolean(data) && (query.isPlaceholderData || (!live && settledCursor !== cursorMs))
 
   const modes = [
     { key: 'live' as const, label: t('events7a.ref.live'), disabled: !liveAllowed },
@@ -387,13 +410,20 @@ export function OperationalEventsPanel({
           </p>
         ) : query.error ? (
           <ErrorState error={query.error} onRetry={() => void query.refetch()} compact />
-        ) : !query.data ? (
+        ) : !data ? (
           <div role="status" aria-label={t('events7a.loading')} className="grid gap-4 lg:grid-cols-2">
             <Skeleton className="h-48" />
             <Skeleton className="h-48" />
           </div>
         ) : (
-          <OperationalEventsView data={query.data} siteIndex={siteIndex} live={live} clockMs={clockMs} />
+          <div aria-busy={busy} className={cn('transition-opacity', busy && 'opacity-60')}>
+            {busy && (
+              <p className="mb-2 text-[11.5px] text-fg-3" data-testid="events-updating">
+                {t('events7a.updating')}
+              </p>
+            )}
+            <OperationalEventsView data={data} siteIndex={siteIndex} siteCoord={siteCoord} live={live} clockMs={clockMs} />
+          </div>
         )}
       </CardContent>
     </Card>

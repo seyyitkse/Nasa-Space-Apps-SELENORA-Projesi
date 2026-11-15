@@ -22,8 +22,10 @@ Semantics
   state differs after the gap without the engine asserting when (or how many
   times) it changed. It is **not** a set.
 * ``VISIBLE → UNKNOWN … → VISIBLE`` confirms nothing either. Any confirmed
-  event found *after* an UNKNOWN run carries
-  ``earlier_events_excluded = False``.
+  event found *after* an UNKNOWN run carries ``unknown_gap_before = True``:
+  an earlier unobserved event cannot be ruled out. (``False`` only says there
+  were no UNKNOWN samples in between — equal samples still prove nothing about
+  the time between them.)
 """
 
 from __future__ import annotations
@@ -57,6 +59,7 @@ class TrackStatus(str, Enum):
     NO_EVENT_IN_WINDOW = "NO_EVENT_IN_WINDOW"
     UNKNOWN_AT_REFERENCE = "UNKNOWN_AT_REFERENCE"
     INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
+    REFERENCE_OUTSIDE_SAMPLES = "REFERENCE_OUTSIDE_SAMPLES"
 
 
 @dataclass(frozen=True, slots=True)
@@ -115,9 +118,9 @@ class Countdown:
 class NextEvent:
     transition: Transition
     countdown: Countdown
-    # None for BECOMES_UNKNOWN / RESOLVES_*; for RISE/SET: False when an UNKNOWN
-    # run lies between the reference and the bracket (earlier events possible).
-    earlier_events_excluded: bool | None
+    # None for BECOMES_UNKNOWN / RESOLVES_*; for RISE/SET: True when UNKNOWN
+    # samples lie between the reference and the bracket (earlier events possible).
+    unknown_gap_before: bool | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -272,6 +275,20 @@ def evaluate_track(
         )
     if transitions is None:
         transitions = find_transitions(observations)
+    ref = _utc(reference)
+    if ref < _utc(observations[0].t) or ref > _utc(observations[-1].t):
+        # No state is known at the reference for this track; assume nothing.
+        return TrackEvaluation(
+            status=TrackStatus.REFERENCE_OUTSIDE_SAMPLES,
+            reference_index=None,
+            current=None,
+            next_change=None,
+            next_confirmed_event=None,
+            next_known=None,
+            no_change_through=None,
+            sample_count=n,
+            unknown_sample_count=unknown_count,
+        )
     idx = reference_index(observations, reference)
     current = observations[idx]
 
@@ -308,18 +325,18 @@ def evaluate_track(
         )
 
     def wrap(tr: Transition) -> NextEvent:
-        excluded: bool | None = None
+        gap: bool | None = None
         if tr.confirmed:
             # An UNKNOWN run between the reference and this bracket hides
             # possible earlier events.
-            excluded = not any(
+            gap = any(
                 observations[k].state is VisState.UNKNOWN
                 for k in range(idx + 1, tr.before_index + 1)
             )
         return NextEvent(
             transition=tr,
             countdown=_countdown(tr, reference),
-            earlier_events_excluded=excluded,
+            unknown_gap_before=gap,
         )
 
     first = ahead[0]

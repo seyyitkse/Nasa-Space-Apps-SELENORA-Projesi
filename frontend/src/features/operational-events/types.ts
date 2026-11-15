@@ -1,4 +1,4 @@
-/** Contract of GET /api/v1/analyses/{analysis_id}/events (Phase 7A, contract 7a.1). */
+/** Contract of GET /api/v1/analyses/{analysis_id}/events (Phase 7A, contract 7a.2). */
 
 export const EVENTS_ROUTE = '/api/v1/analyses/{analysis_id}/events'
 
@@ -6,7 +6,13 @@ export type EventState = 'VISIBLE' | 'NOT_VISIBLE' | 'UNKNOWN'
 export type HorizonType = 'GEOMETRIC' | 'TERRAIN'
 export type EventBody = 'SUN' | 'EARTH'
 export type EventKind = 'RISE' | 'SET' | 'BECOMES_UNKNOWN' | 'RESOLVES_TO_VISIBLE' | 'RESOLVES_TO_NOT_VISIBLE'
-export type TrackStatus = 'EVENT_CONFIRMED' | 'UNKNOWN_AHEAD' | 'NO_EVENT_IN_WINDOW' | 'UNKNOWN_AT_REFERENCE' | 'INSUFFICIENT_DATA'
+export type TrackStatus =
+  | 'EVENT_CONFIRMED'
+  | 'UNKNOWN_AHEAD'
+  | 'NO_EVENT_IN_WINDOW'
+  | 'UNKNOWN_AT_REFERENCE'
+  | 'INSUFFICIENT_DATA'
+  | 'REFERENCE_OUTSIDE_SAMPLES'
 export type NotVisibleReason = 'BELOW_GEOMETRIC_HORIZON' | 'TERRAIN_OCCULTED'
 export type UnknownReason = 'MISSING_EPHEMERIS' | 'TERRAIN_COVERAGE_INCOMPLETE' | 'TERRAIN_DATA_UNAVAILABLE'
 export type ReferenceMode = 'NOW' | 'WINDOW_START' | 'REQUESTED'
@@ -43,7 +49,8 @@ export interface VisibilityEvent {
   elevation_rate_deg_per_hour: number | null
   approx_disc_crossing_hours: number | null
   countdown: EventCountdown | null
-  earlier_events_excluded: boolean | null
+  /** RISE/SET in next_* only: UNKNOWN samples lie between the reference and the bracket. */
+  unknown_gap_before: boolean | null
 }
 
 export interface EventTrack {
