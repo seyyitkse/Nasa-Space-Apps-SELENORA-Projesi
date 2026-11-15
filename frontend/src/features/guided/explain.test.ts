@@ -22,7 +22,10 @@ const site = (label: string, m: SiteResult['metrics'], extra: Partial<SiteResult
   longitude_deg: 0,
   landing_site_id: null,
   metrics: m,
-  score: 0.4 * m.sun_visibility_pct + 0.4 * m.earth_visibility_pct + 0.2 * m.joint_visibility_pct,
+  score:
+    0.4 * (m.sun_visibility_pct ?? 0) +
+    0.4 * (m.earth_visibility_pct ?? 0) +
+    0.2 * (m.joint_visibility_pct ?? 0),
   rank: null,
   contributions: [],
   darkness_windows: [],

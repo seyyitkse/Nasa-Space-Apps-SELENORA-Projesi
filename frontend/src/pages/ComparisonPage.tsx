@@ -47,7 +47,13 @@ function MetricTiles({ sites }: { sites: AnalysisResult['sites'] }) {
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
       {metrics.map((m) => {
         const values = sites.map((s) => s.metrics[m.key])
-        const best = m.better === 'high' ? Math.max(...values) : Math.min(...values)
+        const numeric = values.filter((v): v is number => v != null && !Number.isNaN(v))
+        const best =
+          numeric.length === 0
+            ? null
+            : m.better === 'high'
+              ? Math.max(...numeric)
+              : Math.min(...numeric)
         return (
           <Card key={m.key} className="p-4">
             <div className="flex items-start gap-2 text-xs leading-snug text-fg-2">

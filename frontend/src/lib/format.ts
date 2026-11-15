@@ -12,11 +12,13 @@ export function formatCoord(lat: number, lon: number, digits = 3): string {
   return `${formatLat(lat, digits)}, ${formatLon(lon, digits)}`
 }
 
-export function formatPct(value: number, digits = 1): string {
+export function formatPct(value: number | null | undefined, digits = 1): string {
+  if (value == null || Number.isNaN(value)) return '—'
   return `${value.toFixed(digits)}%`
 }
 
-export function formatHours(hours: number): string {
+export function formatHours(hours: number | null | undefined): string {
+  if (hours == null || Number.isNaN(hours)) return '—'
   if (hours >= 48) return `${(hours / 24).toFixed(1)} d`
   return `${hours.toFixed(1)} h`
 }

@@ -37,15 +37,26 @@ def validate_weights(weights: dict[str, float]) -> None:
         raise ValueError("weights must sum to 100")
 
 
+def metrics_are_scorable(metrics: dict[str, float | None]) -> bool:
+    """Refuse scoring when any weighted visibility percentage is unavailable."""
+    for metric_key in METRIC_KEYS.values():
+        value = metrics.get(metric_key)
+        if value is None:
+            return False
+        if not 0.0 <= float(value) <= 100.0:
+            return False
+    return True
+
+
 def score_site(
-    metrics: dict[str, float], weights: dict[str, float]
+    metrics: dict[str, float | None], weights: dict[str, float]
 ) -> tuple[float, list[Contribution]]:
     validate_weights(weights)
+    if not metrics_are_scorable(metrics):
+        raise ValueError("cannot score site: one or more visibility percentages are unavailable")
     contributions = []
     for name, metric_key in METRIC_KEYS.items():
-        value = float(metrics[metric_key])
-        if not 0.0 <= value <= 100.0:
-            raise ValueError(f"{metric_key} must be a percentage in [0, 100]")
+        value = float(metrics[metric_key])  # type: ignore[arg-type]
         contributions.append(
             Contribution(
                 metric=name,

@@ -152,7 +152,7 @@ def test_compute_terrain_mode_two_lola_sites() -> None:
     assert result.horizon_model == "TERRAIN"
     # 12 km rays on 16×16 km tiles → honest partial label; no deterministic ranking.
     assert result.data_quality == "LOCAL_TERRAIN_PARTIAL"
-    assert "phase4.1" in result.algorithm_version
+    assert "phase6c-science-h1" in result.algorithm_version
     assert result.recommended_site_label is None
     assert any(p.source_id == "lro-lola" for p in result.provenance)
     for site in result.sites:

@@ -18,7 +18,7 @@ BACKEND_ROOT = Path(__file__).resolve().parents[2]
 # Geometric path stays on the Phase 3.3 duration-correct engine.
 ALGORITHM_VERSION = "0.3.1-phase3.3"
 # Terrain (LOLA horizon) analyses use a separate algorithm stamp.
-TERRAIN_ALGORITHM_VERSION = "0.4.1-phase4.1-validation"
+TERRAIN_ALGORITHM_VERSION = "0.4.2-phase6c-science-h1"
 AI_PROMPT_VERSION = "explain-v1"
 API_VERSION = "v1"
 

@@ -72,7 +72,11 @@ export function EvidenceText({ text, evidence, unsupported }: { text: string; ev
 /** Deterministic metric cards that AI statements can be checked against. */
 export function EvidenceGrid({ result }: { result: AnalysisResult }) {
   const { t } = useTranslation()
-  const rows: { key: keyof AnalysisResult['sites'][number]['metrics']; label: string; fmt: (v: number) => string }[] = [
+  const rows: {
+    key: keyof AnalysisResult['sites'][number]['metrics']
+    label: string
+    fmt: (v: number | null) => string
+  }[] = [
     { key: 'sun_visibility_pct', label: t('comparison.sunVisibility'), fmt: (v) => formatPct(v, 2) },
     { key: 'earth_visibility_pct', label: t('comparison.earthVisibility'), fmt: (v) => formatPct(v, 2) },
     { key: 'joint_visibility_pct', label: t('comparison.jointVisibility'), fmt: (v) => formatPct(v, 2) },

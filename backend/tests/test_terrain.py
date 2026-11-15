@@ -206,7 +206,7 @@ def test_terrain_vs_geometric_summary_invariants() -> None:
     sun_el = np.array([5.0, 5.0, 5.0, 5.0, 5.0, 5.0])
     earth_az = np.array([270.0] * 6)
     earth_el = np.array([10.0] * 6)
-    summary, sun_vis, earth_vis, joint, meta = summarize_terrain_pair(
+    summary, sun_vis, earth_vis, joint, _sun_blocked, _earth_blocked, meta = summarize_terrain_pair(
         sun_az,
         sun_el,
         earth_az,

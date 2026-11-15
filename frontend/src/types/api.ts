@@ -143,9 +143,10 @@ export interface Interval {
 }
 
 export interface VisibilityMetrics {
-  sun_visibility_pct: number
-  earth_visibility_pct: number
-  joint_visibility_pct: number
+  /** Null when no scientifically valid samples exist for that body. */
+  sun_visibility_pct: number | null
+  earth_visibility_pct: number | null
+  joint_visibility_pct: number | null
   longest_sunlight_hours: number
   longest_darkness_hours: number
   longest_earth_visibility_hours: number
@@ -186,9 +187,9 @@ export interface GeometricVsTerrain {
   geometric: VisibilityMetrics
   longest_darkness_hours_delta: number
   longest_communication_gap_hours_delta: number
-  sun_visibility_pct_delta: number
-  earth_visibility_pct_delta: number
-  joint_visibility_pct_delta: number
+  sun_visibility_pct_delta: number | null
+  earth_visibility_pct_delta: number | null
+  joint_visibility_pct_delta: number | null
 }
 
 export interface SiteResult {

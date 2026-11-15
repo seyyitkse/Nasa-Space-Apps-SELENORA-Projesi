@@ -36,14 +36,15 @@ export interface Explanation {
 }
 
 const r1 = (v: number) => Math.round(v * 10) / 10
+const pctOrDash = (v: number | null | undefined) => (v == null ? '—' : r1(v))
 
 function siteFacts(result: AnalysisResult, s: SiteResult, index: number): SiteFacts {
   const terrain = result.horizon_model === 'TERRAIN'
   const m = s.metrics
   const established: Statement[] = [
-    { key: 'sun', params: { pct: r1(m.sun_visibility_pct) } },
-    { key: 'earth', params: { pct: r1(m.earth_visibility_pct) } },
-    { key: 'joint', params: { pct: r1(m.joint_visibility_pct) } },
+    { key: 'sun', params: { pct: pctOrDash(m.sun_visibility_pct) } },
+    { key: 'earth', params: { pct: pctOrDash(m.earth_visibility_pct) } },
+    { key: 'joint', params: { pct: pctOrDash(m.joint_visibility_pct) } },
     { key: 'darkness', params: { hours: r1(m.longest_darkness_hours) } },
     { key: 'gap', params: { hours: r1(m.longest_communication_gap_hours) } },
   ]
@@ -51,10 +52,20 @@ function siteFacts(result: AnalysisResult, s: SiteResult, index: number): SiteFa
 
   if (terrain && s.terrain) {
     const geo = s.geometric_comparison?.geometric
-    if (geo && geo.sun_visibility_pct > 0 && m.sun_visibility_pct === 0)
+    if (geo && geo.sun_visibility_pct != null && geo.sun_visibility_pct > 0 && m.sun_visibility_pct === 0)
       established.push({ key: 'terrainBlocksSunAll', params: { geo: r1(geo.sun_visibility_pct) } })
-    else if (geo && geo.sun_visibility_pct - m.sun_visibility_pct >= 1)
-      established.push({ key: 'terrainReducesSun', params: { geo: r1(geo.sun_visibility_pct), terrain: r1(m.sun_visibility_pct) } })
+    else if (
+      geo &&
+      geo.sun_visibility_pct != null &&
+      m.sun_visibility_pct != null &&
+      geo.sun_visibility_pct - m.sun_visibility_pct >= 1
+    )
+      established.push({
+        key: 'terrainReducesSun',
+        params: { geo: r1(geo.sun_visibility_pct), terrain: r1(m.sun_visibility_pct) },
+      })
+    if (m.sun_visibility_pct == null || m.earth_visibility_pct == null || m.joint_visibility_pct == null)
+      uncertain.push({ key: 'perEpochDerived' })
     const unknownH = s.terrain.unknown_hours ?? 0
     if (unknownH > 0) uncertain.push({ key: 'unknownHours', params: { hours: r1(unknownH) } })
     const cov = s.terrain.horizon_coverage_fraction

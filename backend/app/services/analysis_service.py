@@ -102,9 +102,10 @@ DURATION_SEMANTICS_SINCE = "0.3.1-phase3.3"
 def analysis_metrics_superseded(algorithm_version: str) -> bool:
     """True when stored metrics predate the current geometric or terrain engine.
 
-    Geometric current: ``0.3.1-phase3.3``. Terrain current: ``0.4.1-phase4.1-validation``.
-    Prior terrain builds (``0.4.0-phase4-terrain``) lacked true-north convergence
-    and complete-vs-partial coverage semantics — treat as superseded.
+    Geometric current: ``0.3.1-phase3.3``. Terrain current: ``0.4.2-phase6c-science-h1``.
+    Prior terrain builds (``0.4.0-phase4-terrain``, ``0.4.1-phase4.1-validation``)
+    used a joint Sun/Earth denominator and could treat UNKNOWN as darkness —
+    treat as superseded.
     """
     if algorithm_version == ALGORITHM_VERSION:
         return False
@@ -265,15 +266,17 @@ def compute_from_ephemerides(
                         "complete_coverage_fraction": profile.complete_coverage_fraction,
                     },
                 )
-            summary, sun_vis, earth_vis, joint, vmeta = summarize_terrain_pair(
-                sun_az,
-                sun_el,
-                earth_az,
-                earth_el,
-                profile,
-                step,
-                times=times,
-                analysis_end_utc=req.end_utc,
+            summary, sun_vis, earth_vis, joint, sun_blocked, earth_blocked, vmeta = (
+                summarize_terrain_pair(
+                    sun_az,
+                    sun_el,
+                    earth_az,
+                    earth_el,
+                    profile,
+                    step,
+                    times=times,
+                    analysis_end_utc=req.end_utc,
+                )
             )
             terrain_meta = {**tmeta, **vmeta}
             # Ephemeris gaps drive PARTIAL; terrain UNKNOWN is reported separately and
@@ -284,8 +287,10 @@ def compute_from_ephemerides(
                 complete_coverage_fraction=profile.complete_coverage_fraction,
             )
             metrics = summary.as_metrics()
-            # Partial DEM coverage: compute metrics for transparency but refuse ranking.
-            scorable = scoring.is_scorable(site_quality, missing)
+            # Partial DEM coverage / unavailable percentages: refuse ranking.
+            scorable = scoring.is_scorable(site_quality, missing) and scoring.metrics_are_scorable(
+                metrics
+            )
             score = None
             contribs: list[Contribution] = []
             if scorable:
@@ -300,11 +305,13 @@ def compute_from_ephemerides(
             )
             geo_metrics = VisibilityMetrics(**geo_summary.as_metrics())
             terrain_metrics = VisibilityMetrics(**metrics)
-            # Darkness / gaps: BLOCKED among known samples (UNKNOWN excluded).
-            known_sun = ~(np.isnan(sun_el) | np.isnan(sun_az))
-            known_earth = ~(np.isnan(earth_el) | np.isnan(earth_az))
-            sun_dark_mask = known_sun & (~sun_vis)
-            earth_dark_mask = known_earth & (~earth_vis)
+
+            def _pct_delta(a: float | None, b: float | None) -> float | None:
+                if a is None or b is None:
+                    return None
+                return a - b
+
+            # Darkness / gaps: BLOCKED only (UNKNOWN never counted as darkness).
             site_result = SiteResult(
                 label=site.label,
                 latitude_deg=site.latitude_deg,
@@ -315,10 +322,10 @@ def compute_from_ephemerides(
                 rank=None,
                 contributions=contributions_to_schema(contribs),
                 darkness_windows=intervals_from_times(
-                    times, sun_dark_mask, step, True, analysis_end_utc=req.end_utc
+                    times, sun_blocked, step, True, analysis_end_utc=req.end_utc
                 ),
                 communication_gaps=intervals_from_times(
-                    times, earth_dark_mask, step, True, analysis_end_utc=req.end_utc
+                    times, earth_blocked, step, True, analysis_end_utc=req.end_utc
                 ),
                 joint_windows=intervals_from_times(
                     times, joint, step, True, analysis_end_utc=req.end_utc
@@ -351,14 +358,14 @@ def compute_from_ephemerides(
                         terrain_metrics.longest_communication_gap_hours
                         - geo_metrics.longest_communication_gap_hours
                     ),
-                    sun_visibility_pct_delta=(
-                        terrain_metrics.sun_visibility_pct - geo_metrics.sun_visibility_pct
+                    sun_visibility_pct_delta=_pct_delta(
+                        terrain_metrics.sun_visibility_pct, geo_metrics.sun_visibility_pct
                     ),
-                    earth_visibility_pct_delta=(
-                        terrain_metrics.earth_visibility_pct - geo_metrics.earth_visibility_pct
+                    earth_visibility_pct_delta=_pct_delta(
+                        terrain_metrics.earth_visibility_pct, geo_metrics.earth_visibility_pct
                     ),
-                    joint_visibility_pct_delta=(
-                        terrain_metrics.joint_visibility_pct - geo_metrics.joint_visibility_pct
+                    joint_visibility_pct_delta=_pct_delta(
+                        terrain_metrics.joint_visibility_pct, geo_metrics.joint_visibility_pct
                     ),
                 ),
             )

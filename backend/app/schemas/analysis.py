@@ -89,9 +89,11 @@ class Interval(ApiModel):
 
 
 class VisibilityMetrics(ApiModel):
-    sun_visibility_pct: float
-    earth_visibility_pct: float
-    joint_visibility_pct: float
+    """Per-body percentages are null when no scientifically valid samples exist."""
+
+    sun_visibility_pct: float | None
+    earth_visibility_pct: float | None
+    joint_visibility_pct: float | None
     longest_sunlight_hours: float
     longest_darkness_hours: float
     longest_earth_visibility_hours: float
@@ -134,9 +136,9 @@ class GeometricVsTerrain(ApiModel):
     geometric: VisibilityMetrics
     longest_darkness_hours_delta: float
     longest_communication_gap_hours_delta: float
-    sun_visibility_pct_delta: float
-    earth_visibility_pct_delta: float
-    joint_visibility_pct_delta: float
+    sun_visibility_pct_delta: float | None
+    earth_visibility_pct_delta: float | None
+    joint_visibility_pct_delta: float | None
 
 
 class SiteResult(ApiModel):
