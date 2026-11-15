@@ -11,7 +11,7 @@ import { HIGH_MODEL_ID, MOON_ASSET, MOON_MODELS, MoonAssetError } from './asset'
 import { defaultQuality, fmtLat, fmtLon, highModelId, highSupported, loadMoonBuffer, maxAnisotropy, maxTextureSize, webglAvailable } from './globeUtils'
 import { LANDMARKS } from './landmarks'
 import type { LoadedMoon, MoonQuality, ReliefMode } from './loadMoon'
-import type { CameraCommand, CameraIntent, CameraState, GlobeSite } from './MoonScene'
+import type { CameraCommand, CameraIntent, CameraState, DraftPick, GlobeSite } from './MoonScene'
 import { StaticMoonFallback } from './StaticMoonFallback'
 import type { ViewPreset } from './orientation'
 
@@ -30,6 +30,10 @@ export interface MoonExplorerProps {
   onCommand: (c: CameraIntent) => void
   onCamera?: (c: CameraState) => void
   compact?: boolean
+  /** Create-point mode: non-drag mesh clicks call onSurfacePick. */
+  pickMode?: boolean
+  onSurfacePick?: (lat: number, lon: number) => void
+  draftPick?: DraftPick | null
   /** Shown when the camera reaches the global model's resolution limit. */
   onOpenLocalTerrain?: () => void
   /** LOLA 5 m tile footprints to outline on the globe. */
@@ -37,7 +41,21 @@ export interface MoonExplorerProps {
   className?: string
 }
 
-export function MoonExplorer({ sites, selectedId, onSelect, command, onCommand, onCamera, compact = false, onOpenLocalTerrain, tiles, className }: MoonExplorerProps) {
+export function MoonExplorer({
+  sites,
+  selectedId,
+  onSelect,
+  command,
+  onCommand,
+  onCamera,
+  compact = false,
+  pickMode = false,
+  onSurfacePick,
+  draftPick = null,
+  onOpenLocalTerrain,
+  tiles,
+  className,
+}: MoonExplorerProps) {
   const { t } = useTranslation()
   const reduce = useReducedMotion() ?? false
   const [webgl] = useState(() => (typeof document === 'undefined' ? false : webglAvailable()))
@@ -186,6 +204,9 @@ export function MoonExplorer({ sites, selectedId, onSelect, command, onCommand, 
               sites={sites}
               selectedId={selectedId}
               onSelect={onSelect}
+              pickMode={pickMode}
+              onSurfacePick={onSurfacePick}
+              draftPick={draftPick}
               landmarks={landmarks ? LANDMARKS : []}
               showGraticule={grid}
               command={command}
@@ -199,8 +220,18 @@ export function MoonExplorer({ sites, selectedId, onSelect, command, onCommand, 
         )}
       </div>
       <p id="moon-kbd-help" className="sr-only">
-        {t('moon.kbdHelp')}
+        {pickMode ? t('moon.create.kbdHelp') : t('moon.kbdHelp')}
       </p>
+      {pickMode && phase.kind === 'ready' && (
+        <div
+          className="pointer-events-none absolute inset-x-3 top-[3.25rem] z-10 mx-auto max-w-md rounded-xl border border-cyan/40 bg-bg/90 px-3 py-2 text-center text-[12px] leading-snug text-fg-2 backdrop-blur"
+          role="status"
+          aria-live="polite"
+          data-testid="moon-pick-banner"
+        >
+          {t('moon.create.pickHint')}
+        </div>
+      )}
 
       {/* Loading / error overlay */}
       {phase.kind !== 'ready' && (

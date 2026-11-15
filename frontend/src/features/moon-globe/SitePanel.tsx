@@ -87,6 +87,7 @@ export function SiteCard({
 }) {
   const { t } = useTranslation()
   const approximate = site.coordinate_status.startsWith('APPROXIMATE')
+  const userDefined = site.coordinate_status === 'USER_DEFINED'
   const lolaTile = 'local_lola_tile' in site ? site.local_lola_tile : null
   return (
     <section className="space-y-3" aria-labelledby="moon-site-title" data-testid="moon-site-card">
@@ -105,7 +106,9 @@ export function SiteCard({
         <div>
           <dt className="text-fg-3">{t('moon.referenceStatus')}</dt>
           <dd className="mt-0.5 flex flex-wrap items-center gap-1.5">
-            <Badge tone={approximate ? 'warning' : 'neutral'}>{approximate ? t('moon.approxResearch') : site.coordinate_status}</Badge>
+            <Badge tone={userDefined ? 'gold' : approximate ? 'warning' : 'neutral'}>
+              {userDefined ? t('moon.create.userDefined') : approximate ? t('moon.approxResearch') : site.coordinate_status}
+            </Badge>
             <span className="text-fg-3">{t('moon.notNasaRegion')}</span>
           </dd>
           <dd className="mt-1 text-[11px] leading-snug text-fg-3">{site.coordinate_source}</dd>

@@ -5,9 +5,11 @@ import { cn } from '@/lib/utils'
 const fieldBase =
   'h-10 w-full rounded-[10px] border border-line-strong bg-bg-2/80 px-3 text-sm text-fg placeholder:text-fg-3 transition-colors duration-200 hover:border-fg-3 focus-visible:border-cyan focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan/25 disabled:opacity-50 aria-[invalid=true]:border-danger/70 aria-[invalid=true]:ring-danger/20'
 
-export function Input({ className, ...props }: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input className={cn(fieldBase, '[color-scheme:dark]', className)} {...props} />
-}
+export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+  function Input({ className, ...props }, ref) {
+    return <input ref={ref} className={cn(fieldBase, '[color-scheme:dark]', className)} {...props} />
+  },
+)
 
 /**
  * Native &lt;select&gt; fallback. Prefer `@/components/ui/select` (Radix) for menus —

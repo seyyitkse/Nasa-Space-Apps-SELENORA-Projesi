@@ -87,7 +87,7 @@ Screenshots: `docs/screenshots/phase6c/phase6c-01-moon-point-a.png` … `phase6c
 | Suite | Result |
 |---|---|
 | Backend pytest | **170 passed, 1 skipped** |
-| Frontend Vitest | **131 passed** (21 files; +4 PlannerSiteSelect after hotfix) |
+| Frontend Vitest | **141 passed** (23 files; + PlannerSiteSelect + Moon create/pick helpers) |
 | TypeScript (`tsc -b`) | **pass** |
 | Production build | **pass** (~808 ms Vite build; re-verified after hotfix) |
 | oxlint | **0 errors**, **42 warnings** (5F.2 baseline ~37; no new errors; existing react-compiler/export warnings) |
@@ -156,3 +156,17 @@ API smoke against isolated backend:
 | `TimeControls.tsx` | horizon sim time step | Same |
 
 Prefer Radix Select when those screens next get UI attention.
+
+## 14. Hotfix — 3D Moon custom point create & persistence
+
+| | |
+|---|---|
+| Root cause | **Missing feature** on `/moon`: pins only selected API reference sites. No mesh pick, no `addCustomSite`, customs not merged into globe markers. Explorer/Planner already had the client custom-site path. |
+| Fix | Explicit **Create new point** mode → click-without-drag raycast on the Moon mesh → `worldPointToLatLon` (direction vector in verified model frame → planetocentric lat / east-positive lon) → name dialog → `missionStore.addCustomSite`. |
+| Persistence | **Browser `localStorage`** via existing Zustand persist key `selenora-mission` (`draft` + `customSites`). UI labels this honestly. No server/DB custom-site API. Eight reference seeds untouched. |
+| Coordinate method | Intersection world point → normalize direction → `modelToLatLon` / `normalizeLonDeg`. Independent of Standard/High mesh radius/relief (UV never used). |
+| Cross-page | Custom pins on Moon; Explorer `?site=`; Planner A/B `custom:<id>`; `sameSite` validation unchanged. |
+| Files | `MoonScene.tsx`, `MoonExplorer.tsx`, `MoonPage.tsx`, `SitePanel.tsx`, `pickHelpers.ts`, `customSiteAdapter.ts`, `input.tsx` (forwardRef), `phase6a.en.ts` / `phase6a.tr.ts`, tests. |
+| Screenshots | `docs/screenshots/phase6c/phase6c-hotfix-moon-create-mode.png`, `…-moon-custom-saved.png`, `…-moon-custom-site-card.png`, `…-planner-custom-b.png`. |
+| Tests | Vitest **141** (incl. pickHelpers + MoonCreatePoint); `tsc` / build / oxlint pass. Browser: create near south pole, save, refresh (localStorage), assign Site B, Planner shows matching coords. |
+| Limitations | No durable server storage; High-tier offline if GLB missing; LOLA 5 m coverage for arbitrary customs remains “unknown” until a local tile matches; create-mode mesh pick needs a short click (drag still orbits). |

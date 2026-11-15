@@ -16,6 +16,7 @@ import { xyToLonLat } from '@/features/lunar-explorer/projection'
 import { MOON_ASSET } from './asset'
 import type { LoadedMoon } from './loadMoon'
 import { easeInOut, graticule, latLonToModel, modelToLatLon, presetPose, sitePose, slerp, type Vec3, type ViewPreset } from './orientation'
+import { PICK_DRAG_THRESHOLD_PX, worldPointToLatLon } from './pickHelpers'
 
 export interface GlobeSite {
   id: string
@@ -23,6 +24,13 @@ export interface GlobeSite {
   lat: number
   lon: number
   slot: 'A' | 'B' | null
+  /** Reference API seed vs user-defined (missionStore / localStorage). */
+  kind?: 'reference' | 'custom'
+}
+
+export interface DraftPick {
+  lat: number
+  lon: number
 }
 
 export interface GlobeLandmark {
@@ -53,6 +61,11 @@ interface Props {
   sites: GlobeSite[]
   selectedId: string | null
   onSelect: (id: string) => void
+  /** When true, a non-drag click on the mesh places a draft research point. */
+  pickMode?: boolean
+  onSurfacePick?: (lat: number, lon: number) => void
+  /** Temporary marker while naming a new custom point. */
+  draftPick?: DraftPick | null
   landmarks: GlobeLandmark[]
   showGraticule: boolean
   command: CameraCommand | null
@@ -198,14 +211,57 @@ function InvalidateOn({ deps }: { deps: unknown[] }) {
   return null
 }
 
-function MoonMesh({ moon, onReady }: { moon: LoadedMoon; onReady: () => void }) {
+function MoonMesh({
+  moon,
+  onReady,
+  pickMode,
+  onSurfacePick,
+}: {
+  moon: LoadedMoon
+  onReady: () => void
+  pickMode?: boolean
+  onSurfacePick?: (lat: number, lon: number) => void
+}) {
   const invalidate = useThree((s) => s.invalidate)
+  const down = useRef<{ x: number; y: number } | null>(null)
   useEffect(() => {
     invalidate()
     onReady()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moon])
-  return <primitive object={moon.mesh} />
+
+  // Click-without-drag → surface pick. Drag still rotates via OrbitControls (no stopPropagation on down).
+  const onPointerDown = (e: { clientX: number; clientY: number }) => {
+    if (!pickMode) return
+    down.current = { x: e.clientX, y: e.clientY }
+  }
+  const onPointerUp = (e: {
+    clientX: number
+    clientY: number
+    point: { x: number; y: number; z: number }
+    stopPropagation: () => void
+  }) => {
+    if (!pickMode || !onSurfacePick || !down.current) return
+    const dx = e.clientX - down.current.x
+    const dy = e.clientY - down.current.y
+    down.current = null
+    if (dx * dx + dy * dy > PICK_DRAG_THRESHOLD_PX * PICK_DRAG_THRESHOLD_PX) return
+    e.stopPropagation()
+    // Direction from Moon centre in the verified model frame (radius-independent → Standard/High stable).
+    const { lat, lon } = worldPointToLatLon(e.point.x, e.point.y, e.point.z)
+    onSurfacePick(lat, lon)
+  }
+
+  return (
+    <primitive
+      object={moon.mesh}
+      onPointerDown={pickMode ? onPointerDown : undefined}
+      onPointerUp={pickMode ? onPointerUp : undefined}
+      onPointerMissed={() => {
+        down.current = null
+      }}
+    />
+  )
 }
 
 const UP = new THREE.Vector3(0, 1, 0)
@@ -350,7 +406,23 @@ function ReliefLight() {
 }
 
 export default function MoonScene(props: Props) {
-  const { moon, sites, selectedId, onSelect, landmarks, showGraticule, command, reducedMotion, dpr, onCamera, onReady, tiles = [] } = props
+  const {
+    moon,
+    sites,
+    selectedId,
+    onSelect,
+    pickMode = false,
+    onSurfacePick,
+    draftPick = null,
+    landmarks,
+    showGraticule,
+    command,
+    reducedMotion,
+    dpr,
+    onCamera,
+    onReady,
+    tiles = [],
+  } = props
   const start = presetPose('near').position
   // Camera position in lunar radii (direction × distance), for horizon tests of HTML labels.
   const [camPos, setCamPos] = useState<Vec3>(start)
@@ -387,6 +459,14 @@ export default function MoonScene(props: Props) {
     for (const site of sites) m.set(site.id, moon.lit ? moon.surfaceRadiusAt(site.lat, site.lon) * 1.0005 : moon.surfaceMax)
     return m
   }, [moon, sites])
+  const draftRadius = draftPick
+    ? moon.lit
+      ? moon.surfaceRadiusAt(draftPick.lat, draftPick.lon) * 1.0005
+      : moon.surfaceMax
+    : moon.surfaceMax
+  const draftSite: GlobeSite | null = draftPick
+    ? { id: '__draft__', name: '…', lat: draftPick.lat, lon: draftPick.lon, slot: null, kind: 'custom' }
+    : null
 
   return (
     <Canvas
@@ -394,15 +474,15 @@ export default function MoonScene(props: Props) {
       dpr={dpr}
       gl={{ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true }}
       camera={{ position: scaleV(start, R), fov: 40, near: 0.005, far: 100 }}
-      style={{ touchAction: 'none' }}
+      style={{ touchAction: 'none', cursor: pickMode ? 'crosshair' : undefined }}
       onCreated={({ camera }) => camera.lookAt(0, 0, 0)}
     >
       <color attach="background" args={['#05070f']} />
-      <MoonMesh moon={moon} onReady={onReady} />
+      <MoonMesh moon={moon} onReady={onReady} pickMode={pickMode} onSurfacePick={onSurfacePick} />
       {moon.lit && <ReliefLight />}
       <AdaptiveFov />
       <Bench moon={moon} />
-      <InvalidateOn deps={[showGraticule, sites, selectedId, landmarks, footprints]} />
+      <InvalidateOn deps={[showGraticule, sites, selectedId, landmarks, footprints, draftPick, pickMode]} />
       {showGraticule && (
         <group>
           {grid.lines.map((l, i) => (
@@ -429,6 +509,7 @@ export default function MoonScene(props: Props) {
       {sites.map((s) => (
         <Pin key={s.id} site={s} selected={s.id === selectedId} onSelect={onSelect} visible={facing(s.lat, s.lon)} radius={pinRadii.get(s.id) ?? moon.surfaceMax} />
       ))}
+      {draftSite && <Pin site={draftSite} selected onSelect={() => undefined} visible={facing(draftSite.lat, draftSite.lon)} radius={draftRadius} />}
       <CameraRig
         command={command}
         reducedMotion={reducedMotion}
