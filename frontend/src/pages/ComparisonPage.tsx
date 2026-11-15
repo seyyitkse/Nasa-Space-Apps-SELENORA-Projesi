@@ -21,6 +21,7 @@ import { CumulativeJointChart, ElevationChart, VisibilityBarChart } from '@/feat
 import { GeometricTerrainCompare } from '@/features/site-comparison/GeometricTerrainCompare'
 import { ScienceTransparencyPanel } from '@/features/site-comparison/ScienceTransparencyPanel'
 import { ScoreBreakdown } from '@/features/site-comparison/ScoreBreakdown'
+import { SolarPotentialPanel } from '@/features/solar-potential/SolarPotentialPanel'
 import { resolveSiteEpochs } from '@/features/analysis-data/adapter'
 import { StateLanes, StateLegend } from '@/features/analysis-data/StateLanes'
 import type { SiteEpochs } from '@/features/analysis-data/useWorkspaceAnalysis'
@@ -160,6 +161,8 @@ function ComparisonDashboard({
       <GeometricTerrainCompare sites={result.sites} />
 
       <ConfidencePanel result={result} sites={epochSites} />
+
+      <SolarPotentialPanel analysisId={result.id} synthetic={isSynthetic} />
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Section title={t('comparison.elevationTitle')} description={timeline.downsampled ? t('comparison.downsampled', { n: timeline.step_minutes }) : undefined}>
