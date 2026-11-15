@@ -244,7 +244,8 @@ def test_single_sample_at_end_is_insufficient_cover() -> None:
     )
     assert summary.covered_hours == 0.0
     assert summary.longest_sunlight_hours == 0.0
-    assert summary.sun_visibility_pct == 0.0
+    # No valid hold duration → percentage unavailable (not fabricated 0%).
+    assert summary.sun_visibility_pct is None
 
 
 def test_analysis_create_duration_helper() -> None:

@@ -123,12 +123,45 @@ def test_cache_key_stable_and_sensitive() -> None:
         horizon_model="GEOMETRIC",
         algorithm_version="1",
         data_source_version="horizons-x",
+        weights={"sun_visibility": 40.0, "earth_visibility": 40.0, "joint_visibility": 20.0},
     )
     k1 = analysis_cache_key(**base)  # type: ignore[arg-type]
     k2 = analysis_cache_key(**{**base, "sites": list(reversed(base["sites"]))})  # type: ignore[arg-type,dict-item]
     assert k1 == k2  # site order does not matter
-    for change in ({"time_step_minutes": 30}, {"horizon_model": "TERRAIN"}, {"algorithm_version": "2"}):
+    for change in (
+        {"time_step_minutes": 30},
+        {"horizon_model": "TERRAIN"},
+        {"algorithm_version": "2"},
+        {"weights": {"sun_visibility": 80.0, "earth_visibility": 10.0, "joint_visibility": 10.0}},
+    ):
         assert analysis_cache_key(**{**base, **change}) != k1  # type: ignore[arg-type]
+
+
+def test_cache_key_weights_40_40_20_vs_80_10_10() -> None:
+    """H2: identical geometry with different decision weights must not collide."""
+    common = dict(
+        sites=[(-89.68, -166.0), (-89.44, -141.8)],
+        start_utc=datetime(2026, 12, 1, tzinfo=UTC),
+        end_utc=datetime(2026, 12, 15, tzinfo=UTC),
+        time_step_minutes=60,
+        horizon_model="GEOMETRIC",
+        algorithm_version="0.3.1-phase3.3",
+        data_source_version="horizons-x",
+    )
+    balanced = analysis_cache_key(
+        **common,  # type: ignore[arg-type]
+        weights={"sun_visibility": 40.0, "earth_visibility": 40.0, "joint_visibility": 20.0},
+    )
+    sun_heavy = analysis_cache_key(
+        **common,  # type: ignore[arg-type]
+        weights={"sun_visibility": 80.0, "earth_visibility": 10.0, "joint_visibility": 10.0},
+    )
+    balanced_again = analysis_cache_key(
+        **common,  # type: ignore[arg-type]
+        weights={"sun_visibility": 40.0, "earth_visibility": 40.0, "joint_visibility": 20.0},
+    )
+    assert balanced != sun_heavy
+    assert balanced == balanced_again
 
 
 def test_synthetic_anchor_roughly_matches_horizons_fixture() -> None:

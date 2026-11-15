@@ -6,6 +6,7 @@ import { NavLink, useLocation } from 'react-router'
 
 import { Tooltip } from '@/components/ui/misc'
 import { cn } from '@/lib/utils'
+import { useModeStore } from '@/stores/modeStore'
 import { useUiStore } from '@/stores/uiStore'
 
 import { LogoMark } from './Logo'
@@ -13,6 +14,7 @@ import { NAV_ITEMS } from './navItems'
 
 function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: () => void }) {
   const { t } = useTranslation()
+  const mode = useModeStore((s) => s.mode)
   return (
     <nav aria-label="Primary" className="flex flex-col gap-6">
       {(['mission', 'intelligence'] as const).map((group) => (
@@ -27,7 +29,7 @@ function NavList({ collapsed, onNavigate }: { collapsed: boolean; onNavigate?: (
             {t(`nav.${group}`)}
           </div>
           <ul className="flex flex-col gap-0.5">
-            {NAV_ITEMS.filter((i) => i.group === group).map((item) => {
+            {NAV_ITEMS.filter((i) => i.group === group && i.modes.includes(mode)).map((item) => {
               const link = (
                 <NavLink
                   to={item.to}

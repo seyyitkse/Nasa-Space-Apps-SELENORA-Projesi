@@ -18,6 +18,11 @@ export function useSites() {
   return useQuery({ queryKey: queryKeys.sites, queryFn: selenoraApi.sites, staleTime: 5 * 60_000 })
 }
 
+/** 3D Moon pin catalog from Phase 6B (does not replace Planner `useSites`). */
+export function useGlobeSites() {
+  return useQuery({ queryKey: queryKeys.globeSites, queryFn: selenoraApi.globeSites, staleTime: 5 * 60_000 })
+}
+
 export function useDataSources() {
   return useQuery({
     queryKey: queryKeys.dataSources,

@@ -1,6 +1,14 @@
 import phase5a from './phase5a.en'
+import phase5d from './phase5d.en'
+import phase6a from './phase6a.en'
+import phase6c1 from './phase6c1.en'
+import phase7a from './phase7a.en'
 const en = {
   ...phase5a,
+  ...phase5d,
+  ...phase6a,
+  ...phase6c1,
+  ...phase7a,
   common: {
     appName: 'SELENORA',
     subtitle: 'AI-Powered Lunar Mission Intelligence',
@@ -22,6 +30,8 @@ const en = {
     requestId: 'Request ID',
   },
   nav: {
+    moon: '3D Moon',
+    guided: 'Guided mission',
     simulator: 'Horizon Simulator',
     windows: 'Mission Windows',
     mission: 'Mission',
@@ -210,6 +220,10 @@ const en = {
     runDemo: 'Run synthetic preview',
     goPlanner: 'Configure in planner',
     loading: 'Loading stored analysis…',
+    savedUnavailableTitle: 'Saved analysis is no longer available',
+    savedUnavailableBody: 'This saved analysis ID could not be restored from the server. No synthetic result has been substituted.',
+    restoreLatest: 'Open latest completed analysis',
+    clearStale: 'Clear stale selection',
     running: 'Analysis in progress',
     runningBody: 'Waiting for the scientific engine to finish. This page refreshes automatically.',
     failed: 'Analysis failed.',

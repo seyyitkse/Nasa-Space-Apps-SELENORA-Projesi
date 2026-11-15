@@ -1,0 +1,31 @@
+[
+  {
+    "name": "readme",
+    "url": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/BDR/NAC_POLE/NAC_POLE_SOUTH_CM_AVG/NAC_POLE_SOUTH_CM_AVG_README.TXT",
+    "final_url": "https://pds.mcp.nasa.gov/data/store/img/lunar_reconnaissance_orbiter/pds4/lroc/lro-l-lroc-5-rdr/LROLRC_2001/DATA/BDR/NAC_POLE/NAC_POLE_SOUTH_CM_AVG/NAC_POLE_SOUTH_CM_AVG_README.TXT",
+    "status": 200,
+    "headers": {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Content-Length": "2721",
+      "Accept-Ranges": "bytes",
+      "Last-Modified": "Mon, 03 Aug 2026 16:37:57 GMT",
+      "ETag": "\"dc2df7ee09615f20855f281d81007917\""
+    },
+    "document_sha256": "ba00ad12c00aba2b7075a6e3fa79943d3acbcd7759cfe0acf28393ef5ce77c70"
+  },
+  {
+    "name": "pds_label",
+    "url": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/BDR/NAC_POLE/NAC_POLE_SOUTH_CM_AVG/NAC_POLE_SOUTH_CM_AVG_P900S0000.LBL",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "name": "img",
+    "url": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/DATA/BDR/NAC_POLE/NAC_POLE_SOUTH_CM_AVG/NAC_POLE_SOUTH_CM_AVG_P900S0000.IMG",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "name": "tif",
+    "url": "https://pds.lroc.im-ldi.com/data/LRO-L-LROC-5-RDR-V1.0/LROLRC_2001/EXTRAS/BROWSE/NAC_POLE/NAC_POLE_SOUTH_CM_AVG/NAC_POLE_SOUTH_CM_AVG_P900S0000.TIF",
+    "error": "HTTP Error 404: Not Found"
+  }
+]

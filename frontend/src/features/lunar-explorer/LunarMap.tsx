@@ -10,13 +10,18 @@ import ImageLayer from 'ol/layer/Image'
 import VectorLayer from 'ol/layer/Vector'
 import OlMap from 'ol/Map'
 import Projection from 'ol/proj/Projection'
-import ImageStatic from 'ol/source/ImageStatic'
+import type ImageStatic from 'ol/source/ImageStatic'
 import VectorSource from 'ol/source/Vector'
 import { Circle as CircleStyle, Fill, Stroke, Style, Text } from 'ol/style'
 import View from 'ol/View'
 import { type Ref, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react'
 
 import type { DemTileInfo, RasterPreview } from '@/services/contracts'
+
+import { RasterSourceSlot } from './RasterSourceSlot'
+import { PolarBasemap } from './PolarBasemap'
+import { WORLD_HALF, type BasemapStatus } from './polarTiles'
+import { START_VIEW_EXTENT, type RasterDisplayEvent } from './useExplorerPreviews'
 
 import { isInMapRegion, lonLatToXY, MAP_LAT_BOUND, mapHalfExtent, PROJECTION_CODE, xyToLonLat } from './projection'
 
@@ -50,9 +55,12 @@ export const DEFAULT_LAYERS: MapLayers = {
 export interface LunarMapHandle {
   fitPolar: () => void
   fitExtent: (extent: [number, number, number, number]) => void
+  retryBasemap: () => void
 }
 
 interface Props {
+  basemap?: { choice: string; opacity: number; nac: boolean }
+  onBasemapStatus?: (status: BasemapStatus) => void
   sites: MapSite[]
   selectedId: string | null
   picked?: { lat: number; lon: number } | null
@@ -60,8 +68,19 @@ interface Props {
   tiles?: DemTileInfo[]
   /** Backend-rendered PNG previews placed at their returned stereographic bounds. */
   previews?: RasterPreview[]
-  /** Fires after pan/zoom with the view centre and half-extent (metres). */
-  onView?: (v: { center: [number, number]; halfExtent: number; resolution: number }) => void
+  onRasterStatus?: (event: RasterDisplayEvent) => void
+  /** Per-layer opacity (0..1) for previews; default 0.85. */
+  rasterOpacity?: Record<string, number>
+  /** Fires after pan/zoom with the view centre and viewport half-extents (metres). */
+  onView?: (v: {
+    center: [number, number]
+    /** Larger of halfW/halfH — legacy square covering the viewport. */
+    halfExtent: number
+    halfWidthM: number
+    halfHeightM: number
+    resolution: number
+    interacted: boolean
+  }) => void
   /** Badge letters drawn on markers (e.g. mission Site A / B). */
   marks?: Record<string, string>
   onSelect?: (id: string) => void
@@ -69,7 +88,7 @@ interface Props {
   onCursor?: (pos: { lat: number; lon: number } | null) => void
   ariaLabel: string
   interactive?: boolean
-  /** Latitude bound of the initial view (default ≈ −84.5°). */
+  /** Latitude bound of the initial view (default ≈ −88° — Shackleton / ridge scale). */
   focusLat?: number
   ref?: Ref<LunarMapHandle>
 }
@@ -114,20 +133,21 @@ function buildGraticule(): Feature[] {
   return features
 }
 
-const gridStyle = new Style({ stroke: new Stroke({ color: 'rgba(148,163,184,0.16)', width: 1 }) })
-const boundaryStyle = new Style({ stroke: new Stroke({ color: 'rgba(86,217,233,0.35)', width: 1.2, lineDash: [4, 6] }) })
-const regionStyle = new Style({ fill: new Fill({ color: 'rgba(21,31,50,0.55)' }) })
+const gridStyle = new Style({ stroke: new Stroke({ color: 'rgba(148,163,184,0.22)', width: 1 }) })
+const boundaryStyle = new Style({ stroke: new Stroke({ color: 'rgba(86,217,233,0.4)', width: 1.2, lineDash: [4, 6] }) })
+/** Subtle disc UNDER rasters only — never a mask above imagery. */
+const regionStyle = new Style({ fill: new Fill({ color: 'rgba(12,20,36,0.35)' }) })
 
-function graticuleStyle(f: Feature): Style {
+function graticuleLineStyle(f: Feature): Style | undefined {
   const kind = f.get('kind') as string
-  if (kind === 'region') return regionStyle
+  if (kind === 'region') return undefined
   if (kind === 'boundary') return boundaryStyle
   if (kind === 'grid-label')
     return new Style({
       text: new Text({
         text: f.get('text') as string,
         font: '500 10px "JetBrains Mono Variable", monospace',
-        fill: new Fill({ color: 'rgba(148,163,184,0.75)' }),
+        fill: new Fill({ color: 'rgba(148,163,184,0.8)' }),
       }),
     })
   return gridStyle
@@ -151,12 +171,16 @@ export function tilesExtent(tiles: DemTileInfo[], padM = 4000): [number, number,
 }
 
 export function LunarMap({
+  basemap,
+  onBasemapStatus,
   sites,
   selectedId,
   picked = null,
   layers,
   tiles = [],
   previews = [],
+  onRasterStatus,
+  rasterOpacity = {},
   onView,
   marks = {},
   onSelect,
@@ -164,36 +188,57 @@ export function LunarMap({
   onCursor,
   ariaLabel,
   interactive = true,
-  focusLat = -84.5,
+  focusLat = -88,
   ref,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<OlMap | null>(null)
+  const basemapRef = useRef<PolarBasemap | null>(null)
   const siteSource = useRef(new VectorSource())
   const pickSource = useRef(new VectorSource())
   const tileSource = useRef(new VectorSource())
+  const regionLayer = useRef<VectorLayer | null>(null)
   const graticuleLayer = useRef<VectorLayer | null>(null)
   const tileLayer = useRef<VectorLayer | null>(null)
-  const rasterLayers = useRef(new Map<string, ImageLayer<ImageStatic>>())
+  const rasterLayers = useRef(new Map<string, { layer: ImageLayer<ImageStatic>; slot: RasterSourceSlot; layerId: string }>())
+  const interacted = useRef(false)
+  const startedAt = useRef(0)
+  const displayEvents = useRef<Record<string, object>>({})
   // Latest props for OpenLayers callbacks (registered once).
-  const state = useRef({ selectedId, layers, marks, onSelect, onPick, onCursor, onView })
+  const state = useRef({ selectedId, layers, marks, onSelect, onPick, onCursor, onView, onRasterStatus, onBasemapStatus })
   useLayoutEffect(() => {
-    state.current = { selectedId, layers, marks, onSelect, onPick, onCursor, onView }
+    state.current = { selectedId, layers, marks, onSelect, onPick, onCursor, onView, onRasterStatus, onBasemapStatus }
   })
 
   useImperativeHandle(ref, () => ({
+    retryBasemap: () => basemapRef.current?.retry(),
     fitPolar: () => {
-      const f = mapHalfExtent(focusLat)
+      interacted.current = true
+      const f = HALF
       mapRef.current?.getView().fit([-f, -f, f, f], { padding: [16, 16, 16, 16], duration: 400 })
     },
-    fitExtent: (extent) => mapRef.current?.getView().fit(extent, { padding: [24, 24, 24, 24], duration: 450 }),
+    fitExtent: (extent) => {
+      interacted.current = true
+      mapRef.current?.getView().fit(extent, { padding: [24, 24, 24, 24], duration: 450 })
+    },
   }))
 
   useEffect(() => {
     if (!containerRef.current) return
+    startedAt.current = performance.now()
+    const allGrat = buildGraticule()
+    const regionFeats = allGrat.filter((f) => f.get('kind') === 'region')
+    const lineFeats = allGrat.filter((f) => f.get('kind') !== 'region')
+    // z-order: region fill (0) < rasters (2) < grid/labels (5) < coverage (6) < sites (10)
+    const region = new VectorLayer({
+      source: new VectorSource({ features: regionFeats }),
+      style: regionStyle,
+      zIndex: 0,
+    })
+    regionLayer.current = region
     const grat = new VectorLayer({
-      source: new VectorSource({ features: buildGraticule() }),
-      style: (f) => graticuleStyle(f as Feature),
+      source: new VectorSource({ features: lineFeats }),
+      style: (f) => graticuleLineStyle(f as Feature),
       zIndex: 5,
     })
     graticuleLayer.current = grat
@@ -283,8 +328,11 @@ export function LunarMap({
     })
 
     const map = new OlMap({
+      // Our loader limits HTTP concurrency. Let coarse prepared parents enter its
+      // priority queue without waiting behind OL's default 16 detailed loads.
+      maxTilesLoading: 128,
       target: containerRef.current,
-      layers: [grat, coverage, siteLayer, pickLayer],
+      layers: [region, grat, coverage, siteLayer, pickLayer],
       controls: interactive
         ? defaultControls({ attribution: false, rotate: false }).extend([new ScaleLine({ units: 'metric', minWidth: 80 })])
         : [],
@@ -293,19 +341,19 @@ export function LunarMap({
         projection: lunarProjection,
         center: [0, 0],
         zoom: 1,
-        extent: [-HALF, -HALF, HALF, HALF],
-        constrainOnlyCenter: true,
+        extent: [-WORLD_HALF, -WORLD_HALF, WORLD_HALF, WORLD_HALF],
+        constrainOnlyCenter: false,
         enableRotation: false,
-        showFullExtent: true,
+        showFullExtent: false,
       }),
     })
+    // Min zoom = full 80°S disc; start zoomed to focusLat (~88°S ridge/Shackleton scale).
     map.getView().fit([-HALF, -HALF, HALF, HALF], { padding: [16, 16, 16, 16] })
     const fitZoom = map.getView().getZoom() ?? 1
     map.getView().setMinZoom(fitZoom - 0.5)
-    // 5 m/px LOLA tiles need deep zoom; allow down to ~1 m per screen pixel.
     map.getView().setMaxZoom(map.getView().getZoomForResolution(1) ?? fitZoom + 12)
     const focus = mapHalfExtent(focusLat)
-    map.getView().fit([-focus, -focus, focus, focus], { padding: [16, 16, 16, 16] })
+    map.getView().fit(focusLat === -88 ? START_VIEW_EXTENT : [-focus, -focus, focus, focus], { padding: [24, 24, 24, 24] })
 
     if (interactive) {
       map.on('singleclick', (evt) => {
@@ -336,28 +384,67 @@ export function LunarMap({
       const size = map.getSize()
       const res = v.getResolution()
       if (!c || !size || !res) return
-      state.current.onView?.({ center: [c[0]!, c[1]!], halfExtent: (Math.max(size[0]!, size[1]!) * res) / 2, resolution: res })
+      const worldResolution = 2 * WORLD_HALF / Math.max(size[0]!, size[1]!)
+      v.setMinZoom(Math.max(fitZoom - 0.5, v.getZoomForResolution(worldResolution) ?? fitZoom))
+      const halfWidthM = (size[0]! * res) / 2
+      const halfHeightM = (size[1]! * res) / 2
+      el.dataset.view = JSON.stringify({ center: c, resolution: res, bounds: [c[0]! - halfWidthM, c[1]! - halfHeightM, c[0]! + halfWidthM, c[1]! + halfHeightM], size })
+      state.current.onView?.({
+        center: [c[0]!, c[1]!],
+        halfExtent: Math.max(halfWidthM, halfHeightM),
+        halfWidthM,
+        halfHeightM,
+        resolution: res,
+        interacted: interacted.current,
+      })
     }
     map.on('moveend', emitView)
     map.once('rendercomplete', emitView)
 
     const el = containerRef.current
     const leave = () => state.current.onCursor?.(null)
+    const beginInteraction = () => { interacted.current = true }
+    el.addEventListener('pointerdown', beginInteraction)
+    el.addEventListener('wheel', beginInteraction, { passive: true })
+    el.addEventListener('keydown', beginInteraction)
     el.addEventListener('mouseleave', leave)
 
     mapRef.current = map
-    const resize = new ResizeObserver(() => map.updateSize())
+    const polar = new PolarBasemap(map, lunarProjection,
+      (status) => state.current.onBasemapStatus?.(status),
+      (metrics) => {
+        const el = containerRef.current
+        if (!el) return
+        el.dataset.basemap = JSON.stringify(metrics)
+        const m = metrics as { status: BasemapStatus; painted: boolean }
+        if (!el.dataset.firstRasterMs && m.painted && m.status.overviewReady) {
+          el.dataset.firstRasterMs = (performance.now() - startedAt.current).toFixed(1)
+          el.dataset.firstRasterNavMs = performance.now().toFixed(1)
+        }
+      })
+    basemapRef.current = polar
+    const resize = new ResizeObserver(() => { map.updateSize(); emitView() })
     resize.observe(el)
     const rasterMap = rasterLayers.current
     return () => {
       cancelAnimationFrame(raf)
       resize.disconnect()
       el.removeEventListener('mouseleave', leave)
+      el.removeEventListener('pointerdown', beginInteraction)
+      el.removeEventListener('wheel', beginInteraction)
+      el.removeEventListener('keydown', beginInteraction)
+      polar.dispose()
+      basemapRef.current = null
       map.setTarget(undefined)
       mapRef.current = null
+      for (const entry of rasterMap.values()) entry.slot.dispose()
       rasterMap.clear()
     }
   }, [interactive, focusLat])
+
+  useEffect(() => {
+    basemapRef.current?.setMode(basemap?.choice ?? 'none', basemap?.opacity ?? 1, basemap?.nac ?? false)
+  }, [basemap?.choice, basemap?.opacity, basemap?.nac, interactive, focusLat])
 
   // Sites
   useEffect(() => {
@@ -382,37 +469,58 @@ export function LunarMap({
     tileSource.current.addFeatures(tiles.map(tileFeature))
   }, [tiles])
 
-  // Backend previews (GET /maps/preview). One image layer per layer id; source replaced on new preview.
+  // Slots own their source/URL lifetimes; stable payloads never re-decode on UI renders.
   useEffect(() => {
     const map = mapRef.current
     if (!map) return
     const existing = rasterLayers.current
-    const live = new Set(previews.map((p) => p.layerId))
-    for (const [id, layer] of existing) {
-      if (!live.has(id)) {
-        map.removeLayer(layer)
-        existing.delete(id)
+    const live = new Set(previews.map((p) => p.renderKey ?? p.layerId))
+    for (const [key, entry] of existing) {
+      if (!live.has(key)) {
+        map.removeLayer(entry.layer)
+        entry.slot.dispose()
+        existing.delete(key)
       }
     }
-    previews.forEach((p, k) => {
-      const source = new ImageStatic({ url: p.url, imageExtent: p.extent, projection: lunarProjection, attributions: p.attribution })
-      const layer = existing.get(p.layerId)
-      if (layer) layer.setSource(source)
-      else {
-        const created = new ImageLayer({ source, opacity: 0.85, zIndex: 1 + k })
-        existing.set(p.layerId, created)
-        map.addLayer(created)
+    previews.forEach((preview, index) => {
+      const key = preview.renderKey ?? preview.layerId
+      let entry = existing.get(key)
+      if (!entry) {
+        const layer = new ImageLayer<ImageStatic>({ opacity: 0.85, zIndex: preview.renderOrder ?? 2 + index })
+        const slot = new RasterSourceSlot(layer, map, lunarProjection, (event) => {
+          const el = containerRef.current
+          if (el) {
+            if (event.status === 'ready' && !el.dataset.firstRasterMs) {
+              el.dataset.firstRasterMs = (performance.now() - startedAt.current).toFixed(1)
+            }
+            displayEvents.current[key] = { status: event.status, layer: event.preview.layerId,
+              bounds: event.preview.extent, cache: event.preview.cacheStatus,
+              requestMs: event.preview.requestMs, loadMs: event.loadMs,
+              elapsedMs: performance.now() - startedAt.current }
+            el.dataset.rasters = JSON.stringify(displayEvents.current)
+          }
+          state.current.onRasterStatus?.(event)
+        })
+        entry = { layer, slot, layerId: preview.layerId }
+        existing.set(key, entry)
+        map.addLayer(layer)
       }
+      entry.layer.setZIndex(preview.renderOrder ?? 2 + index)
+      entry.slot.update(preview)
     })
   }, [previews])
 
   // Restyle on selection / layer toggles.
   useEffect(() => {
     siteSource.current.changed()
+    regionLayer.current?.setVisible(layers.graticule)
     graticuleLayer.current?.setVisible(layers.graticule)
     tileLayer.current?.setVisible(layers.coverage)
-    for (const [id, layer] of rasterLayers.current) layer.setVisible(Boolean(layers.rasters[id]))
-  }, [selectedId, layers, marks, previews])
+    for (const { layer, layerId } of rasterLayers.current.values()) {
+      layer.setVisible(Boolean(layers.rasters[layerId]))
+      layer.setOpacity(rasterOpacity[layerId] ?? 0.85)
+    }
+  }, [selectedId, layers, marks, previews, rasterOpacity])
 
   useEffect(() => {
     pickSource.current.clear()
@@ -423,6 +531,7 @@ export function LunarMap({
     const map = mapRef.current
     const site = sites.find((s) => s.id === selectedId)
     if (!map || !site || !isInMapRegion(site.latitude_deg)) return
+    interacted.current = true
     map.getView().animate({ center: lonLatToXY(site.longitude_deg, site.latitude_deg), duration: 450 })
   }, [selectedId, sites])
 
@@ -431,6 +540,7 @@ export function LunarMap({
       ref={containerRef}
       role="application"
       aria-label={ariaLabel}
+      data-build={JSON.stringify(__SELENORA_BUILD__)}
       className="absolute inset-0 cursor-crosshair bg-[radial-gradient(circle_at_50%_50%,#0c1424_0%,#070b16_70%)]"
     />
   )

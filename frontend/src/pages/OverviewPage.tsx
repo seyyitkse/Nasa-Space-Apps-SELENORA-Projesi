@@ -1,4 +1,4 @@
-import { ArrowRight, Compass, Sparkles, SunMoon } from 'lucide-react'
+import { ArrowRight, Compass, MapPin, ShieldQuestion, Sparkles, SunMoon } from 'lucide-react'
 import { lazy, Suspense } from 'react'
 import { motion } from 'motion/react'
 import { useTranslation } from 'react-i18next'
@@ -7,15 +7,17 @@ import { Link } from 'react-router'
 import { staggerChild, staggerParent } from '@/components/shared/PageTransition'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/misc'
+import { useIsScientist } from '@/stores/modeStore'
 import { DataSourcesCard, MissionOverviewCard, SystemHealthCard } from '@/features/dashboard/DashboardCards'
 import { EngineModeCard, RecentAnalyses } from '@/features/dashboard/HomeWorkspace'
-import { MoonIllustration } from '@/features/dashboard/MoonIllustration'
+import { MoonHero } from '@/features/moon-globe/MoonHero'
 
 // OpenLayers loads only for the preview, after the hero has rendered.
 const SouthPolePreview = lazy(() => import('@/features/dashboard/SouthPolePreview'))
 
 export default function OverviewPage() {
   const { t } = useTranslation()
+  const scientist = useIsScientist()
   return (
     <div className="space-y-8">
       {/* ---------------- Hero ---------------- */}
@@ -44,8 +46,8 @@ export default function OverviewPage() {
             </motion.p>
             <motion.div variants={staggerChild} className="mt-7 flex flex-wrap gap-3">
               <Button asChild variant="primary" size="lg">
-                <Link to="/planner">
-                  {t('overview.ctaStart')} <ArrowRight />
+                <Link to={scientist ? '/planner' : '/mission'}>
+                  {scientist ? t('overview.ctaStart') : t('home5d.startGuided')} <ArrowRight />
                 </Link>
               </Button>
               <Button asChild variant="secondary" size="lg">
@@ -72,9 +74,34 @@ export default function OverviewPage() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
           >
-            <MoonIllustration caption={t('overview.illustration')} />
+            <MoonHero />
           </motion.div>
         </div>
+      </section>
+
+      {/* ---------------- 10-second orientation ---------------- */}
+      <section aria-labelledby="tensec-title" className="sel-card p-5 md:p-6">
+        <h2 id="tensec-title" className="font-display text-lg font-semibold">
+          {t('home5d.tenSecTitle')}
+        </h2>
+        <ol className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-3">
+          {([
+            { icon: MapPin, k: 's1' },
+            { icon: SunMoon, k: 's2' },
+            { icon: ShieldQuestion, k: 's3' },
+          ] as const).map((s, i) => (
+            <li key={s.k} className="flex gap-3 rounded-xl border border-line bg-bg-2/50 p-3.5">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-cyan/10 font-mono text-[12px] text-cyan">{i + 1}</span>
+              <span className="min-w-0">
+                <span className="flex items-center gap-1.5 text-[13.5px] font-medium text-fg">
+                  <s.icon className="size-4 text-cyan" aria-hidden /> {t(`home5d.${s.k}.title`)}
+                </span>
+                <span className="mt-1 block text-[12.5px] leading-relaxed text-fg-2">{t(`home5d.${s.k}.body`)}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+        <p className="mt-3 text-[11.5px] text-fg-3">{t('home5d.modeNote')}</p>
       </section>
 
       {/* ---------------- Live mission workspace ---------------- */}

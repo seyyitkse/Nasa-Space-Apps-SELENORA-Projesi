@@ -9,6 +9,7 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { api } from '@/services/apiClient'
+import type { GlobeSiteCatalog } from '@/types/api'
 
 export const ROUTES = {
   terrainCatalog: '/api/v1/terrain/catalog', // Phase 4
@@ -17,9 +18,13 @@ export const ROUTES = {
   observerSeries: '/api/v1/ephemeris/observer-series', // Phase 5B (live Horizons, ≤ 72 h)
   mapLayers: '/api/v1/maps/layers', // Phase 5B
   mapPreview: '/api/v1/maps/preview', // Phase 5B (PNG + X-SELENORA-Bounds-M)
-  mapMesh: '/api/v1/maps/mesh', // Phase 5B (3D, not yet consumed)
-  artemisRegions: '/api/v1/artemis/regions', // Phase 5B
-  analysisEpochs: '/api/v1/analyses/{analysis_id}/epochs', // still REQUESTED (R1)
+  mapMesh: '/api/v1/maps/mesh', // Phase 5B / 5E schema
+  artemisRegions: '/api/v1/artemis/regions', // Phase 5B / 5E provenance
+  analysisEpochs: '/api/v1/analyses/{analysis_id}/epochs', // Phase 5E R1
+  imagerySources: '/api/v1/maps/imagery/sources', // Phase 5E allow-list
+  globeSites: '/api/v1/globe/sites', // Phase 6B markers for 3D Moon
+  mapTiles: '/api/v1/maps/tiles/{layer_id}/{z}/{x}/{y}.png', // Phase 5F.2 polar tiles
+  mapRuntime: '/api/v1/maps/runtime', // Phase 5F.2 tile/runtime provenance
 } as const
 
 export type RouteKey = keyof typeof ROUTES
@@ -76,6 +81,8 @@ export interface HorizonProfile {
   horizon_elevation_deg: (number | null)[]
   /** false where the ray did not reach max_range_m (partial: a far ridge could be missed). */
   complete: boolean[]
+  /** Distance (m) to the terrain point that sets the horizon in each bin (null if none). */
+  blocker_m: (number | null)[]
   max_range_m: number
   complete_coverage_fraction: number
   quality_label: string
@@ -93,6 +100,7 @@ export function normalizeHorizonProfile(p: HorizonProfileApi): HorizonProfile {
     azimuth_deg: p.bins.map((b) => b.azimuth_deg),
     horizon_elevation_deg: p.bins.map((b) => (b.has_any_data ? b.horizon_elevation_deg : null)),
     complete: p.bins.map((b) => b.complete_coverage),
+    blocker_m: p.bins.map((b) => (b.has_any_data ? b.distance_to_blocker_m : null)),
     max_range_m: p.max_range_m,
     complete_coverage_fraction: p.complete_coverage_fraction,
     quality_label: p.quality_label,
@@ -179,22 +187,166 @@ export interface MapLayerList {
 
 export interface RasterPreview {
   layerId: string
-  url: string
+  blob: Blob
+  /** Stable slot for a startup overview or a viewport image of the same layer. */
+  renderKey?: string
+  renderOrder?: number
   /** Bounds actually rendered by the backend (X-SELENORA-Bounds-M). */
   extent: [number, number, number, number]
   sizePx: string
+  /** Actual decoded PNG dimensions; OpenLayers reads the native image geometry. */
+  imageSize?: [number, number]
   role: string
   attribution: string
+  cacheStatus?: string
+  requestMs?: number
+  cacheKey?: string
 }
 
-/** Backend cap for preview windows (MAP_SERVICE_ERROR above this). */
-export const PREVIEW_MAX_HALF_EXTENT_M = 50_000
+export function parseSizePxHeader(v: string | undefined | null): [number, number] | undefined {
+  if (!v) return undefined
+  const m = /^(\d+)x(\d+)$/i.exec(v.trim())
+  if (!m) return undefined
+  const w = Number(m[1])
+  const h = Number(m[2])
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w < 1 || h < 1) return undefined
+  return [w, h]
+}
+
+/** Read width/height from PNG IHDR when response headers are unavailable. */
+export async function readPngSize(blob: Blob): Promise<[number, number] | undefined> {
+  const buf = new Uint8Array(await blob.slice(0, 24).arrayBuffer())
+  // 8-byte signature + IHDR length(4) + 'IHDR'(4) + width(4) + height(4)
+  if (buf.length < 24) return undefined
+  if (buf[0] !== 0x89 || buf[1] !== 0x50 || buf[2] !== 0x4e || buf[3] !== 0x47) return undefined
+  const w = (buf[16]! << 24) | (buf[17]! << 16) | (buf[18]! << 8) | buf[19]!
+  const h = (buf[20]! << 24) | (buf[21]! << 16) | (buf[22]! << 8) | buf[23]!
+  if (w < 1 || h < 1) return undefined
+  return [w, h]
+}
+
+/** Backend cap for preview windows (MAP_SERVICE_ERROR above this). Phase 5F raised to 400 km for polar overview. */
+export const PREVIEW_PROCESSING_VERSION = 'phase5f1-polar-direct-v1'
+export const PREVIEW_MAX_HALF_EXTENT_M = 400_000
+/** Snap preview BBOX edges to this grid (metres) so React Query keys stay stable while panning. */
+export const PREVIEW_BOUNDS_SNAP_M = 2_000
 
 export function parseBoundsHeader(v: string | undefined | null): [number, number, number, number] | null {
   if (!v) return null
   const parts = v.split(',').map(Number)
   if (parts.length !== 4 || parts.some((n) => !Number.isFinite(n))) return null
+  if (parts[2]! <= parts[0]! || parts[3]! <= parts[1]!) return null
   return parts as [number, number, number, number]
+}
+
+export interface MeshResponse {
+  layer_id: string
+  role: string
+  kind?: string
+  crs_summary: string
+  crs_proj4?: string
+  attribution: string
+  source_url?: string | null
+  access_mode?: string
+  origin_lonlat_deg?: [number, number]
+  origin_stereo_m: [number, number]
+  extent_m?: { left: number; bottom: number; right: number; top: number }
+  grid?: { nx: number; ny: number; n_cells: number }
+  x_m: number[]
+  y_m: number[]
+  z_m: (number | null)[][]
+  nodata_mask?: boolean[][]
+  nodata_fraction?: number
+  elevation_units?: string
+  reference_elevation_m?: number | null
+  z_min_m?: number | null
+  z_max_m?: number | null
+  sampling_resolution_m?: number
+  step_m: number
+  half_extent_m: number
+  warning: string
+}
+
+/** Authoritative per-epoch states from GET /analyses/{id}/epochs (Phase 5E). */
+export type AuthoritativeBodyState = 'VISIBLE' | 'BLOCKED' | 'UNKNOWN'
+export type AuthoritativeJointState = 'VISIBLE' | 'NOT_VISIBLE' | 'UNKNOWN'
+
+export interface AuthoritativeEpochSample {
+  t: string
+  sun_azimuth_deg: number | null
+  sun_elevation_deg: number | null
+  earth_azimuth_deg: number | null
+  earth_elevation_deg: number | null
+  sun_state: AuthoritativeBodyState
+  earth_state: AuthoritativeBodyState
+  joint_state: AuthoritativeJointState
+  sun_terrain_horizon_deg?: number | null
+  earth_terrain_horizon_deg?: number | null
+  sun_geometric_state?: AuthoritativeBodyState | null
+  earth_geometric_state?: AuthoritativeBodyState | null
+  hold_hours: number
+  contributes_duration: boolean
+}
+
+export interface AuthoritativeSiteEpochs {
+  label: string
+  latitude_deg: number
+  longitude_deg: number
+  landing_site_id?: string | null
+  dem_site_id?: string | null
+  terrain_complete_coverage_fraction?: number | null
+  true_north_grid_azimuth_deg?: number | null
+  samples: AuthoritativeEpochSample[]
+}
+
+export interface EpochsResponse {
+  analysis_id: string
+  mission_name: string
+  horizon_model: string
+  data_quality: string
+  algorithm_version: string
+  start_utc: string
+  end_utc: string
+  time_step_minutes: number
+  sample_count_per_site: number
+  duration_semantics: string
+  sites: AuthoritativeSiteEpochs[]
+  provenance: { source_id: string; description: string; version?: string | null }[]
+  limitations: string[]
+}
+
+export interface ImagerySource {
+  layer_id: string
+  title: string
+  provider: string
+  protocol: string
+  endpoint: string
+  remote_layer_name: string | null
+  crs_native: string
+  tile_format: string
+  attribution: string
+  product_page: string
+  alignment_status: string
+  preview_enabled: boolean
+  notes: string
+  polar_coverage: string
+}
+
+/** Index of the horizon-profile bin nearest to a true azimuth (bins are evenly spaced from 0°). */
+export function nearestBin(p: Pick<HorizonProfile, 'azimuth_deg'>, azDeg: number): number {
+  const n = p.azimuth_deg.length
+  if (n === 0) return -1
+  const step = 360 / n
+  return ((Math.round((((azDeg % 360) + 360) % 360) / step) % n) + n) % n
+}
+
+export interface ArtemisRegionMeta {
+  id: string
+  name: string
+  notes?: string
+  classification?: string
+  source_date?: string
+  polygon?: null
 }
 
 export interface ArtemisRegions {
@@ -203,7 +355,9 @@ export interface ArtemisRegions {
   geometry: null
   geometry_status: string
   official_sources: { id: string; url: string }[]
-  regions: { id: string; name: string; notes?: string }[]
+  regions: ArtemisRegionMeta[]
+  historical_2022_regions?: ArtemisRegionMeta[]
+  current_2024_shortlist?: ArtemisRegionMeta[]
 }
 
 /* ----------------------------------------------------------- capability */
@@ -241,25 +395,60 @@ export const contractApi = {
       })
       .then((r) => r.data),
   mapLayers: () => api.get<MapLayerList>(ROUTES.mapLayers).then((r) => r.data),
-  mapPreview: async (layerId: string, bounds: [number, number, number, number], maxEdgePx = 768): Promise<RasterPreview> => {
+  mapPreview: async (layerId: string, bounds: [number, number, number, number], maxEdgePx = 768, signal?: AbortSignal): Promise<RasterPreview> => {
+    const started = performance.now()
     const [left_m, bottom_m, right_m, top_m] = bounds
+    // Coarser max_edge for very wide polar windows keeps payload bounded.
+    const span = Math.max(right_m - left_m, top_m - bottom_m)
+    const edge = span > 200_000 ? Math.min(maxEdgePx, 512) : maxEdgePx
     const r = await api.get<Blob>(ROUTES.mapPreview, {
-      params: { layer_id: layerId, left_m, bottom_m, right_m, top_m, max_edge_px: maxEdgePx },
+      params: { layer_id: layerId, left_m, bottom_m, right_m, top_m, max_edge_px: edge, preview_version: PREVIEW_PROCESSING_VERSION },
       responseType: 'blob',
-      timeout: 120_000,
+      signal,
+      timeout: 90_000,
     })
+    if (!(r.data instanceof Blob) || r.data.size < 32 || !String(r.headers['content-type'] ?? r.data.type).includes('image')) {
+      throw new Error('Preview response was not an image PNG.')
+    }
+    // Only direct LROC is guaranteed to return the full requested BBOX. A local
+    // raster may be clipped; never stretch a clipped image over the requested window.
     const extent = parseBoundsHeader(r.headers['x-selenora-bounds-m'] as string | undefined)
-    if (!extent) throw new Error('Preview response is missing X-SELENORA-Bounds-M; refusing to place the image.')
+      ?? (layerId === 'lroc-wac-south-summer' ? bounds : null)
+    if (!extent) throw new Error('Raster geographic placement headers are missing or invalid.')
+    const crs = r.headers['x-selenora-crs'] as string | undefined
+    if (crs && crs !== 'IAU2000:30120') throw new Error('Raster CRS does not match the lunar map.')
+    const sizePx = String(r.headers['x-selenora-size-px'] ?? '')
+    let imageSize = parseSizePxHeader(sizePx)
+    if (!imageSize) {
+      // Decode PNG IHDR when the Size-Px header is stripped by a proxy.
+      imageSize = await readPngSize(r.data)
+    }
     return {
       layerId,
-      url: URL.createObjectURL(r.data),
+      blob: r.data,
+      requestMs: performance.now() - started,
       extent,
-      sizePx: String(r.headers['x-selenora-size-px'] ?? ''),
+      sizePx: sizePx || (imageSize ? `${imageSize[0]}x${imageSize[1]}` : ''),
+      imageSize,
       role: String(r.headers['x-selenora-layer-role'] ?? ''),
       attribution: String(r.headers['x-selenora-attribution'] ?? ''),
+      cacheStatus: String(r.headers['x-selenora-cache'] ?? ''),
+      cacheKey: String(r.headers['x-selenora-cache-key'] ?? ''),
     }
   },
   artemisRegions: () => api.get<ArtemisRegions>(ROUTES.artemisRegions).then((r) => r.data),
+  mapMesh: (p: { lat: number; lon: number; halfExtentM: number; stepM: number; layerId: string }) =>
+    api
+      .get<MeshResponse>(ROUTES.mapMesh, {
+        params: { latitude_deg: p.lat, longitude_deg: p.lon, half_extent_m: p.halfExtentM, step_m: p.stepM, layer_id: p.layerId },
+        timeout: 120_000,
+      })
+      .then((r) => r.data),
+  analysisEpochs: (analysisId: string) =>
+    api.get<EpochsResponse>(`/api/v1/analyses/${analysisId}/epochs`, { timeout: 60_000 }).then((r) => r.data),
+  imagerySources: () =>
+    api.get<{ items: ImagerySource[]; scientific_note: string }>(ROUTES.imagerySources).then((r) => r.data),
+  globeSites: () => api.get<GlobeSiteCatalog>(ROUTES.globeSites).then((r) => r.data),
 }
 
 export function useTerrainCatalog(enabled: boolean) {
@@ -300,10 +489,51 @@ export function useObserverSeries(
 export function useMapPreview(layerId: string, bounds: [number, number, number, number] | null, enabled: boolean) {
   return useQuery({
     queryKey: ['map-preview', layerId, bounds],
-    queryFn: () => contractApi.mapPreview(layerId, bounds!),
+    queryFn: ({ signal }) => contractApi.mapPreview(layerId, bounds!, 768, signal),
     enabled: enabled && bounds !== null,
     staleTime: 10 * 60_000,
     gcTime: 10 * 60_000,
+    retry: 0,
+  })
+}
+
+export function useMapMesh(p: { lat: number; lon: number; halfExtentM: number; stepM: number; layerId: string } | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ['map-mesh', p],
+    queryFn: () => contractApi.mapMesh(p!),
+    enabled: enabled && p !== null,
+    staleTime: 30 * 60_000,
+    retry: 0,
+  })
+}
+
+export function useAnalysisEpochs(analysisId: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: ['analysis-epochs', analysisId],
+    queryFn: () => contractApi.analysisEpochs(analysisId!),
+    enabled: enabled && Boolean(analysisId),
+    staleTime: 5 * 60_000,
+    retry: 0,
+  })
+}
+
+export function useImagerySources(enabled: boolean) {
+  return useQuery({
+    queryKey: ['imagery-sources'],
+    queryFn: contractApi.imagerySources,
+    enabled,
+    staleTime: 30 * 60_000,
+    retry: 0,
+  })
+}
+
+/** Phase 6B/6C: 3D Moon research markers (keep /api/v1/sites for Mission Planner). */
+export function useGlobeSites(enabled = true) {
+  return useQuery({
+    queryKey: ['globe-sites'],
+    queryFn: contractApi.globeSites,
+    enabled,
+    staleTime: 5 * 60_000,
     retry: 0,
   })
 }

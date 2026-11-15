@@ -18,7 +18,7 @@ BACKEND_ROOT = Path(__file__).resolve().parents[2]
 # Geometric path stays on the Phase 3.3 duration-correct engine.
 ALGORITHM_VERSION = "0.3.1-phase3.3"
 # Terrain (LOLA horizon) analyses use a separate algorithm stamp.
-TERRAIN_ALGORITHM_VERSION = "0.4.1-phase4.1-validation"
+TERRAIN_ALGORITHM_VERSION = "0.4.2-phase6c-science-h1"
 AI_PROMPT_VERSION = "explain-v1"
 API_VERSION = "v1"
 
@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     )
     database_url: str = f"sqlite:///{(BACKEND_ROOT / 'data' / 'selenora.db').as_posix()}"
     rate_limit_per_minute: int = Field(default=120, ge=1)
+    map_cache_dir: Path = BACKEND_ROOT.parent / "data" / "cache" / "map_previews"
 
     horizons_base_url: str = "https://ssd.jpl.nasa.gov/api/horizons.api"
     horizons_timeout_seconds: float = Field(default=30.0, gt=0)

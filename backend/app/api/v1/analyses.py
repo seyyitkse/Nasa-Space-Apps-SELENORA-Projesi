@@ -22,7 +22,8 @@ from app.schemas.analysis import (
     TimelineResponse,
 )
 from app.schemas.common import ErrorResponse
-from app.services import analysis_service, explain_service
+from app.schemas.epochs import EpochsResponse
+from app.services import analysis_service, epochs_service, explain_service
 
 router = APIRouter(prefix="/analyses", tags=["analyses"])
 
@@ -130,6 +131,23 @@ def get_timeline(
     if row.status != "COMPLETED" or not row.timeline_json:
         raise NotFoundError(f"Timeline for analysis '{analysis_id}' is not available yet.")
     return analysis_service.load_timeline(row)
+
+
+@router.get(
+    "/{analysis_id}/epochs",
+    response_model=EpochsResponse,
+    responses=_ERRORS,
+    summary="Authoritative per-epoch Sun/Earth states from stored timelines (Phase 5E)",
+)
+def get_epochs(
+    analysis_id: AnalysisId, session: Annotated[Session, Depends(db_session)]
+) -> EpochsResponse:
+    """Return VISIBLE/BLOCKED/UNKNOWN per sample without a new Horizons request.
+
+    Built from persisted ``visibility_timelines`` Az/El. Terrain analyses recompute
+    states against the local LOLA horizon (UNKNOWN when DEM coverage is incomplete).
+    """
+    return epochs_service.load_epochs(session, analysis_id)
 
 
 @router.post(

@@ -1,0 +1,144 @@
+[
+  {
+    "scenario": "warm-startup-server",
+    "bounds": [
+      -64000,
+      -64000,
+      64000,
+      64000
+    ],
+    "edge": 768,
+    "status": 200,
+    "cache": "HIT",
+    "cache_key": "a7d140abcc996bab04039bb62497f8274d8d6efa8c692de7c0f7569c393a8c18",
+    "crs": "IAU2000:30120",
+    "returned_bounds": "-64000.000,-64000.000,64000.000,64000.000",
+    "bytes": 524427,
+    "size": [
+      768,
+      768
+    ],
+    "channel_stddev": [
+      54.16342305155102,
+      54.16342305155102,
+      54.16342305155102
+    ],
+    "seconds": 0.07579
+  },
+  {
+    "scenario": "warm-startup-server-repeat",
+    "bounds": [
+      -64000,
+      -64000,
+      64000,
+      64000
+    ],
+    "edge": 768,
+    "status": 200,
+    "cache": "HIT",
+    "cache_key": "a7d140abcc996bab04039bb62497f8274d8d6efa8c692de7c0f7569c393a8c18",
+    "crs": "IAU2000:30120",
+    "returned_bounds": "-64000.000,-64000.000,64000.000,64000.000",
+    "bytes": 524427,
+    "size": [
+      768,
+      768
+    ],
+    "channel_stddev": [
+      54.16342305155102,
+      54.16342305155102,
+      54.16342305155102
+    ],
+    "seconds": 0.02903
+  },
+  {
+    "scenario": "new-region-cold",
+    "bounds": [
+      -16000,
+      -26000,
+      8000,
+      -2000
+    ],
+    "edge": 512,
+    "error": "HTTP Error 503: Service Unavailable",
+    "seconds": 30.96819
+  },
+  {
+    "scenario": "new-region-warm",
+    "bounds": [
+      -16000,
+      -26000,
+      8000,
+      -2000
+    ],
+    "edge": 512,
+    "status": 200,
+    "cache": "MISS",
+    "cache_key": "df3273069a37547a8d73f8c95493db282b91765bcfcd48e251f23ab23ea103d2",
+    "crs": "IAU2000:30120",
+    "returned_bounds": "-16000.000,-26000.000,8000.000,-2000.000",
+    "bytes": 71220,
+    "size": [
+      512,
+      512
+    ],
+    "channel_stddev": [
+      66.75435432196961,
+      66.75435432196961,
+      66.75435432196961
+    ],
+    "seconds": 2.8471
+  },
+  {
+    "scenario": "concurrent-0",
+    "bounds": [
+      -14000,
+      -24000,
+      6000,
+      -4000
+    ],
+    "edge": 256,
+    "status": 200,
+    "cache": "MISS",
+    "cache_key": "e3bb3e9ee30cc3e1065bafd35c59a4351d5d088a9f6aaa710582041656cc1c2c",
+    "crs": "IAU2000:30120",
+    "returned_bounds": "-14000.000,-24000.000,6000.000,-4000.000",
+    "bytes": 49642,
+    "size": [
+      256,
+      256
+    ],
+    "channel_stddev": [
+      61.1871884534741,
+      61.1871884534741,
+      61.1871884534741
+    ],
+    "seconds": 2.01272
+  },
+  {
+    "scenario": "concurrent-1",
+    "bounds": [
+      -14000,
+      -24000,
+      6000,
+      -4000
+    ],
+    "edge": 256,
+    "status": 200,
+    "cache": "COALESCED",
+    "cache_key": "e3bb3e9ee30cc3e1065bafd35c59a4351d5d088a9f6aaa710582041656cc1c2c",
+    "crs": "IAU2000:30120",
+    "returned_bounds": "-14000.000,-24000.000,6000.000,-4000.000",
+    "bytes": 49642,
+    "size": [
+      256,
+      256
+    ],
+    "channel_stddev": [
+      61.1871884534741,
+      61.1871884534741,
+      61.1871884534741
+    ],
+    "seconds": 2.01331
+  }
+]

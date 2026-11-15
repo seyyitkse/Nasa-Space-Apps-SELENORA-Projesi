@@ -1,0 +1,68 @@
+[
+  {
+    "url": "https://webmap.lroc.asu.edu/lunaserv/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=luna_wac_roi_south_summer&STYLES=&FORMAT=image%2Fpng&TRANSPARENT=true&SRS=IAU2000%3A30120&BBOX=-64000%2C-64000%2C64000%2C64000&WIDTH=768&HEIGHT=768",
+    "started_utc": 1794680724.4439704,
+    "bytes": 524427,
+    "seconds": 13.1649
+  },
+  {
+    "url": "https://webmap.lroc.asu.edu/lunaserv/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=luna_wac_roi_south_summer&STYLES=&FORMAT=image%2Fpng&TRANSPARENT=true&SRS=IAU2000%3A30120&BBOX=-26000%2C-20000%2C14000%2C0&WIDTH=768&HEIGHT=384",
+    "started_utc": 1794680945.3503308,
+    "bytes": 84804,
+    "seconds": 2.4361
+  },
+  {
+    "url": "https://webmap.lroc.asu.edu/lunaserv/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=luna_wac_roi_south_summer&STYLES=&FORMAT=image%2Fpng&TRANSPARENT=true&SRS=IAU2000%3A30120&BBOX=-16000%2C-24000%2C24000%2C-4000&WIDTH=768&HEIGHT=384",
+    "started_utc": 1794681071.854187,
+    "bytes": 96349,
+    "seconds": 3.8471
+  },
+  {
+    "url": "https://webmap.lroc.asu.edu/lunaserv/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=luna_wac_roi_south_summer&STYLES=&FORMAT=image%2Fpng&TRANSPARENT=true&SRS=IAU2000%3A30120&BBOX=-16000%2C-26000%2C8000%2C-2000&WIDTH=512&HEIGHT=512",
+    "started_utc": 1794681146.0401368,
+    "error": "Imagery upstream failed: TimeoutError: The read operation timed out",
+    "seconds": 30.9386
+  },
+  {
+    "url": "https://webmap.lroc.asu.edu/lunaserv/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=luna_wac_roi_south_summer&STYLES=&FORMAT=image%2Fpng&TRANSPARENT=true&SRS=IAU2000%3A30120&BBOX=-36000%2C-34000%2C44000%2C6000&WIDTH=768&HEIGHT=384",
+    "started_utc": 1794681173.8720224,
+    "bytes": 291062,
+    "seconds": 3.1245
+  },
+  {
+    "url": "https://webmap.lroc.asu.edu/lunaserv/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=luna_wac_roi_south_summer&STYLES=&FORMAT=image%2Fpng&TRANSPARENT=true&SRS=IAU2000%3A30120&BBOX=-16000%2C-26000%2C8000%2C-2000&WIDTH=512&HEIGHT=512",
+    "started_utc": 1794681177.0109558,
+    "bytes": 71220,
+    "seconds": 2.8049
+  },
+  {
+    "url": "https://webmap.lroc.asu.edu/lunaserv/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=luna_wac_roi_south_summer&STYLES=&FORMAT=image%2Fpng&TRANSPARENT=true&SRS=IAU2000%3A30120&BBOX=-14000%2C-24000%2C6000%2C-4000&WIDTH=256&HEIGHT=256",
+    "started_utc": 1794681179.8581355,
+    "bytes": 49642,
+    "seconds": 1.9965
+  },
+  {
+    "url": "https://webmap.lroc.asu.edu/lunaserv/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=luna_wac_roi_south_summer&STYLES=&FORMAT=image%2Fpng&TRANSPARENT=true&SRS=IAU2000%3A30120&BBOX=-64000%2C-64000%2C64000%2C64000&WIDTH=768&HEIGHT=768",
+    "started_utc": 1794681326.9194663,
+    "error": "Browser QA: simulated remote LROC HTTP 503",
+    "seconds": 0.0001
+  },
+  {
+    "url": "https://webmap.lroc.asu.edu/lunaserv/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=luna_wac_roi_south_summer&STYLES=&FORMAT=image%2Fpng&TRANSPARENT=true&SRS=IAU2000%3A30120&BBOX=-118000%2C-110000%2C90000%2C94000&WIDTH=512&HEIGHT=502",
+    "started_utc": 1794681879.800588,
+    "bytes": 252080,
+    "seconds": 5.3177
+  },
+  {
+    "url": "https://webmap.lroc.asu.edu/lunaserv/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=luna_wac_roi_south_summer&STYLES=&FORMAT=image%2Fpng&TRANSPARENT=true&SRS=IAU2000%3A30120&BBOX=-60000%2C-62000%2C44000%2C42000&WIDTH=768&HEIGHT=768",
+    "started_utc": 1794681879.4591913,
+    "error": "Imagery upstream failed: TimeoutError: The read operation timed out",
+    "seconds": 31.0115
+  },
+  {
+    "url": "https://webmap.lroc.asu.edu/lunaserv/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetMap&LAYERS=luna_wac_roi_south_summer&STYLES=&FORMAT=image%2Fpng&TRANSPARENT=true&SRS=IAU2000%3A30120&BBOX=-236000%2C-206000%2C176000%2C202000&WIDTH=512&HEIGHT=507",
+    "started_utc": 1794681880.160243,
+    "error": "Imagery upstream failed: TimeoutError: The read operation timed out",
+    "seconds": 30.9614
+  }
+]

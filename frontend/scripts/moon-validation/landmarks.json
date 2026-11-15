@@ -1,0 +1,9 @@
+[
+ {"id":"mare-crisium","name":"Mare Crisium","lat":16.18,"lon":59.10,"expect":"dark","mirror":"lat"},
+ {"id":"mare-imbrium","name":"Mare Imbrium","lat":34.72,"lon":-14.91,"expect":"dark","mirror":"lat"},
+ {"id":"mare-moscoviense","name":"Mare Moscoviense","lat":27.28,"lon":148.12,"expect":"dark","mirror":"lon"},
+ {"id":"mare-ingenii","name":"Mare Ingenii","lat":-33.25,"lon":164.83,"expect":"dark","mirror":"lon"},
+ {"id":"mare-orientale","name":"Mare Orientale","lat":-19.87,"lon":-94.67,"expect":"dark","mirror":"lon"},
+ {"id":"tycho","name":"Tycho","lat":-43.30,"lon":-11.22,"expect":"bright","mirror":"lon"},
+ {"id":"copernicus","name":"Copernicus","lat":9.62,"lon":-20.08,"expect":"bright","mirror":"lon"}
+]

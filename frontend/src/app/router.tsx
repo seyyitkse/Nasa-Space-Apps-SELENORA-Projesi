@@ -9,6 +9,8 @@ const ExplorerPage = lazy(() => import('@/pages/ExplorerPage'))
 const PlannerPage = lazy(() => import('@/pages/PlannerPage'))
 const ComparisonPage = lazy(() => import('@/pages/ComparisonPage'))
 const SimulatorPage = lazy(() => import('@/pages/SimulatorPage'))
+const GuidedMissionPage = lazy(() => import('@/pages/GuidedMissionPage'))
+const MoonPage = lazy(() => import('@/pages/MoonPage'))
 const WindowsPage = lazy(() => import('@/pages/WindowsPage'))
 const AnalystPage = lazy(() => import('@/pages/AnalystPage'))
 const ReportsPage = lazy(() => import('@/pages/ReportsPage'))
@@ -19,8 +21,10 @@ export const routes: RouteObject[] = [
     element: <AppShell />,
     children: [
       { index: true, element: <OverviewPage /> },
+      { path: 'moon', element: <MoonPage /> },
       { path: 'explorer', element: <ExplorerPage /> },
       { path: 'planner', element: <PlannerPage /> },
+      { path: 'mission', element: <GuidedMissionPage /> },
       { path: 'simulator', element: <SimulatorPage /> },
       { path: 'windows', element: <WindowsPage /> },
       { path: 'comparison', element: <ComparisonPage /> },

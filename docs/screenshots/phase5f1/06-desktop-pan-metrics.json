@@ -1,0 +1,58 @@
+{
+  "detail:ldem-80s-80mpp-hill": {
+    "bounds": [
+      -16000,
+      -24000,
+      24000,
+      -4000
+    ],
+    "cache": "MISS",
+    "elapsedMs": 162183.19999999553,
+    "layer": "ldem-80s-80mpp-hill",
+    "loadMs": 26.899999998509884,
+    "requestMs": 7916.89999999851,
+    "status": "ready"
+  },
+  "detail:lroc-wac-south-summer": {
+    "bounds": [
+      -16000,
+      -24000,
+      24000,
+      -4000
+    ],
+    "cache": "MISS",
+    "elapsedMs": 158178.09999999404,
+    "layer": "lroc-wac-south-summer",
+    "loadMs": 33.29999999701977,
+    "requestMs": 3904.5,
+    "status": "ready"
+  },
+  "startup:hillshade": {
+    "bounds": [
+      -64000,
+      -64000,
+      64000,
+      64000
+    ],
+    "cache": "COALESCED",
+    "elapsedMs": 357.79999999701977,
+    "layer": "ldem-80s-80mpp-hill",
+    "loadMs": 35.399999998509884,
+    "requestMs": 69.60000000149012,
+    "status": "ready"
+  },
+  "startup:photo": {
+    "bounds": [
+      -64000,
+      -64000,
+      64000,
+      64000
+    ],
+    "cache": "MISS",
+    "elapsedMs": 405,
+    "layer": "lroc-wac-south-summer",
+    "loadMs": 50.70000000298023,
+    "requestMs": 99,
+    "status": "ready"
+  }
+}

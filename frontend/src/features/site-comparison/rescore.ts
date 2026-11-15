@@ -31,7 +31,13 @@ export function weightsValid(w: DecisionWeights): boolean {
 
 export function scoreMetrics(metrics: SiteResult['metrics'], w: DecisionWeights) {
   const contributions = {} as Record<WeightKey, number>
-  for (const k of KEYS) contributions[k.weight] = r3((w[k.weight] / 100) * metrics[k.metric])
+  for (const k of KEYS) {
+    const value = metrics[k.metric]
+    if (value == null) {
+      throw new Error(`cannot rescore: ${k.metric} is unavailable`)
+    }
+    contributions[k.weight] = r3((w[k.weight] / 100) * value)
+  }
   const score = r3(KEYS.reduce((acc, k) => acc + contributions[k.weight], 0))
   return { score, contributions }
 }

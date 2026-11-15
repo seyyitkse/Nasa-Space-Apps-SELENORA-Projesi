@@ -1,0 +1,117 @@
+{
+ "median": 110.0,
+ "landmarks": [
+  {
+   "id": "mare-crisium",
+   "name": "Mare Crisium",
+   "lat": 16.18,
+   "lon": 59.1,
+   "expect": "dark",
+   "mirror": "lat",
+   "uv": [
+    0.54261,
+    0.79961
+   ],
+   "lum": 37.0,
+   "lum_mirror_lon": 20.2,
+   "lum_mirror_lat": 88.5,
+   "pass": true
+  },
+  {
+   "id": "mare-imbrium",
+   "name": "Mare Imbrium",
+   "lat": 34.72,
+   "lon": -14.91,
+   "expect": "dark",
+   "mirror": "lat",
+   "uv": [
+    0.59027,
+    0.59148
+   ],
+   "lum": 39.6,
+   "lum_mirror_lon": 45.4,
+   "lum_mirror_lat": 141.1,
+   "pass": true
+  },
+  {
+   "id": "mare-moscoviense",
+   "name": "Mare Moscoviense",
+   "lat": 27.28,
+   "lon": 148.12,
+   "expect": "dark",
+   "mirror": "lon",
+   "uv": [
+    0.57641,
+    0.04675
+   ],
+   "lum": 43.0,
+   "lum_mirror_lon": 190.1,
+   "lum_mirror_lat": 104.7,
+   "pass": true
+  },
+  {
+   "id": "mare-ingenii",
+   "name": "Mare Ingenii",
+   "lat": -33.25,
+   "lon": 164.83,
+   "expect": "dark",
+   "mirror": "lon",
+   "uv": [
+    0.41448,
+    0.09087
+   ],
+   "lum": 45.9,
+   "lum_mirror_lon": 73.3,
+   "lum_mirror_lat": 153.9,
+   "pass": true
+  },
+  {
+   "id": "mare-orientale",
+   "name": "Mare Orientale",
+   "lat": -19.87,
+   "lon": -94.67,
+   "expect": "dark",
+   "mirror": "lon",
+   "uv": [
+    0.45424,
+    0.36469
+   ],
+   "lum": 75.0,
+   "lum_mirror_lon": 123.4,
+   "lum_mirror_lat": 122.6,
+   "pass": true
+  },
+  {
+   "id": "tycho",
+   "name": "Tycho",
+   "lat": -43.3,
+   "lon": -11.22,
+   "expect": "bright",
+   "mirror": "lon",
+   "uv": [
+    0.37957,
+    0.60048
+   ],
+   "lum": 207.2,
+   "lum_mirror_lon": 125.8,
+   "lum_mirror_lat": 61.6,
+   "pass": true
+  },
+  {
+   "id": "copernicus",
+   "name": "Copernicus",
+   "lat": 9.62,
+   "lon": -20.08,
+   "expect": "bright",
+   "mirror": "lon",
+   "uv": [
+    0.52277,
+    0.57888
+   ],
+   "lum": 138.2,
+   "lum_mirror_lon": 11.8,
+   "lum_mirror_lat": 38.1,
+   "pass": true
+  }
+ ]
+}

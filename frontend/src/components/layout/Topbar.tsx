@@ -1,9 +1,10 @@
-import { Languages, Menu } from 'lucide-react'
+import { FlaskConical, GraduationCap, Languages, Menu } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLocation } from 'react-router'
 
 import { useHealth } from '@/hooks/useApi'
 import { cn } from '@/lib/utils'
+import { useModeStore } from '@/stores/modeStore'
 import { useUiStore } from '@/stores/uiStore'
 
 import { LogoMark } from './Logo'
@@ -65,6 +66,34 @@ function LanguageToggle() {
   )
 }
 
+/** Explorer (guided, plain language) ↔ Scientist (full controls). Same backend data in both. */
+export function ModeToggle() {
+  const { t } = useTranslation()
+  const mode = useModeStore((s) => s.mode)
+  const setMode = useModeStore((s) => s.setMode)
+  return (
+    <div role="radiogroup" aria-label={t('mode.label')} className="flex h-8 items-center rounded-full border border-line bg-surface/60 p-0.5">
+      {(['explorer', 'scientist'] as const).map((m) => (
+        <button
+          key={m}
+          type="button"
+          role="radio"
+          aria-checked={mode === m}
+          title={t(`mode.${m}Hint`)}
+          onClick={() => setMode(m)}
+          className={cn(
+            'flex h-7 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-[11.5px] font-medium transition-colors',
+            mode === m ? (m === 'explorer' ? 'bg-cyan/15 text-cyan' : 'bg-violet/15 text-violet') : 'text-fg-3 hover:text-fg',
+          )}
+        >
+          {m === 'explorer' ? <GraduationCap className="size-3.5" aria-hidden /> : <FlaskConical className="size-3.5" aria-hidden />}
+          <span className="hidden sm:inline">{t(`mode.${m}`)}</span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function Topbar() {
   const { t } = useTranslation()
   const setMobileOpen = useUiStore((s) => s.setMobileNavOpen)
@@ -88,7 +117,10 @@ export function Topbar() {
           {current ? t(`nav.${current.key}`) : 'SELENORA'}
         </div>
       </div>
-      <ApiStatusPill />
+      <ModeToggle />
+      <span className="hidden md:contents">
+        <ApiStatusPill />
+      </span>
       <LanguageToggle />
     </header>
   )

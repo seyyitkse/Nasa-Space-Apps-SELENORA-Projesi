@@ -2,11 +2,12 @@ import { useQueries } from '@tanstack/react-query'
 import { useEffect, useMemo } from 'react'
 
 import { useAnalyses, useAnalysis, useTimeline } from '@/hooks/useApi'
+import { useAnalysisEpochs, useCapabilities } from '@/services/contracts'
 import { queryKeys, selenoraApi } from '@/services/selenoraApi'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
 import type { AnalysisResult } from '@/types/api'
 
-import { buildEpochs, type EpochState, nearestSampleIndex } from './adapter'
+import { nearestSampleIndex, resolveSiteEpochs, type EpochState } from './adapter'
 
 const CATALOG_LIMIT = 12
 
@@ -38,12 +39,13 @@ export interface SiteEpochs {
 
 /**
  * The analysis currently selected in the shared workspace, plus per-site
- * epoch states. Auto-selects the newest completed analysis if none is chosen.
+ * epoch states. Prefers GET /analyses/{id}/epochs when the backend exposes it.
  */
 export function useWorkspaceAnalysis(preferredId?: string) {
   const storeId = useWorkspaceStore((s) => s.analysisId)
   const setAnalysis = useWorkspaceStore((s) => s.setAnalysis)
   const catalog = useAnalyses()
+  const caps = useCapabilities()
   const fallback = catalog.data?.find((a) => a.status === 'COMPLETED')?.id ?? null
   const id = preferredId ?? storeId ?? fallback ?? undefined
 
@@ -55,26 +57,44 @@ export function useWorkspaceAnalysis(preferredId?: string) {
   const analysis = useAnalysis(id)
   const completed = analysis.data?.status === 'COMPLETED'
   const timeline = useTimeline(id, completed)
+  const epochsQ = useAnalysisEpochs(id, completed && caps.has('analysisEpochs'))
 
   const sites: SiteEpochs[] = useMemo(() => {
-    if (!analysis.data || !timeline.data) return []
+    if (!analysis.data) return []
+    // Wait for authoritative epochs when the route exists; fall back to timeline.
+    if (caps.has('analysisEpochs') && epochsQ.isPending && !epochsQ.data) return []
+    if (!epochsQ.data && !timeline.data) return []
     return analysis.data.sites.map((s, index) => {
-      const tl = timeline.data.sites.find((x) => x.label === s.label) ?? timeline.data.sites[index]
-      return { label: s.label, index, epochs: tl ? buildEpochs(analysis.data, s, tl.points) : [] }
+      const tl = timeline.data?.sites.find((x) => x.label === s.label) ?? timeline.data?.sites[index]
+      return {
+        label: s.label,
+        index,
+        epochs: resolveSiteEpochs(analysis.data, s, tl?.points, epochsQ.data),
+      }
     })
-  }, [analysis.data, timeline.data])
+  }, [analysis.data, timeline.data, epochsQ.data, epochsQ.isPending, caps])
+
+  const epochsAuthoritative = Boolean(epochsQ.data?.sites.some((s) => s.samples.length > 0))
 
   return {
     id,
     result: analysis.data,
     timeline: timeline.data,
+    epochs: epochsQ.data,
+    epochsAuthoritative,
     sites,
-    isPending: catalog.isPending || (Boolean(id) && (analysis.isPending || (completed && timeline.isPending))),
-    error: analysis.error ?? timeline.error ?? catalog.error,
+    isPending:
+      catalog.isPending ||
+      (Boolean(id) &&
+        (analysis.isPending ||
+          (completed && !epochsQ.data && timeline.isPending) ||
+          (completed && caps.has('analysisEpochs') && epochsQ.isPending && !epochsQ.data))),
+    error: analysis.error ?? epochsQ.error ?? timeline.error ?? catalog.error,
     noAnalyses: catalog.isSuccess && !fallback && !preferredId && !storeId,
     refetch: () => {
       void analysis.refetch()
       void timeline.refetch()
+      void epochsQ.refetch()
     },
   }
 }

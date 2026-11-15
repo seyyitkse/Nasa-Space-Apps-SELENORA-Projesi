@@ -1,0 +1,16 @@
+﻿branch=feature/phase5f-immersive-integration
+worktree=.worktrees/phase5f
+SPA=http://127.0.0.1:5180/explorer
+API=http://127.0.0.1:8030
+HEAD=2bf0c08
+DO_NOT_USE=http://127.0.0.1:5176 (Phase 5D — Photo disabled / old 100km UX)
+lroc_layer=lroc-wac-south-summer
+product_page=https://data.lroc.im-ldi.com/lroc/view_rdr/WAC_ROI_SOUTH_SUMMER
+wms=https://webmap.lroc.asu.edu/lunaserv/wms remote=luna_wac_roi_south_summer
+hillshade_layer=ldem-80s-80mpp-hill
+api_photo_60km=10-api-photo-60km.png
+api_hill_60km=11-api-hillshade-60km.png
+ui_photo=12-ui-photo-5180.png
+ui_hill_select=13-ui-hillshade-select-5180.png
+viewport_note=dynamic e.g. 44x84 km (not fixed 100 km)
+disclaimer=LROC WAC South Summer is a static mosaic; lighting is not mission-date illumination

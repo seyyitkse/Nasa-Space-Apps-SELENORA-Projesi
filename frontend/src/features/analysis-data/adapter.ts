@@ -1,17 +1,14 @@
 /**
- * Explicit data adapter between the analysis API and Phase 5A visualisations.
+ * Explicit data adapter between the analysis API and Phase 5A/5F visualisations.
  *
  * Rules (scientific honesty):
  * - Only sampled epochs returned by the API are used. No interpolation.
- * - GEOMETRIC state is the backend rule: visible ⇔ elevation > 0° (strict); null → UNKNOWN.
- * - TERRAIN state is derived from the backend's terrain windows, which contain
- *   only *known* non-visible samples (UNKNOWN samples are excluded server-side):
- *     inside a darkness/gap window → BLOCKED (geometric visible) or BELOW_HORIZON;
- *     outside → VISIBLE only if the site has zero unknown samples and the window
- *     list is complete; otherwise UNRESOLVED (visible *or* unknown — the API does
- *     not expose per-sample terrain state).
+ * - Prefer GET /analyses/{id}/epochs when available (authoritative VISIBLE/BLOCKED/UNKNOWN).
+ * - Fallback (legacy): GEOMETRIC from elevation > 0°; TERRAIN from darkness/communication windows
+ *   (may produce UNRESOLVED when the API cannot confirm clear sky).
  */
-import type { AnalysisResult, Interval, SiteResult, TimelinePoint } from '@/types/api'
+import type { AuthoritativeEpochSample, AuthoritativeSiteEpochs, EpochsResponse } from '@/services/contracts'
+import type { AnalysisResult, HorizonModel, Interval, SiteResult, TimelinePoint } from '@/types/api'
 
 export type BodyState = 'VISIBLE' | 'BELOW_HORIZON' | 'BLOCKED' | 'UNKNOWN' | 'UNRESOLVED'
 export type Body = 'sun' | 'earth'
@@ -24,12 +21,20 @@ export interface EpochState {
   iso: string
   sunElevation: number | null
   earthElevation: number | null
+  sunAzimuth: number | null
+  earthAzimuth: number | null
   sun: BodyState
   earth: BodyState
   /** Geometric (0°) state regardless of analysis mode. */
   sunGeometric: BodyState
   earthGeometric: BodyState
   joint: 'VISIBLE' | 'NOT_VISIBLE' | 'UNKNOWN'
+  sunTerrainHorizonDeg: number | null
+  earthTerrainHorizonDeg: number | null
+  holdHours: number | null
+  contributesDuration: boolean
+  /** True when states came from GET /analyses/{id}/epochs. */
+  authoritative: boolean
 }
 
 export function geometricState(elevation: number | null | undefined): BodyState {
@@ -84,6 +89,96 @@ function jointOf(a: BodyState, b: BodyState): EpochState['joint'] {
   return 'UNKNOWN'
 }
 
+function emptyExtras(): Pick<
+  EpochState,
+  'sunAzimuth' | 'earthAzimuth' | 'sunTerrainHorizonDeg' | 'earthTerrainHorizonDeg' | 'holdHours' | 'contributesDuration' | 'authoritative'
+> {
+  return {
+    sunAzimuth: null,
+    earthAzimuth: null,
+    sunTerrainHorizonDeg: null,
+    earthTerrainHorizonDeg: null,
+    holdHours: null,
+    contributesDuration: true,
+    authoritative: false,
+  }
+}
+
+/**
+ * Map backend geometric BLOCKED (el ≤ 0) to the UI's BELOW_HORIZON label.
+ * Terrain / science BLOCKED stays BLOCKED.
+ */
+export function mapAuthoritativeBody(
+  state: 'VISIBLE' | 'BLOCKED' | 'UNKNOWN',
+  asGeometric: boolean,
+): BodyState {
+  if (state === 'VISIBLE' || state === 'UNKNOWN') return state
+  return asGeometric ? 'BELOW_HORIZON' : 'BLOCKED'
+}
+
+export function epochsFromAuthoritativeSite(
+  site: AuthoritativeSiteEpochs,
+  endUtc?: string,
+  horizonModel: HorizonModel = 'TERRAIN',
+): EpochState[] {
+  const endMs = endUtc ? Date.parse(endUtc) : Infinity
+  return site.samples
+    .filter((s) => s.contributes_duration && Date.parse(s.t) < endMs)
+    .map((s) => authoritativeSampleToEpoch(s, horizonModel))
+}
+
+export function authoritativeSampleToEpoch(
+  s: AuthoritativeEpochSample,
+  horizonModel: HorizonModel = 'TERRAIN',
+): EpochState {
+  const sunGeoSrc = s.sun_geometric_state ?? (s.sun_elevation_deg != null && s.sun_elevation_deg > 0 ? 'VISIBLE' : s.sun_elevation_deg == null ? 'UNKNOWN' : 'BLOCKED')
+  const earthGeoSrc =
+    s.earth_geometric_state ??
+    (s.earth_elevation_deg != null && s.earth_elevation_deg > 0 ? 'VISIBLE' : s.earth_elevation_deg == null ? 'UNKNOWN' : 'BLOCKED')
+  return {
+    t: Date.parse(s.t),
+    iso: s.t,
+    sunElevation: s.sun_elevation_deg,
+    earthElevation: s.earth_elevation_deg,
+    sunAzimuth: s.sun_azimuth_deg,
+    earthAzimuth: s.earth_azimuth_deg,
+    // Backend GEOMETRIC uses BLOCKED for the <= 0° source state. In the UI
+    // that is explicitly BELOW_HORIZON; only TERRAIN analyses may show BLOCKED.
+    sun: mapAuthoritativeBody(s.sun_state, horizonModel === 'GEOMETRIC'),
+    earth: mapAuthoritativeBody(s.earth_state, horizonModel === 'GEOMETRIC'),
+    sunGeometric: mapAuthoritativeBody(sunGeoSrc, true),
+    earthGeometric: mapAuthoritativeBody(earthGeoSrc, true),
+    joint: s.joint_state,
+    sunTerrainHorizonDeg: s.sun_terrain_horizon_deg ?? null,
+    earthTerrainHorizonDeg: s.earth_terrain_horizon_deg ?? null,
+    holdHours: s.hold_hours,
+    contributesDuration: s.contributes_duration,
+    authoritative: true,
+  }
+}
+
+/** Prefer authoritative /epochs payload; fall back to timeline-derived states. */
+export function resolveSiteEpochs(
+  result: Pick<AnalysisResult, 'horizon_model'> & Partial<Pick<AnalysisResult, 'end_utc'>>,
+  site: SiteResult,
+  timelinePoints: TimelinePoint[] | undefined,
+  authoritative: EpochsResponse | null | undefined,
+): EpochState[] {
+  const authSite = authoritative?.sites.find((s) => s.label === site.label)
+  if (authSite && authSite.samples.length > 0) {
+    const horizonModel: HorizonModel =
+      (authoritative?.horizon_model ?? result.horizon_model) === 'GEOMETRIC'
+        ? 'GEOMETRIC'
+        : 'TERRAIN'
+    return epochsFromAuthoritativeSite(
+      authSite,
+      result.end_utc ?? authoritative?.end_utc,
+      horizonModel,
+    )
+  }
+  return timelinePoints ? buildEpochs(result, site, timelinePoints) : []
+}
+
 export function buildEpochs(
   result: Pick<AnalysisResult, 'horizon_model'> & Partial<Pick<AnalysisResult, 'end_utc'>>,
   site: SiteResult,
@@ -99,6 +194,7 @@ export function buildEpochs(
   const gaps = parseWindows(site.communication_gaps)
   const sunClean = terrain ? terrainCleanVisible(site, 'sun') : true
   const earthClean = terrain ? terrainCleanVisible(site, 'earth') : true
+  const extras = emptyExtras()
   return inWindow.map((p) => {
     const t = Date.parse(p.t)
     const sunGeometric = geometricState(p.sun_elevation_deg)
@@ -115,6 +211,7 @@ export function buildEpochs(
       sunGeometric,
       earthGeometric,
       joint: jointOf(sun, earth),
+      ...extras,
     }
   })
 }

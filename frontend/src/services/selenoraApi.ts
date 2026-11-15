@@ -7,6 +7,7 @@ import type {
   DemoAnalysisResponse,
   ExplainRequest,
   ExplainResponse,
+  GlobeSiteCatalog,
   HealthResponse,
   LandingSiteList,
   TerrainCoverage,
@@ -16,6 +17,8 @@ import type {
 export const selenoraApi = {
   health: () => api.get<HealthResponse>('/health').then((r) => r.data),
   sites: () => api.get<LandingSiteList>('/api/v1/sites').then((r) => r.data),
+  /** Phase 6B globe markers for 3D Moon (Planner continues to use `sites`). */
+  globeSites: () => api.get<GlobeSiteCatalog>('/api/v1/globe/sites').then((r) => r.data),
   dataSources: () => api.get<DataSourceList>('/api/v1/data-sources').then((r) => r.data),
   terrainCoverage: (latitude_deg: number, longitude_deg: number) =>
     api
@@ -51,6 +54,7 @@ export const selenoraApi = {
 export const queryKeys = {
   health: ['health'] as const,
   sites: ['sites'] as const,
+  globeSites: ['globe-sites'] as const,
   dataSources: ['data-sources'] as const,
   analyses: ['analyses'] as const,
   analysis: (id: string) => ['analysis', id] as const,

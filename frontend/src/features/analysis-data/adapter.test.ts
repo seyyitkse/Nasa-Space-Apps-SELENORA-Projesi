@@ -2,13 +2,18 @@ import { describe, expect, it } from 'vitest'
 
 import type { AnalysisResult, SiteResult } from '@/types/api'
 
+import type { AuthoritativeSiteEpochs, EpochsResponse } from '@/services/contracts'
+
 import {
   buildEpochs,
   canRescore,
+  epochsFromAuthoritativeSite,
   geometricState,
+  mapAuthoritativeBody,
   MAX_WINDOWS,
   nearestSampleIndex,
   recommendationStatus,
+  resolveSiteEpochs,
 } from './adapter'
 
 // Deterministic test fixture — NOT live NASA data.
@@ -108,6 +113,142 @@ describe('analysis adapter', () => {
   it('drops the zero-duration sample at end_utc (half-open analysis window)', () => {
     const e = buildEpochs({ horizon_model: 'GEOMETRIC', end_utc: hour(3) }, site(), points)
     expect(e.map((x) => x.iso)).toEqual([hour(0), hour(1), hour(2)])
+  })
+
+  it('maps authoritative VISIBLE/BLOCKED/UNKNOWN without inventing clear sky', () => {
+    expect(mapAuthoritativeBody('BLOCKED', false)).toBe('BLOCKED')
+    expect(mapAuthoritativeBody('BLOCKED', true)).toBe('BELOW_HORIZON')
+    expect(mapAuthoritativeBody('UNKNOWN', false)).toBe('UNKNOWN')
+    const authSite: AuthoritativeSiteEpochs = {
+      label: 'A',
+      latitude_deg: -89.68,
+      longitude_deg: -166,
+      samples: [
+        {
+          t: hour(0),
+          sun_azimuth_deg: 86,
+          sun_elevation_deg: 1.5,
+          earth_azimuth_deg: 170,
+          earth_elevation_deg: -1.9,
+          sun_state: 'BLOCKED',
+          earth_state: 'BLOCKED',
+          joint_state: 'NOT_VISIBLE',
+          sun_terrain_horizon_deg: 12,
+          earth_terrain_horizon_deg: -1.2,
+          sun_geometric_state: 'VISIBLE',
+          earth_geometric_state: 'BLOCKED',
+          hold_hours: 1,
+          contributes_duration: true,
+        },
+        {
+          t: hour(3),
+          sun_azimuth_deg: 90,
+          sun_elevation_deg: 2,
+          earth_azimuth_deg: 171,
+          earth_elevation_deg: -1,
+          sun_state: 'VISIBLE',
+          earth_state: 'UNKNOWN',
+          joint_state: 'UNKNOWN',
+          hold_hours: 0,
+          contributes_duration: false,
+        },
+      ],
+    }
+    const e = epochsFromAuthoritativeSite(authSite, hour(3))
+    expect(e).toHaveLength(1)
+    expect(e[0]!.sun).toBe('BLOCKED')
+    expect(e[0]!.earth).toBe('BLOCKED')
+    expect(e[0]!.joint).toBe('NOT_VISIBLE')
+    expect(e[0]!.sunAzimuth).toBe(86)
+    expect(e[0]!.authoritative).toBe(true)
+    expect(e[0]!.sunGeometric).toBe('VISIBLE')
+    expect(e[0]!.earthGeometric).toBe('BELOW_HORIZON')
+  })
+
+  it('prefers authoritative /epochs over timeline-derived UNRESOLVED', () => {
+    const s = site({
+      terrain: {
+        dem_file: null, dem_site_id: null, resolution_m: 5, horizon_coverage_fraction: 0.1,
+        observer_height_m: 2, surface_z_m: 0, dataset_version: 'x',
+        sun_unknown_fraction: 0.07, earth_unknown_fraction: 0,
+      },
+    })
+    const derived = buildEpochs({ horizon_model: 'TERRAIN' }, s, points)
+    expect(derived[0]!.sun).toBe('UNRESOLVED')
+    const auth: EpochsResponse = {
+      analysis_id: 'x',
+      mission_name: 'm',
+      horizon_model: 'TERRAIN',
+      data_quality: 'LOCAL_TERRAIN_PARTIAL',
+      algorithm_version: '1',
+      start_utc: hour(0),
+      end_utc: hour(4),
+      time_step_minutes: 60,
+      sample_count_per_site: 1,
+      duration_semantics: '[start_utc, end_utc)',
+      sites: [
+        {
+          label: 'A',
+          latitude_deg: -89.68,
+          longitude_deg: -166,
+          samples: [
+            {
+              t: hour(0),
+              sun_azimuth_deg: 10,
+              sun_elevation_deg: 1,
+              earth_azimuth_deg: 20,
+              earth_elevation_deg: 1,
+              sun_state: 'UNKNOWN',
+              earth_state: 'VISIBLE',
+              joint_state: 'UNKNOWN',
+              hold_hours: 1,
+              contributes_duration: true,
+            },
+          ],
+        },
+      ],
+      provenance: [],
+      limitations: [],
+    }
+    const resolved = resolveSiteEpochs({ horizon_model: 'TERRAIN', end_utc: hour(4) }, s, points, auth)
+    expect(resolved[0]!.sun).toBe('UNKNOWN')
+    expect(resolved[0]!.authoritative).toBe(true)
+  })
+
+  it('uses authoritative /epochs horizon metadata for GEOMETRIC below-horizon states', () => {
+    const auth: EpochsResponse = {
+      analysis_id: 'geometric-analysis',
+      mission_name: 'Geometric fixture',
+      horizon_model: 'GEOMETRIC',
+      data_quality: 'EPHEMERIS_ONLY',
+      algorithm_version: '1',
+      start_utc: hour(0),
+      end_utc: hour(1),
+      time_step_minutes: 60,
+      sample_count_per_site: 1,
+      duration_semantics: '[start_utc, end_utc)',
+      sites: [{
+        label: 'A', latitude_deg: -89.68, longitude_deg: -166,
+        samples: [{
+          t: hour(0),
+          sun_azimuth_deg: 10, sun_elevation_deg: -2,
+          earth_azimuth_deg: 20, earth_elevation_deg: null,
+          // The backend contract uses BLOCKED for the geometric <= 0° source state.
+          sun_state: 'BLOCKED', earth_state: 'UNKNOWN', joint_state: 'NOT_VISIBLE',
+          sun_geometric_state: 'BLOCKED', earth_geometric_state: 'UNKNOWN',
+          hold_hours: 1, contributes_duration: true,
+        }],
+      }],
+      provenance: [], limitations: [],
+    }
+    const resolved = resolveSiteEpochs(
+      { horizon_model: 'GEOMETRIC', end_utc: hour(1) }, site(), points, auth,
+    )
+    expect(resolved[0]!.sun).toBe('BELOW_HORIZON')
+    expect(resolved[0]!.earth).toBe('UNKNOWN')
+    expect(resolved[0]!.sunGeometric).toBe('BELOW_HORIZON')
+    expect(resolved[0]!.sunTerrainHorizonDeg).toBeNull()
+    expect(resolved[0]!.authoritative).toBe(true)
   })
 
   it('snaps cursor times to the nearest sampled epoch', () => {
