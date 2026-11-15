@@ -24,11 +24,32 @@ export function sphereDropM(d: number, R = MOON_RADIUS_M): number {
   return R * (1 - Math.cos(d / R))
 }
 
-/** DEM tile id from /terrain/coverage → mesh layer id. */
+/** DEM tile id from /terrain/coverage → mesh layer id (local Product 78 only). */
 export function meshLayerForTile(demSiteId: string | null | undefined): string | null {
   if (!demSiteId) return null
   const m = /^site(\d+)$/i.exec(demSiteId)
   return m ? `lola-site${m[1]!.padStart(2, '0')}-5mpp-surf` : null
+}
+
+/**
+ * Phase 7D: prefer an explicit local 5 m layer when coverage is known; otherwise
+ * let the backend auto-select the finest usable real NASA elevation DEM
+ * (local Product 78 → remote Product 90 COG). Never invent a layer id.
+ */
+export function meshLayerForRequest(demSiteId: string | null | undefined): string {
+  return meshLayerForTile(demSiteId) ?? 'auto'
+}
+
+/** Human-readable provenance line for the 3D panel. */
+export function meshSourceLabel(mesh: Pick<MeshResponse, 'coverage_tier' | 'native_resolution_m' | 'dem_site_id' | 'layer_id'>): string {
+  const res = mesh.native_resolution_m != null ? `${mesh.native_resolution_m} m` : null
+  if (mesh.coverage_tier === 'LOCAL_5MPP') {
+    return res ? `LOLA ${res} · ${mesh.dem_site_id ?? mesh.layer_id}` : `LOLA 5 m · ${mesh.dem_site_id ?? mesh.layer_id}`
+  }
+  if (mesh.coverage_tier === 'REMOTE_PGDA90') {
+    return res ? `LOLA ${res} · PGDA 90` : `LOLA · PGDA 90 · ${mesh.layer_id}`
+  }
+  return mesh.layer_id
 }
 
 /** Grid bearing (clockwise from stereo +Y) of a true azimuth — backend `grid_bearing_for_true_azimuth`. */

@@ -5,7 +5,9 @@ import {
   buildTerrainGeometry,
   gridBearingDeg,
   MESH_PRESETS,
+  meshLayerForRequest,
   meshLayerForTile,
+  meshSourceLabel,
   type MeshResponse,
   rayProfile,
   sampleZ,
@@ -31,6 +33,28 @@ describe('LOLA mesh geometry', () => {
     expect(meshLayerForTile('Site04')).toBe('lola-site04-5mpp-surf')
     expect(meshLayerForTile('Site01')).toBe('lola-site01-5mpp-surf')
     expect(meshLayerForTile(null)).toBeNull()
+  })
+
+  it('falls back to auto layer selection outside local 5 m tiles (Phase 7D)', () => {
+    expect(meshLayerForRequest('Site04')).toBe('lola-site04-5mpp-surf')
+    expect(meshLayerForRequest(null)).toBe('auto')
+    expect(meshLayerForRequest(undefined)).toBe('auto')
+    expect(
+      meshSourceLabel({
+        coverage_tier: 'REMOTE_PGDA90',
+        native_resolution_m: 80,
+        dem_site_id: null,
+        layer_id: 'ldem-80s-80mpp',
+      }),
+    ).toBe('LOLA 80 m · PGDA 90')
+    expect(
+      meshSourceLabel({
+        coverage_tier: 'LOCAL_5MPP',
+        native_resolution_m: 5,
+        dem_site_id: 'Site04',
+        layer_id: 'lola-site04-5mpp-surf',
+      }),
+    ).toBe('LOLA 5 m · Site04')
   })
 
   it('uses the backend true-north convention (Point A γ = 194°, Point B γ = 218.2°)', () => {
