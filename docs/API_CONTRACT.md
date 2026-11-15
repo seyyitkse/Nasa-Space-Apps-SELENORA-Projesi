@@ -117,3 +117,12 @@ ExplainResponse { analysis_id, language, model, recommended_site_label, report: 
 
 `data_quality ∈ EPHEMERIS_GEOMETRIC | EPHEMERIS_TERRAIN | SYNTHETIC_DEMO | PARTIAL | UNAVAILABLE`.
 Scores are only produced for `EPHEMERIS_*` / `SYNTHETIC_DEMO` with ≤ 5 % missing samples; otherwise `score = rank = null`.
+
+## Phase 7A — operational events
+
+`GET /api/v1/analyses/{analysis_id}/events?reference_utc=<ISO-8601 with timezone>` returns, per site
+and per body (Sun, Earth), the current visibility state and the next state changes as **brackets
+between stored samples** — never as exact timestamps. GEOMETRIC analyses expose a geometric track;
+TERRAIN analyses expose geometric and terrain tracks side by side. `UNKNOWN` is preserved and no
+rise/set is confirmed across UNKNOWN samples. Full contract and semantics:
+`docs/PHASE7A_IMPLEMENTATION_REPORT.md` §3–§4.

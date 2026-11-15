@@ -21,6 +21,7 @@ import { ElevationGauge } from '@/features/horizon-sim/ElevationGauge'
 import { type BodyDirection, HorizonPanorama } from '@/features/horizon-sim/HorizonPanorama'
 import { SimElevationChart } from '@/features/horizon-sim/SimElevationChart'
 import { TimeControls } from '@/features/horizon-sim/TimeControls'
+import { OperationalEventsPanel } from '@/features/operational-events/OperationalEventsPanel'
 import { Terrain3DPanel } from '@/features/terrain3d/Terrain3DPanel'
 import { Term } from '@/components/shared/Explain'
 import { useIsScientist } from '@/stores/modeStore'
@@ -404,6 +405,8 @@ export default function SimulatorPage() {
                 </Card>
               </div>
             </div>
+
+            <OperationalEventsPanel analysisId={result.id} siteIndex={safeIndex} siteCoord={site} cursorMs={epoch?.t ?? cursorT} startUtc={result.start_utc} endUtc={result.end_utc} />
 
             <Card id="terrain-3d">
               <CardHeader>
