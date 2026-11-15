@@ -237,3 +237,40 @@ def test_terrain_coverage_endpoint(client, dem_tiles) -> None:
     assert r.status_code == 200
     assert r.json()["covered"] is True
     assert r.json()["dem_site_id"] == "Site04"
+
+
+def test_horizon_profile_endpoint_rejects_exact_pole(client) -> None:
+    r = client.get("/api/v1/terrain/horizon-profile", params={"latitude_deg": -90.0, "longitude_deg": 0.0})
+    assert r.status_code == 422
+    body = r.json()
+    assert body["error"]["code"] == "AZIMUTH_UNDEFINED_AT_POLE"
+    assert "azimuth" in body["error"]["message"].lower()
+    assert body["error"]["details"]["latitude_deg"] == -90.0
+
+
+def test_horizon_profile_endpoint_near_pole_ok_or_terrain_unavailable(client, dem_tiles) -> None:
+    # Near-pole latitudes are scientifically valid for azimuth computations.
+    # If the local DEM doesn't cover the chosen point, the API should return a
+    # documented 422 (TERRAIN_UNAVAILABLE) — never a 500.
+    lon, lat = -166.0, -89.9
+    cov = terrain_data_service.check_coverage(lat, lon)
+    if not cov.covered:
+        pytest.skip("Chosen near-pole lon/lat not covered by local LOLA DEM tiles")
+    r = client.get(
+        "/api/v1/terrain/horizon-profile",
+        params={"latitude_deg": lat, "longitude_deg": lon, "max_range_m": 2000.0, "n_azimuth": 36},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert "bins" in body and len(body["bins"]) == 36
+
+
+def test_horizon_profile_endpoint_normal_site_is_not_500(client) -> None:
+    # Non-polar points are valid coordinates; if outside local LOLA coverage the API
+    # should return a documented 422, not an internal server error.
+    r = client.get(
+        "/api/v1/terrain/horizon-profile",
+        params={"latitude_deg": 0.0, "longitude_deg": 0.0, "max_range_m": 500.0, "n_azimuth": 36},
+    )
+    assert r.status_code in (200, 422)
+    assert r.status_code != 500

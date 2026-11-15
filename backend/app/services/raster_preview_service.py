@@ -316,7 +316,6 @@ def build_mesh(
         raise LayerNotFoundError(f"Unknown layer id '{layer_id}'.")
     if layer.kind not in {"elevation", "hillshade"}:
         raise MapServiceError(f"Layer '{layer_id}' (kind={layer.kind}) cannot build an elevation mesh.")
-    path = _open_path_for_layer(layer)
     pt = lonlat_to_stereo(longitude_deg, latitude_deg)
     left, bottom, right, top = (
         pt.x_m - half_extent_m,
@@ -329,6 +328,7 @@ def build_mesh(
     nx, ny = int(xs.size), int(ys.size)
     if nx * ny > 20_000:
         raise MapServiceError("Mesh too dense; increase step_m or reduce half_extent_m.")
+    path = _open_path_for_layer(layer)
     grid_x, grid_y = np.meshgrid(xs, ys)
     coords = list(zip(grid_x.ravel().tolist(), grid_y.ravel().tolist()))
     with rasterio.open(path) as ds:

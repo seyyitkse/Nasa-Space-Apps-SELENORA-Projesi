@@ -62,6 +62,13 @@ class TerrainUnavailableError(AppError):
     code = "TERRAIN_UNAVAILABLE"
 
 
+class AzimuthUndefinedAtPoleError(AppError):
+    """Scientifically undefined: local north/azimuth at exact geographic poles."""
+
+    status_code = 422
+    code = "AZIMUTH_UNDEFINED_AT_POLE"
+
+
 def _body(request: Request, code: str, message: str, details: Any = None) -> dict[str, Any]:
     return {
         "error": {
