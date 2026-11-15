@@ -22,6 +22,8 @@ frontend/dist/
 # Data caches (large rasters / ephemeris caches are regenerated)
 data/cache/
 data/raw/
+backend/data/cache/
+backend/data/raw/
 
 # OS / editors
 .DS_Store
