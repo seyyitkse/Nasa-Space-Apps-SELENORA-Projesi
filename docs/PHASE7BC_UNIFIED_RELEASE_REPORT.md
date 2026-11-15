@@ -82,7 +82,7 @@ Namespaces do not collide (`solarPotential*` vs `scenarios*`). Nav key `scenario
 | 0.5 percentage-point solar comparison margin | **Preserved** (`COMPARISON_MINIMUM_GAP_PCT = 0.5`; live solar limitations include “0.5”) |
 | Relative solar opportunity ≠ electrical power | **Preserved** (panel + API limitations/assumptions language) |
 | UNKNOWN in all terrain analyses | **Preserved** (locale + science tests + 7C UNKNOWN copy) |
-| Independent ephemeris / cache identity per 7C scenario | **Preserved** (scenario `cache_key` + independent windows) |
+| Independent ephemeris / cache identity per 7C scenario | **Preserved** (DB `cache_key` `8bdc4e1a…`; Dec/Jan independent `start_utc`/`end_utc` + MISS→HIT) |
 | TERRAIN algo stamp | **`0.4.2-phase6c-science-h1`** retained |
 
 No opportunistic engine changes were made during this release integration.
@@ -139,7 +139,7 @@ Runtime worktree DB used for browser/API QA was derived from the isolated migrat
 
 ### Screenshots
 
-Directory: `docs/screenshots/phase7bc-integration/` (21 PNG files)
+Directory: `docs/screenshots/phase7bc-integration/` (23 PNG files)
 
 - `01-mission-control.png`
 - `02-moon.png`, `02-moon-standard.png`
@@ -149,7 +149,9 @@ Directory: `docs/screenshots/phase7bc-integration/` (21 PNG files)
 - `06-simulator.png`, `06-simulator-events.png`
 - `07-windows.png`, `07-scenarios-results.png`
 - `08-tr-mobile.png` (375×812)
+- `08-scenarios-tr-mobile-375.png` (TR Date Scenarios @ 375×812)
 - `09-comparison-demo.png`
+- `09-planner-tr-mobile.png` (TR Planner with Date Scenarios CTA @ 375)
 - `10-comparison-real.png` (solar panel footer visible)
 - `11-simulator-events.png`
 - `12-windows-real.png`
@@ -163,6 +165,9 @@ Directory: `docs/screenshots/phase7bc-integration/` (21 PNG files)
 | `POST /api/v1/analyses` short GEOMETRIC window | **COMPLETED** `f41aa764-65aa-4833-9085-72f2faf9c561` · `EPHEMERIS_GEOMETRIC` |
 | `GET …/events` on that analysis | **OK** — 2 sites; confirmed bracket semantics retained |
 | Windows UI | Deep-link screenshot captured against stored/live analyses |
+| `GET /api/v1/ephemeris/observer-series` (live) | **OK** — 7 points at Shackleton Ridge B (−89.45°, −141.8°); `LOCAL_TERRAIN_PARTIAL` + UNKNOWN/BLOCKED states present |
+| `POST /api/v1/scenarios` (live, 2 windows) | **COMPLETED** `a6d4afd5-0091-489a-a71c-adc70303dd99` · `cache_status=MISS` then repeat **HIT**; independent Dec/Jan UTC windows |
+| Solar potential on stored analysis | **OK** — `electrical_energy.available=False`; 0.5 pp margin in limitations; Horizontal `NOT_DISTINGUISHABLE` |
 | Live upstream verdict | **Complete for this release probe** (JPL Horizons reachable during QA) |
 
 ---
