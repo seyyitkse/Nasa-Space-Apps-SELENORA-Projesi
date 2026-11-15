@@ -1,0 +1,414 @@
+{
+ "analysis_id": "c10e11f3-f469-45a0-af91-6733691239d4",
+ "mission_name": "South-pole site trade study",
+ "horizon_model": "GEOMETRIC",
+ "data_quality": "EPHEMERIS_GEOMETRIC",
+ "algorithm_version": "0.3.1-phase3.3",
+ "terrain_engine_version": null,
+ "solar_contract_version": "7b.1",
+ "start_utc": "2027-01-01T00:00:00Z",
+ "end_utc": "2027-01-15T00:00:00Z",
+ "time_step_minutes": 60,
+ "generated_at_utc": "2026-11-15T11:50:12.576349Z",
+ "headline_horizon": "GEOMETRIC",
+ "index_definition": "index = Σ f·cosθ·hold_hours / Σ hold_hours, in percent. f is the fraction of the solar disc above the horizon, θ the angle between the panel normal and the Sun. 100 % is a dual-axis tracking panel in continuous unobstructed sunlight for the whole analysis window. Dimensionless and relative: not irradiance, not watts, not kWh.",
+ "sun_angular_radius_deg": 0.2666,
+ "sites": [
+  {
+   "site_index": 0,
+   "label": "Shackleton Rim — Point A",
+   "latitude_deg": -89.68,
+   "longitude_deg": -166.0,
+   "landing_site_id": "shackleton-rim-a",
+   "dem_site_id": null,
+   "terrain_complete_coverage_fraction": null,
+   "window_hours": 336.0,
+   "sample_count": 337,
+   "sun_above_geometric_horizon": {
+    "above_horizon_hours": 336.0,
+    "below_horizon_hours": 0.0,
+    "missing_ephemeris_hours": 0.0,
+    "above_horizon_fraction_min": 1.0,
+    "above_horizon_fraction_max": 1.0
+   },
+   "sun_terrain_visibility": null,
+   "configurations": [
+    {
+     "panel": "HORIZONTAL",
+     "tilt_deg": null,
+     "azimuth_deg": null,
+     "azimuth_source": null,
+     "available": true,
+     "unavailable_reason": null,
+     "geometric": {
+      "horizon": "GEOMETRIC",
+      "status": "DETERMINED",
+      "index_pct": 1.9225,
+      "index_min_pct": 1.9225,
+      "index_max_pct": 1.9225,
+      "unavailable_reason": null,
+      "window_hours": 336.0,
+      "known_hours": 336.0,
+      "unknown_hours": 0.0,
+      "unknown_fraction": 0.0,
+      "edge_uncertain_hours": 0.0
+     },
+     "terrain": null
+    },
+    {
+     "panel": "FIXED",
+     "tilt_deg": 90.0,
+     "azimuth_deg": 344.0,
+     "azimuth_source": "OPTIMISED_HINDSIGHT_GEOMETRIC",
+     "available": true,
+     "unavailable_reason": null,
+     "geometric": {
+      "horizon": "GEOMETRIC",
+      "status": "DETERMINED",
+      "index_pct": 66.9378,
+      "index_min_pct": 66.9378,
+      "index_max_pct": 66.9378,
+      "unavailable_reason": null,
+      "window_hours": 336.0,
+      "known_hours": 336.0,
+      "unknown_hours": 0.0,
+      "unknown_fraction": 0.0,
+      "edge_uncertain_hours": 0.0
+     },
+     "terrain": null
+    },
+    {
+     "panel": "AZIMUTH_TRACKING",
+     "tilt_deg": 90.0,
+     "azimuth_deg": null,
+     "azimuth_source": null,
+     "available": true,
+     "unavailable_reason": null,
+     "geometric": {
+      "horizon": "GEOMETRIC",
+      "status": "DETERMINED",
+      "index_pct": 99.9811,
+      "index_min_pct": 99.9811,
+      "index_max_pct": 99.9811,
+      "unavailable_reason": null,
+      "window_hours": 336.0,
+      "known_hours": 336.0,
+      "unknown_hours": 0.0,
+      "unknown_fraction": 0.0,
+      "edge_uncertain_hours": 0.0
+     },
+     "terrain": null
+    },
+    {
+     "panel": "DUAL_AXIS",
+     "tilt_deg": null,
+     "azimuth_deg": null,
+     "azimuth_source": null,
+     "available": true,
+     "unavailable_reason": null,
+     "geometric": {
+      "horizon": "GEOMETRIC",
+      "status": "DETERMINED",
+      "index_pct": 100.0,
+      "index_min_pct": 100.0,
+      "index_max_pct": 100.0,
+      "unavailable_reason": null,
+      "window_hours": 336.0,
+      "known_hours": 336.0,
+      "unknown_hours": 0.0,
+      "unknown_fraction": 0.0,
+      "edge_uncertain_hours": 0.0
+     },
+     "terrain": null
+    }
+   ]
+  },
+  {
+   "site_index": 1,
+   "label": "Bussey 2010 Point D",
+   "latitude_deg": -88.74,
+   "longitude_deg": 124.5,
+   "landing_site_id": "bussey-2010-point-d",
+   "dem_site_id": null,
+   "terrain_complete_coverage_fraction": null,
+   "window_hours": 336.0,
+   "sample_count": 337,
+   "sun_above_geometric_horizon": {
+    "above_horizon_hours": 336.0,
+    "below_horizon_hours": 0.0,
+    "missing_ephemeris_hours": 0.0,
+    "above_horizon_fraction_min": 1.0,
+    "above_horizon_fraction_max": 1.0
+   },
+   "sun_terrain_visibility": null,
+   "configurations": [
+    {
+     "panel": "HORIZONTAL",
+     "tilt_deg": null,
+     "azimuth_deg": null,
+     "azimuth_source": null,
+     "available": true,
+     "unavailable_reason": null,
+     "geometric": {
+      "horizon": "GEOMETRIC",
+      "status": "DETERMINED",
+      "index_pct": 2.4334,
+      "index_min_pct": 2.4334,
+      "index_max_pct": 2.4334,
+      "unavailable_reason": null,
+      "window_hours": 336.0,
+      "known_hours": 336.0,
+      "unknown_hours": 0.0,
+      "unknown_fraction": 0.0,
+      "edge_uncertain_hours": 0.0
+     },
+     "terrain": null
+    },
+    {
+     "panel": "FIXED",
+     "tilt_deg": 90.0,
+     "azimuth_deg": 53.0,
+     "azimuth_source": "OPTIMISED_HINDSIGHT_GEOMETRIC",
+     "available": true,
+     "unavailable_reason": null,
+     "geometric": {
+      "horizon": "GEOMETRIC",
+      "status": "DETERMINED",
+      "index_pct": 66.7475,
+      "index_min_pct": 66.7475,
+      "index_max_pct": 66.7475,
+      "unavailable_reason": null,
+      "window_hours": 336.0,
+      "known_hours": 336.0,
+      "unknown_hours": 0.0,
+      "unknown_fraction": 0.0,
+      "edge_uncertain_hours": 0.0
+     },
+     "terrain": null
+    },
+    {
+     "panel": "AZIMUTH_TRACKING",
+     "tilt_deg": 90.0,
+     "azimuth_deg": null,
+     "azimuth_source": null,
+     "available": true,
+     "unavailable_reason": null,
+     "geometric": {
+      "horizon": "GEOMETRIC",
+      "status": "DETERMINED",
+      "index_pct": 98.767,
+      "index_min_pct": 98.767,
+      "index_max_pct": 98.767,
+      "unavailable_reason": null,
+      "window_hours": 336.0,
+      "known_hours": 336.0,
+      "unknown_hours": 0.0,
+      "unknown_fraction": 0.0,
+      "edge_uncertain_hours": 0.0
+     },
+     "terrain": null
+    },
+    {
+     "panel": "DUAL_AXIS",
+     "tilt_deg": null,
+     "azimuth_deg": null,
+     "azimuth_source": null,
+     "available": true,
+     "unavailable_reason": null,
+     "geometric": {
+      "horizon": "GEOMETRIC",
+      "status": "DETERMINED",
+      "index_pct": 98.8033,
+      "index_min_pct": 98.8033,
+      "index_max_pct": 98.8033,
+      "unavailable_reason": null,
+      "window_hours": 336.0,
+      "known_hours": 336.0,
+      "unknown_hours": 0.0,
+      "unknown_fraction": 0.0,
+      "edge_uncertain_hours": 0.0
+     },
+     "terrain": null
+    }
+   ]
+  },
+  {
+   "site_index": 2,
+   "label": "Malapert Massif (approx.)",
+   "latitude_deg": -86.0,
+   "longitude_deg": 2.9,
+   "landing_site_id": "malapert-massif",
+   "dem_site_id": null,
+   "terrain_complete_coverage_fraction": null,
+   "window_hours": 336.0,
+   "sample_count": 337,
+   "sun_above_geometric_horizon": {
+    "above_horizon_hours": 32.0,
+    "below_horizon_hours": 304.0,
+    "missing_ephemeris_hours": 0.0,
+    "above_horizon_fraction_min": 0.095238,
+    "above_horizon_fraction_max": 0.095238
+   },
+   "sun_terrain_visibility": null,
+   "configurations": [
+    {
+     "panel": "HORIZONTAL",
+     "tilt_deg": null,
+     "azimuth_deg": null,
+     "azimuth_source": null,
+     "available": true,
+     "unavailable_reason": null,
+     "geometric": {
+      "horizon": "GEOMETRIC",
+      "status": "DETERMINED",
+      "index_pct": 0.0503,
+      "index_min_pct": 0.0503,
+      "index_max_pct": 0.0503,
+      "unavailable_reason": null,
+      "window_hours": 336.0,
+      "known_hours": 336.0,
+      "unknown_hours": 0.0,
+      "unknown_fraction": 0.0,
+      "edge_uncertain_hours": 0.0
+     },
+     "terrain": null
+    },
+    {
+     "panel": "FIXED",
+     "tilt_deg": 90.0,
+     "azimuth_deg": 96.0,
+     "azimuth_source": "OPTIMISED_HINDSIGHT_GEOMETRIC",
+     "available": true,
+     "unavailable_reason": null,
+     "geometric": {
+      "horizon": "GEOMETRIC",
+      "status": "DETERMINED",
+      "index_pct": 6.5352,
+      "index_min_pct": 6.5352,
+      "index_max_pct": 6.5352,
+      "unavailable_reason": null,
+      "window_hours": 336.0,
+      "known_hours": 336.0,
+      "unknown_hours": 0.0,
+      "unknown_fraction": 0.0,
+      "edge_uncertain_hours": 0.0
+     },
+     "terrain": null
+    },
+    {
+     "panel": "AZIMUTH_TRACKING",
+     "tilt_deg": 90.0,
+     "azimuth_deg": null,
+     "azimuth_source": null,
+     "available": true,
+     "unavailable_reason": null,
+     "geometric": {
+      "horizon": "GEOMETRIC",
+      "status": "DETERMINED",
+      "index_pct": 9.5091,
+      "index_min_pct": 9.5091,
+      "index_max_pct": 9.5091,
+      "unavailable_reason": null,
+      "window_hours": 336.0,
+      "known_hours": 336.0,
+      "unknown_hours": 0.0,
+      "unknown_fraction": 0.0,
+      "edge_uncertain_hours": 0.0
+     },
+     "terrain": null
+    },
+    {
+     "panel": "DUAL_AXIS",
+     "tilt_deg": null,
+     "azimuth_deg": null,
+     "azimuth_source": null,
+     "available": true,
+     "unavailable_reason": null,
+     "geometric": {
+      "horizon": "GEOMETRIC",
+      "status": "DETERMINED",
+      "index_pct": 9.5093,
+      "index_min_pct": 9.5093,
+      "index_max_pct": 9.5093,
+      "unavailable_reason": null,
+      "window_hours": 336.0,
+      "known_hours": 336.0,
+      "unknown_hours": 0.0,
+      "unknown_fraction": 0.0,
+      "edge_uncertain_hours": 0.0
+     },
+     "terrain": null
+    }
+   ]
+  }
+ ],
+ "comparisons": [
+  {
+   "panel": "HORIZONTAL",
+   "horizon": "GEOMETRIC",
+   "status": "DISTINGUISHABLE",
+   "leading_site_index": 1
+  },
+  {
+   "panel": "FIXED",
+   "horizon": "GEOMETRIC",
+   "status": "NOT_DISTINGUISHABLE",
+   "leading_site_index": null
+  },
+  {
+   "panel": "AZIMUTH_TRACKING",
+   "horizon": "GEOMETRIC",
+   "status": "DISTINGUISHABLE",
+   "leading_site_index": 0
+  },
+  {
+   "panel": "DUAL_AXIS",
+   "horizon": "GEOMETRIC",
+   "status": "DISTINGUISHABLE",
+   "leading_site_index": 0
+  }
+ ],
+ "electrical_energy": {
+  "available": false,
+  "reason": "Electrical output cannot be derived from illumination geometry alone.",
+  "missing_inputs": [
+   "solar irradiance at the Moon for the date (Sun distance)",
+   "panel area and cell efficiency",
+   "panel temperature, dust and degradation",
+   "power electronics and storage"
+  ]
+ },
+ "assumptions": [
+  "Sun azimuth and elevation are the stored JPL Horizons apparent values for each site (airless body, no refraction). Azimuth is clockwise from local true north.",
+  "Panel tilt is the angle between the panel normal and the local vertical on the reference sphere (0° horizontal, 90° vertical). Local surface slope is not applied.",
+  "Fixed panel: constant tilt and azimuth for the whole window. When no azimuth is given, one azimuth per site is chosen with hindsight to maximise the geometric-horizon index (1° grid) and reused for every horizon type and bound.",
+  "Azimuth tracking: the panel rotates about the local vertical and always faces the Sun's azimuth at a constant tilt. Dual-axis: the panel always faces the Sun.",
+  "The Sun is a uniform disc of nominal radius 0.2666° cut by a straight horizon; limb darkening and the ±1.7 % seasonal change in apparent radius are ignored.",
+  "Each sample holds for min(step, end − t) hours (sample-and-hold over [start_utc, end_utc)); a sample at the window end has zero weight.",
+  "Only direct sunlight is considered: no earthshine, no light reflected from terrain, no self-shading by the lander or by neighbouring panels."
+ ],
+ "provenance": [
+  {
+   "source_id": "stored-visibility-timelines",
+   "description": "Per-body Az/El arrays persisted at analysis time in visibility_timelines (SUN + EARTH).",
+   "version": "0.3.1-phase3.3"
+  },
+  {
+   "source_id": "jpl-horizons",
+   "description": "Original Az/El source for the stored analysis (not re-fetched).",
+   "version": null
+  },
+  {
+   "source_id": "selenora-solar-potential",
+   "description": "Relative incidence index derived from the stored Sun azimuth/elevation and per-epoch visibility states; no new ephemeris request.",
+   "version": "7b.1"
+  }
+ ],
+ "limitations": [
+  "This is geometry only. It is not irradiance and not electrical output: Sun distance, cell efficiency, panel area, temperature, dust, degradation and storage are not modelled.",
+  "Temporal sampling: the Sun's azimuth moves about 0.5° per hour at the lunar poles and the state is held constant between samples, so changes shorter than the 60-minute step are not resolved.",
+  "Sites are comparable only within this analysis (same window and step). A site is reported as leading only when its minimum exceeds every other site's maximum by more than 0.5 percentage points; overlapping or closer values do not support a ranking.",
+  "A range (minimum to maximum) is not a probability distribution; no value inside it is more likely than another.",
+  "GEOMETRIC analysis: the horizon is the smooth 0° lunar sphere. Terrain shadowing is not modelled, so real illumination at polar sites can be far lower. No terrain-aware value is reported."
+ ]
+}

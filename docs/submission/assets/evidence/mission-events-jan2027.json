@@ -1,0 +1,662 @@
+{
+ "analysis_id": "c10e11f3-f469-45a0-af91-6733691239d4",
+ "mission_name": "South-pole site trade study",
+ "horizon_model": "GEOMETRIC",
+ "data_quality": "EPHEMERIS_GEOMETRIC",
+ "algorithm_version": "0.3.1-phase3.3",
+ "terrain_engine_version": null,
+ "start_utc": "2027-01-01T00:00:00Z",
+ "end_utc": "2027-01-15T00:00:00Z",
+ "first_sample_utc": "2027-01-01T00:00:00Z",
+ "last_sample_utc": "2027-01-15T00:00:00Z",
+ "time_step_minutes": 60,
+ "reference_utc": "2027-01-01T00:00:00Z",
+ "reference_mode": "WINDOW_START",
+ "generated_at_utc": "2026-11-15T11:50:12.714348Z",
+ "events_contract_version": "7a.2",
+ "event_time_semantics": "Each event lies in the half-open bracket (bracket_start_utc, bracket_end_utc] between two stored samples; no event time is interpolated. bracket_minutes is the timing uncertainty. Countdowns are ranges measured from reference_utc.",
+ "sites": [
+  {
+   "site_index": 0,
+   "label": "Shackleton Rim — Point A",
+   "latitude_deg": -89.68,
+   "longitude_deg": -166.0,
+   "landing_site_id": "shackleton-rim-a",
+   "dem_site_id": null,
+   "terrain_complete_coverage_fraction": null,
+   "sun": {
+    "body": "SUN",
+    "nominal_angular_radius_deg": 0.2666,
+    "geometric": {
+     "horizon": "GEOMETRIC",
+     "status": "NO_EVENT_IN_WINDOW",
+     "current": {
+      "t": "2027-01-01T00:00:00Z",
+      "state": "VISIBLE",
+      "elevation_deg": 1.127972,
+      "horizon_deg": 0.0,
+      "not_visible_reason": null,
+      "unknown_reason": null
+     },
+     "next_change": null,
+     "next_confirmed_event": null,
+     "next_known": null,
+     "no_change_through_utc": "2027-01-15T00:00:00Z",
+     "sample_count": 337,
+     "unknown_sample_count": 0,
+     "transitions": [],
+     "transitions_truncated": false
+    },
+    "terrain": null
+   },
+   "earth": {
+    "body": "EARTH",
+    "nominal_angular_radius_deg": 0.95,
+    "geometric": {
+     "horizon": "GEOMETRIC",
+     "status": "EVENT_CONFIRMED",
+     "current": {
+      "t": "2027-01-01T00:00:00Z",
+      "state": "NOT_VISIBLE",
+      "elevation_deg": -6.565823,
+      "horizon_deg": 0.0,
+      "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+      "unknown_reason": null
+     },
+     "next_change": {
+      "kind": "RISE",
+      "confirmed": true,
+      "from_state": "NOT_VISIBLE",
+      "to_state": "VISIBLE",
+      "bracket_start_utc": "2027-01-11T02:00:00Z",
+      "bracket_end_utc": "2027-01-11T03:00:00Z",
+      "bracket_minutes": 60.0,
+      "before": {
+       "t": "2027-01-11T02:00:00Z",
+       "state": "NOT_VISIBLE",
+       "elevation_deg": -0.028081,
+       "horizon_deg": 0.0,
+       "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+       "unknown_reason": null
+      },
+      "after": {
+       "t": "2027-01-11T03:00:00Z",
+       "state": "VISIBLE",
+       "elevation_deg": 0.03102,
+       "horizon_deg": 0.0,
+       "not_visible_reason": null,
+       "unknown_reason": null
+      },
+      "last_known_before_unknown": null,
+      "differs_from_last_known": null,
+      "unknown_samples_before": 0,
+      "elevation_rate_deg_per_hour": 0.059101,
+      "approx_disc_crossing_hours": 32.0,
+      "countdown": {
+       "earliest_minutes": 14520.0,
+       "latest_minutes": 14580.0,
+       "may_have_occurred": false
+      },
+      "unknown_gap_before": false
+     },
+     "next_confirmed_event": {
+      "kind": "RISE",
+      "confirmed": true,
+      "from_state": "NOT_VISIBLE",
+      "to_state": "VISIBLE",
+      "bracket_start_utc": "2027-01-11T02:00:00Z",
+      "bracket_end_utc": "2027-01-11T03:00:00Z",
+      "bracket_minutes": 60.0,
+      "before": {
+       "t": "2027-01-11T02:00:00Z",
+       "state": "NOT_VISIBLE",
+       "elevation_deg": -0.028081,
+       "horizon_deg": 0.0,
+       "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+       "unknown_reason": null
+      },
+      "after": {
+       "t": "2027-01-11T03:00:00Z",
+       "state": "VISIBLE",
+       "elevation_deg": 0.03102,
+       "horizon_deg": 0.0,
+       "not_visible_reason": null,
+       "unknown_reason": null
+      },
+      "last_known_before_unknown": null,
+      "differs_from_last_known": null,
+      "unknown_samples_before": 0,
+      "elevation_rate_deg_per_hour": 0.059101,
+      "approx_disc_crossing_hours": 32.0,
+      "countdown": {
+       "earliest_minutes": 14520.0,
+       "latest_minutes": 14580.0,
+       "may_have_occurred": false
+      },
+      "unknown_gap_before": false
+     },
+     "next_known": null,
+     "no_change_through_utc": null,
+     "sample_count": 337,
+     "unknown_sample_count": 0,
+     "transitions": [
+      {
+       "kind": "RISE",
+       "confirmed": true,
+       "from_state": "NOT_VISIBLE",
+       "to_state": "VISIBLE",
+       "bracket_start_utc": "2027-01-11T02:00:00Z",
+       "bracket_end_utc": "2027-01-11T03:00:00Z",
+       "bracket_minutes": 60.0,
+       "before": {
+        "t": "2027-01-11T02:00:00Z",
+        "state": "NOT_VISIBLE",
+        "elevation_deg": -0.028081,
+        "horizon_deg": 0.0,
+        "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+        "unknown_reason": null
+       },
+       "after": {
+        "t": "2027-01-11T03:00:00Z",
+        "state": "VISIBLE",
+        "elevation_deg": 0.03102,
+        "horizon_deg": 0.0,
+        "not_visible_reason": null,
+        "unknown_reason": null
+       },
+       "last_known_before_unknown": null,
+       "differs_from_last_known": null,
+       "unknown_samples_before": 0,
+       "elevation_rate_deg_per_hour": 0.059101,
+       "approx_disc_crossing_hours": 32.0,
+       "countdown": null,
+       "unknown_gap_before": null
+      }
+     ],
+     "transitions_truncated": false
+    },
+    "terrain": null
+   }
+  },
+  {
+   "site_index": 1,
+   "label": "Bussey 2010 Point D",
+   "latitude_deg": -88.74,
+   "longitude_deg": 124.5,
+   "landing_site_id": "bussey-2010-point-d",
+   "dem_site_id": null,
+   "terrain_complete_coverage_fraction": null,
+   "sun": {
+    "body": "SUN",
+    "nominal_angular_radius_deg": 0.2666,
+    "geometric": {
+     "horizon": "GEOMETRIC",
+     "status": "NO_EVENT_IN_WINDOW",
+     "current": {
+      "t": "2027-01-01T00:00:00Z",
+      "state": "VISIBLE",
+      "elevation_deg": 0.068471,
+      "horizon_deg": 0.0,
+      "not_visible_reason": null,
+      "unknown_reason": null
+     },
+     "next_change": null,
+     "next_confirmed_event": null,
+     "next_known": null,
+     "no_change_through_utc": "2027-01-15T00:00:00Z",
+     "sample_count": 337,
+     "unknown_sample_count": 0,
+     "transitions": [],
+     "transitions_truncated": false
+    },
+    "terrain": null
+   },
+   "earth": {
+    "body": "EARTH",
+    "nominal_angular_radius_deg": 0.95,
+    "geometric": {
+     "horizon": "GEOMETRIC",
+     "status": "EVENT_CONFIRMED",
+     "current": {
+      "t": "2027-01-01T00:00:00Z",
+      "state": "NOT_VISIBLE",
+      "elevation_deg": -6.824945,
+      "horizon_deg": 0.0,
+      "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+      "unknown_reason": null
+     },
+     "next_change": {
+      "kind": "RISE",
+      "confirmed": true,
+      "from_state": "NOT_VISIBLE",
+      "to_state": "VISIBLE",
+      "bracket_start_utc": "2027-01-11T10:00:00Z",
+      "bracket_end_utc": "2027-01-11T11:00:00Z",
+      "bracket_minutes": 60.0,
+      "before": {
+       "t": "2027-01-11T10:00:00Z",
+       "state": "NOT_VISIBLE",
+       "elevation_deg": -0.054195,
+       "horizon_deg": 0.0,
+       "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+       "unknown_reason": null
+      },
+      "after": {
+       "t": "2027-01-11T11:00:00Z",
+       "state": "VISIBLE",
+       "elevation_deg": 0.003723,
+       "horizon_deg": 0.0,
+       "not_visible_reason": null,
+       "unknown_reason": null
+      },
+      "last_known_before_unknown": null,
+      "differs_from_last_known": null,
+      "unknown_samples_before": 0,
+      "elevation_rate_deg_per_hour": 0.057918,
+      "approx_disc_crossing_hours": 33.0,
+      "countdown": {
+       "earliest_minutes": 15000.0,
+       "latest_minutes": 15060.0,
+       "may_have_occurred": false
+      },
+      "unknown_gap_before": false
+     },
+     "next_confirmed_event": {
+      "kind": "RISE",
+      "confirmed": true,
+      "from_state": "NOT_VISIBLE",
+      "to_state": "VISIBLE",
+      "bracket_start_utc": "2027-01-11T10:00:00Z",
+      "bracket_end_utc": "2027-01-11T11:00:00Z",
+      "bracket_minutes": 60.0,
+      "before": {
+       "t": "2027-01-11T10:00:00Z",
+       "state": "NOT_VISIBLE",
+       "elevation_deg": -0.054195,
+       "horizon_deg": 0.0,
+       "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+       "unknown_reason": null
+      },
+      "after": {
+       "t": "2027-01-11T11:00:00Z",
+       "state": "VISIBLE",
+       "elevation_deg": 0.003723,
+       "horizon_deg": 0.0,
+       "not_visible_reason": null,
+       "unknown_reason": null
+      },
+      "last_known_before_unknown": null,
+      "differs_from_last_known": null,
+      "unknown_samples_before": 0,
+      "elevation_rate_deg_per_hour": 0.057918,
+      "approx_disc_crossing_hours": 33.0,
+      "countdown": {
+       "earliest_minutes": 15000.0,
+       "latest_minutes": 15060.0,
+       "may_have_occurred": false
+      },
+      "unknown_gap_before": false
+     },
+     "next_known": null,
+     "no_change_through_utc": null,
+     "sample_count": 337,
+     "unknown_sample_count": 0,
+     "transitions": [
+      {
+       "kind": "RISE",
+       "confirmed": true,
+       "from_state": "NOT_VISIBLE",
+       "to_state": "VISIBLE",
+       "bracket_start_utc": "2027-01-11T10:00:00Z",
+       "bracket_end_utc": "2027-01-11T11:00:00Z",
+       "bracket_minutes": 60.0,
+       "before": {
+        "t": "2027-01-11T10:00:00Z",
+        "state": "NOT_VISIBLE",
+        "elevation_deg": -0.054195,
+        "horizon_deg": 0.0,
+        "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+        "unknown_reason": null
+       },
+       "after": {
+        "t": "2027-01-11T11:00:00Z",
+        "state": "VISIBLE",
+        "elevation_deg": 0.003723,
+        "horizon_deg": 0.0,
+        "not_visible_reason": null,
+        "unknown_reason": null
+       },
+       "last_known_before_unknown": null,
+       "differs_from_last_known": null,
+       "unknown_samples_before": 0,
+       "elevation_rate_deg_per_hour": 0.057918,
+       "approx_disc_crossing_hours": 33.0,
+       "countdown": null,
+       "unknown_gap_before": null
+      }
+     ],
+     "transitions_truncated": false
+    },
+    "terrain": null
+   }
+  },
+  {
+   "site_index": 2,
+   "label": "Malapert Massif (approx.)",
+   "latitude_deg": -86.0,
+   "longitude_deg": 2.9,
+   "landing_site_id": "malapert-massif",
+   "dem_site_id": null,
+   "terrain_complete_coverage_fraction": null,
+   "sun": {
+    "body": "SUN",
+    "nominal_angular_radius_deg": 0.2666,
+    "geometric": {
+     "horizon": "GEOMETRIC",
+     "status": "EVENT_CONFIRMED",
+     "current": {
+      "t": "2027-01-01T00:00:00Z",
+      "state": "VISIBLE",
+      "elevation_deg": 0.332288,
+      "horizon_deg": 0.0,
+      "not_visible_reason": null,
+      "unknown_reason": null
+     },
+     "next_change": {
+      "kind": "SET",
+      "confirmed": true,
+      "from_state": "VISIBLE",
+      "to_state": "NOT_VISIBLE",
+      "bracket_start_utc": "2027-01-01T09:00:00Z",
+      "bracket_end_utc": "2027-01-01T10:00:00Z",
+      "bracket_minutes": 60.0,
+      "before": {
+       "t": "2027-01-01T09:00:00Z",
+       "state": "VISIBLE",
+       "elevation_deg": 0.015162,
+       "horizon_deg": 0.0,
+       "not_visible_reason": null,
+       "unknown_reason": null
+      },
+      "after": {
+       "t": "2027-01-01T10:00:00Z",
+       "state": "NOT_VISIBLE",
+       "elevation_deg": -0.019717,
+       "horizon_deg": 0.0,
+       "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+       "unknown_reason": null
+      },
+      "last_known_before_unknown": null,
+      "differs_from_last_known": null,
+      "unknown_samples_before": 0,
+      "elevation_rate_deg_per_hour": -0.034879,
+      "approx_disc_crossing_hours": 15.0,
+      "countdown": {
+       "earliest_minutes": 540.0,
+       "latest_minutes": 600.0,
+       "may_have_occurred": false
+      },
+      "unknown_gap_before": false
+     },
+     "next_confirmed_event": {
+      "kind": "SET",
+      "confirmed": true,
+      "from_state": "VISIBLE",
+      "to_state": "NOT_VISIBLE",
+      "bracket_start_utc": "2027-01-01T09:00:00Z",
+      "bracket_end_utc": "2027-01-01T10:00:00Z",
+      "bracket_minutes": 60.0,
+      "before": {
+       "t": "2027-01-01T09:00:00Z",
+       "state": "VISIBLE",
+       "elevation_deg": 0.015162,
+       "horizon_deg": 0.0,
+       "not_visible_reason": null,
+       "unknown_reason": null
+      },
+      "after": {
+       "t": "2027-01-01T10:00:00Z",
+       "state": "NOT_VISIBLE",
+       "elevation_deg": -0.019717,
+       "horizon_deg": 0.0,
+       "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+       "unknown_reason": null
+      },
+      "last_known_before_unknown": null,
+      "differs_from_last_known": null,
+      "unknown_samples_before": 0,
+      "elevation_rate_deg_per_hour": -0.034879,
+      "approx_disc_crossing_hours": 15.0,
+      "countdown": {
+       "earliest_minutes": 540.0,
+       "latest_minutes": 600.0,
+       "may_have_occurred": false
+      },
+      "unknown_gap_before": false
+     },
+     "next_known": null,
+     "no_change_through_utc": null,
+     "sample_count": 337,
+     "unknown_sample_count": 0,
+     "transitions": [
+      {
+       "kind": "SET",
+       "confirmed": true,
+       "from_state": "VISIBLE",
+       "to_state": "NOT_VISIBLE",
+       "bracket_start_utc": "2027-01-01T09:00:00Z",
+       "bracket_end_utc": "2027-01-01T10:00:00Z",
+       "bracket_minutes": 60.0,
+       "before": {
+        "t": "2027-01-01T09:00:00Z",
+        "state": "VISIBLE",
+        "elevation_deg": 0.015162,
+        "horizon_deg": 0.0,
+        "not_visible_reason": null,
+        "unknown_reason": null
+       },
+       "after": {
+        "t": "2027-01-01T10:00:00Z",
+        "state": "NOT_VISIBLE",
+        "elevation_deg": -0.019717,
+        "horizon_deg": 0.0,
+        "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+        "unknown_reason": null
+       },
+       "last_known_before_unknown": null,
+       "differs_from_last_known": null,
+       "unknown_samples_before": 0,
+       "elevation_rate_deg_per_hour": -0.034879,
+       "approx_disc_crossing_hours": 15.0,
+       "countdown": null,
+       "unknown_gap_before": null
+      },
+      {
+       "kind": "RISE",
+       "confirmed": true,
+       "from_state": "NOT_VISIBLE",
+       "to_state": "VISIBLE",
+       "bracket_start_utc": "2027-01-14T01:00:00Z",
+       "bracket_end_utc": "2027-01-14T02:00:00Z",
+       "bracket_minutes": 60.0,
+       "before": {
+        "t": "2027-01-14T01:00:00Z",
+        "state": "NOT_VISIBLE",
+        "elevation_deg": -0.017266,
+        "horizon_deg": 0.0,
+        "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+        "unknown_reason": null
+       },
+       "after": {
+        "t": "2027-01-14T02:00:00Z",
+        "state": "VISIBLE",
+        "elevation_deg": 0.016368,
+        "horizon_deg": 0.0,
+        "not_visible_reason": null,
+        "unknown_reason": null
+       },
+       "last_known_before_unknown": null,
+       "differs_from_last_known": null,
+       "unknown_samples_before": 0,
+       "elevation_rate_deg_per_hour": 0.033634,
+       "approx_disc_crossing_hours": 16.0,
+       "countdown": null,
+       "unknown_gap_before": null
+      }
+     ],
+     "transitions_truncated": false
+    },
+    "terrain": null
+   },
+   "earth": {
+    "body": "EARTH",
+    "nominal_angular_radius_deg": 0.95,
+    "geometric": {
+     "horizon": "GEOMETRIC",
+     "status": "EVENT_CONFIRMED",
+     "current": {
+      "t": "2027-01-01T00:00:00Z",
+      "state": "NOT_VISIBLE",
+      "elevation_deg": -2.260675,
+      "horizon_deg": 0.0,
+      "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+      "unknown_reason": null
+     },
+     "next_change": {
+      "kind": "RISE",
+      "confirmed": true,
+      "from_state": "NOT_VISIBLE",
+      "to_state": "VISIBLE",
+      "bracket_start_utc": "2027-01-07T21:00:00Z",
+      "bracket_end_utc": "2027-01-07T22:00:00Z",
+      "bracket_minutes": 60.0,
+      "before": {
+       "t": "2027-01-07T21:00:00Z",
+       "state": "NOT_VISIBLE",
+       "elevation_deg": -0.008031,
+       "horizon_deg": 0.0,
+       "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+       "unknown_reason": null
+      },
+      "after": {
+       "t": "2027-01-07T22:00:00Z",
+       "state": "VISIBLE",
+       "elevation_deg": 0.040149,
+       "horizon_deg": 0.0,
+       "not_visible_reason": null,
+       "unknown_reason": null
+      },
+      "last_known_before_unknown": null,
+      "differs_from_last_known": null,
+      "unknown_samples_before": 0,
+      "elevation_rate_deg_per_hour": 0.04818,
+      "approx_disc_crossing_hours": 39.0,
+      "countdown": {
+       "earliest_minutes": 9900.0,
+       "latest_minutes": 9960.0,
+       "may_have_occurred": false
+      },
+      "unknown_gap_before": false
+     },
+     "next_confirmed_event": {
+      "kind": "RISE",
+      "confirmed": true,
+      "from_state": "NOT_VISIBLE",
+      "to_state": "VISIBLE",
+      "bracket_start_utc": "2027-01-07T21:00:00Z",
+      "bracket_end_utc": "2027-01-07T22:00:00Z",
+      "bracket_minutes": 60.0,
+      "before": {
+       "t": "2027-01-07T21:00:00Z",
+       "state": "NOT_VISIBLE",
+       "elevation_deg": -0.008031,
+       "horizon_deg": 0.0,
+       "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+       "unknown_reason": null
+      },
+      "after": {
+       "t": "2027-01-07T22:00:00Z",
+       "state": "VISIBLE",
+       "elevation_deg": 0.040149,
+       "horizon_deg": 0.0,
+       "not_visible_reason": null,
+       "unknown_reason": null
+      },
+      "last_known_before_unknown": null,
+      "differs_from_last_known": null,
+      "unknown_samples_before": 0,
+      "elevation_rate_deg_per_hour": 0.04818,
+      "approx_disc_crossing_hours": 39.0,
+      "countdown": {
+       "earliest_minutes": 9900.0,
+       "latest_minutes": 9960.0,
+       "may_have_occurred": false
+      },
+      "unknown_gap_before": false
+     },
+     "next_known": null,
+     "no_change_through_utc": null,
+     "sample_count": 337,
+     "unknown_sample_count": 0,
+     "transitions": [
+      {
+       "kind": "RISE",
+       "confirmed": true,
+       "from_state": "NOT_VISIBLE",
+       "to_state": "VISIBLE",
+       "bracket_start_utc": "2027-01-07T21:00:00Z",
+       "bracket_end_utc": "2027-01-07T22:00:00Z",
+       "bracket_minutes": 60.0,
+       "before": {
+        "t": "2027-01-07T21:00:00Z",
+        "state": "NOT_VISIBLE",
+        "elevation_deg": -0.008031,
+        "horizon_deg": 0.0,
+        "not_visible_reason": "BELOW_GEOMETRIC_HORIZON",
+        "unknown_reason": null
+       },
+       "after": {
+        "t": "2027-01-07T22:00:00Z",
+        "state": "VISIBLE",
+        "elevation_deg": 0.040149,
+        "horizon_deg": 0.0,
+        "not_visible_reason": null,
+        "unknown_reason": null
+       },
+       "last_known_before_unknown": null,
+       "differs_from_last_known": null,
+       "unknown_samples_before": 0,
+       "elevation_rate_deg_per_hour": 0.04818,
+       "approx_disc_crossing_hours": 39.0,
+       "countdown": null,
+       "unknown_gap_before": null
+      }
+     ],
+     "transitions_truncated": false
+    },
+    "terrain": null
+   }
+  }
+ ],
+ "provenance": [
+  {
+   "source_id": "stored-visibility-timelines",
+   "description": "Per-body Az/El arrays persisted at analysis time in visibility_timelines (SUN + EARTH).",
+   "version": "0.3.1-phase3.3"
+  },
+  {
+   "source_id": "jpl-horizons",
+   "description": "Original Az/El source for the stored analysis (not re-fetched).",
+   "version": null
+  }
+ ],
+ "limitations": [
+  "Events are derived only from stored per-epoch states; no new ephemeris is fetched and no event time is interpolated.",
+  "A confirmed RISE/SET requires two adjacent known samples. It proves a net state change inside the bracket, not exactly one crossing.",
+  "Nothing is confirmed across UNKNOWN samples: a state that differs after an UNKNOWN run is reported as RESOLVES_* with differs_from_last_known, never as a rise or set.",
+  "NO_EVENT_IN_WINDOW means no state change at the sampled epochs after the reference; shorter excursions between samples cannot be excluded.",
+  "Geometric events are disc-CENTRE crossings of the 0° smooth-sphere horizon. At polar sites the full disc can take many hours to cross (approx_disc_crossing_hours); the bracket is not a moment of darkness or light.",
+  "Sun rise/set here is line-of-sight to the disc centre only — not power output. Earth events are Direct-to-Earth visibility potential — not a link budget.",
+  "GEOMETRIC analysis: NOT_VISIBLE means below the smooth-sphere horizon. Terrain obstruction is not modelled and no terrain events are reported."
+ ]
+}
