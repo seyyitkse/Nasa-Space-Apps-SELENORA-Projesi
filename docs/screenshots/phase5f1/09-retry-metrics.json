@@ -1,0 +1,30 @@
+{
+  "startup:hillshade": {
+    "bounds": [
+      -64000,
+      -64000,
+      64000,
+      64000
+    ],
+    "cache": "HIT",
+    "elapsedMs": 266,
+    "layer": "ldem-80s-80mpp-hill",
+    "loadMs": 17.700000002980232,
+    "requestMs": 72.80000000447035,
+    "status": "ready"
+  },
+  "startup:photo": {
+    "bounds": [
+      -64000,
+      -64000,
+      64000,
+      64000
+    ],
+    "cache": "HIT",
+    "elapsedMs": 26270.60000000149,
+    "layer": "lroc-wac-south-summer",
+    "loadMs": 31.30000000447035,
+    "requestMs": 39.900000005960464,
+    "status": "ready"
+  }
+}

@@ -125,3 +125,21 @@ This is **not** a flat-Moon assumption.
 2. Barker et al., 2021, *Planet. Space Sci.* 203, 105119 — https://doi.org/10.1016/j.pss.2020.105119  
 3. PGDA product 78 — https://pgda.gsfc.nasa.gov/products/78  
 4. Mazarico et al., 2011, *Icarus* 211 — site numbering context for Site01/Site04  
+5. LRO/LGCWG lunar coordinate white paper — https://science.nasa.gov/wp-content/uploads/2024/01/luncoordwhitepaper-10-08.pdf  
+6. NASA SVS #14959 Moon 3D Models (2026) — https://svs.gsfc.nasa.gov/14959/  
+
+---
+
+## 9. Phase 6B — 3D globe markers (appendix)
+
+**Full report:** `docs/PHASE6B_GLOBE_DATA_REPORT.md`
+
+| Topic | Decision |
+|-------|----------|
+| Marker lon/lat | Same planetocentric / east-positive values as `/api/v1/sites` and Horizons `SITE_COORD` |
+| Cartesian helper | `backend/app/science/lunar_sphere.py` — MOON_ME sphere (+Z north, +X lon 0°, +Y lon +90°E) |
+| Globe API | `GET /api/v1/globe/sites` (read-only enrichment; no duplicate DB; `not_nasa_landing_recommendation`) |
+| SVS `moon_small.glb` | Inspected: geometry axes match MOON_ME; UV not vanilla equirect — place markers in mesh body frame, not from UV |
+| Seed coordinates | Unchanged; still `APPROXIMATE_REFERENCE` |
+
+Do **not** assert centimetre identity between the web GLB texture and LOLA DEM control. Marker placement targets **degree-level** visual correctness for the interactive globe.

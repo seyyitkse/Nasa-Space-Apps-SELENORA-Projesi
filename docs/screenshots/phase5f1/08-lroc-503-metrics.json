@@ -1,0 +1,19 @@
+{
+  "firstRasterMs": "266.0",
+  "rasters": {
+    "startup:hillshade": {
+      "bounds": [
+        -64000,
+        -64000,
+        64000,
+        64000
+      ],
+      "cache": "HIT",
+      "elapsedMs": 266,
+      "layer": "ldem-80s-80mpp-hill",
+      "loadMs": 17.700000002980232,
+      "requestMs": 72.80000000447035,
+      "status": "ready"
+    }
+  }
+}

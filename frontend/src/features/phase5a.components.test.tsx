@@ -22,11 +22,18 @@ const epoch = (i: number, sun: EpochState['sun']): EpochState => ({
   iso: new Date(T0 + i * H).toISOString(),
   sunElevation: sun === 'UNKNOWN' ? null : 1,
   earthElevation: -1,
+  sunAzimuth: null,
+  earthAzimuth: null,
   sun,
   earth: 'BELOW_HORIZON',
   sunGeometric: sun === 'UNKNOWN' ? 'UNKNOWN' : 'VISIBLE',
   earthGeometric: 'BELOW_HORIZON',
   joint: sun === 'UNKNOWN' ? 'UNKNOWN' : 'NOT_VISIBLE',
+  sunTerrainHorizonDeg: null,
+  earthTerrainHorizonDeg: null,
+  holdHours: 1,
+  contributesDuration: true,
+  authoritative: false,
 })
 const epochs = [epoch(0, 'VISIBLE'), epoch(1, 'BLOCKED'), epoch(2, 'UNKNOWN'), epoch(3, 'UNRESOLVED')]
 
@@ -101,7 +108,7 @@ describe('HorizonPanorama', () => {
     expect(profileRuns([0, 1, 2, 3, 4], [1, 2, null, 3, 4]).map((r) => r.length)).toEqual([2, 2])
     const { container } = wrap(
       <HorizonPanorama
-        profile={{ latitude_deg: -89.68, longitude_deg: -166, observer_height_m: 2, azimuth_deg: [0, 90, 180, 270], horizon_elevation_deg: [1, null, 2, 1.5], complete: [true, false, false, true], max_range_m: 12000, complete_coverage_fraction: 0.5, quality_label: 'LOCAL_TERRAIN_PARTIAL', dem_site_id: 'Site04', resolution_m: 5, dataset_version: 'fixture', citation: 'fixture' }}
+        profile={{ latitude_deg: -89.68, longitude_deg: -166, observer_height_m: 2, azimuth_deg: [0, 90, 180, 270], horizon_elevation_deg: [1, null, 2, 1.5], complete: [true, false, false, true], blocker_m: [100, null, 200, 300], max_range_m: 12000, complete_coverage_fraction: 0.5, quality_label: 'LOCAL_TERRAIN_PARTIAL', dem_site_id: 'Site04', resolution_m: 5, dataset_version: 'fixture', citation: 'fixture' }}
         bodies={[{ body: 'sun', azimuthDeg: 86, elevationDeg: 1.49 }]}
       />,
     )

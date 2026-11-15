@@ -1,0 +1,112 @@
+[
+  {
+    "scenario": "prepared-overview-import",
+    "route": "/api/v1/maps/tiles/lroc-wac-south-summer/0/0/0.png",
+    "status": 200,
+    "bytes": 85775,
+    "cache": "HIT",
+    "crs": "IAU2000:30120",
+    "bounds": "-768000.0,0.0,0.0,768000.0",
+    "key": "3112887134893a6861cea37db5eae435747767d7805f52b34ddf957658c4ea23",
+    "seconds": 0.04607
+  },
+  {
+    "scenario": "prepared-overview-hit",
+    "route": "/api/v1/maps/tiles/lroc-wac-south-summer/0/0/0.png",
+    "status": 200,
+    "bytes": 85775,
+    "cache": "HIT",
+    "crs": "IAU2000:30120",
+    "bounds": "-768000.0,0.0,0.0,768000.0",
+    "key": "3112887134893a6861cea37db5eae435747767d7805f52b34ddf957658c4ea23",
+    "seconds": 0.01537
+  },
+  {
+    "scenario": "new-region-cold",
+    "route": "/api/v1/maps/tiles/lroc-wac-south-summer/5/42/40.png",
+    "status": 200,
+    "bytes": 66009,
+    "cache": "MISS",
+    "crs": "IAU2000:30120",
+    "bounds": "240000.0,-216000.0,264000.0,-192000.0",
+    "key": "321180cef9c3bc72eda705ec6f94da3f71298fe1687c21c2bd92303d3501a37c",
+    "seconds": 3.59107
+  },
+  {
+    "scenario": "new-region-warm",
+    "route": "/api/v1/maps/tiles/lroc-wac-south-summer/5/42/40.png",
+    "status": 200,
+    "bytes": 66009,
+    "cache": "HIT",
+    "crs": "IAU2000:30120",
+    "bounds": "240000.0,-216000.0,264000.0,-192000.0",
+    "key": "321180cef9c3bc72eda705ec6f94da3f71298fe1687c21c2bd92303d3501a37c",
+    "seconds": 0.01946
+  },
+  {
+    "scenario": "NAC-native-2m-cold",
+    "route": "/api/v1/maps/tiles/lroc-nac-2m-south-pole/10/1021/1036.png",
+    "status": 200,
+    "bytes": 226111,
+    "cache": "MISS",
+    "crs": "IAU2000:30120",
+    "bounds": "-2250.0,-9750.0,-1500.0,-9000.0",
+    "key": "28d6980b764c00cbdbb361c4a4ca2ea27a673e8872cc520e6a5d561e9644d506",
+    "seconds": 9.26857
+  },
+  {
+    "scenario": "NAC-native-2m-warm",
+    "route": "/api/v1/maps/tiles/lroc-nac-2m-south-pole/10/1021/1036.png",
+    "status": 200,
+    "bytes": 226111,
+    "cache": "HIT",
+    "crs": "IAU2000:30120",
+    "bounds": "-2250.0,-9750.0,-1500.0,-9000.0",
+    "key": "28d6980b764c00cbdbb361c4a4ca2ea27a673e8872cc520e6a5d561e9644d506",
+    "seconds": 0.01313
+  },
+  {
+    "scenario": "concurrent-0",
+    "route": "/api/v1/maps/tiles/lroc-wac-south-summer/5/40/41.png",
+    "status": 200,
+    "bytes": 61761,
+    "cache": "COALESCED",
+    "crs": "IAU2000:30120",
+    "bounds": "192000.0,-240000.0,216000.0,-216000.0",
+    "key": "ec23a515416bac66e79b55c17b03c82988d6638583c068e670880ef8522bdbd3",
+    "seconds": 2.96961
+  },
+  {
+    "scenario": "concurrent-1",
+    "route": "/api/v1/maps/tiles/lroc-wac-south-summer/5/40/41.png",
+    "status": 200,
+    "bytes": 61761,
+    "cache": "MISS",
+    "crs": "IAU2000:30120",
+    "bounds": "192000.0,-240000.0,216000.0,-216000.0",
+    "key": "ec23a515416bac66e79b55c17b03c82988d6638583c068e670880ef8522bdbd3",
+    "seconds": 2.96903
+  },
+  {
+    "scenario": "legacy-prepared-128km",
+    "route": "/api/v1/maps/preview?layer_id=lroc-wac-south-summer&left_m=-64000&bottom_m=-64000&right_m=64000&top_m=64000&max_edge_px=768",
+    "status": 200,
+    "bytes": 524427,
+    "cache": "HIT",
+    "crs": "IAU2000:30120",
+    "bounds": "-64000.000,-64000.000,64000.000,64000.000",
+    "key": "a7d140abcc996bab04039bb62497f8274d8d6efa8c692de7c0f7569c393a8c18",
+    "seconds": 0.0338
+  },
+  {
+    "scenario": "legacy-prepared-128km-repeat",
+    "route": "/api/v1/maps/preview?layer_id=lroc-wac-south-summer&left_m=-64000&bottom_m=-64000&right_m=64000&top_m=64000&max_edge_px=768",
+    "status": 200,
+    "bytes": 524427,
+    "cache": "HIT",
+    "crs": "IAU2000:30120",
+    "bounds": "-64000.000,-64000.000,64000.000,64000.000",
+    "key": "a7d140abcc996bab04039bb62497f8274d8d6efa8c692de7c0f7569c393a8c18",
+    "seconds": 0.00349
+  }
+]

@@ -82,8 +82,9 @@ export function GeometricTerrainCompare({ sites }: { sites: SiteResult[] }) {
                     <td className="py-2 pr-3 font-mono text-fg-2">{k.fmt(k.geo(s))}</td>
                     <td className="py-2 pr-3 font-mono text-fg">{k.fmt(k.ter(s))}</td>
                     <td className="py-2 font-mono text-fg-2">
-                      {k.delta(s) > 0 ? '+' : ''}
-                      {k.fmt(k.delta(s))}
+                      {k.delta(s) == null
+                        ? '—'
+                        : `${(k.delta(s) as number) > 0 ? '+' : ''}${k.fmt(k.delta(s) as number)}`}
                     </td>
                   </tr>
                 )),

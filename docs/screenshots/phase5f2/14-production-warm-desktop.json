@@ -1,0 +1,632 @@
+{
+  "firstRasterMs": "236.8",
+  "firstRasterNavMs": "642.0",
+  "metrics": {
+    "activeRequests": 0,
+    "alphaMaskBytes": 230400,
+    "decodedBytesEstimate": 4838400,
+    "painted": false,
+    "status": {
+      "detail": "ready",
+      "failed": 0,
+      "fallback": false,
+      "loaded": 9,
+      "nac": "off",
+      "outsideLoaded": false,
+      "overviewReady": true,
+      "photoCoverage": "full",
+      "requested": 9,
+      "resolutionM": 100,
+      "unavailable": false
+    },
+    "tiles": [
+      {
+        "bytes": 57895,
+        "cache": "BUNDLED",
+        "coord": [
+          5,
+          31,
+          32
+        ],
+        "layer": "lroc-wac-south-summer",
+        "nodata": 0,
+        "requestMs": 28.700000002980232,
+        "state": "ready"
+      },
+      {
+        "coord": [
+          5,
+          31,
+          32
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "bytes": 58415,
+        "cache": "BUNDLED",
+        "coord": [
+          5,
+          32,
+          32
+        ],
+        "layer": "lroc-wac-south-summer",
+        "nodata": 0,
+        "requestMs": 41.70000000298023,
+        "state": "ready"
+      },
+      {
+        "coord": [
+          5,
+          32,
+          32
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          5,
+          31,
+          31
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "bytes": 36910,
+        "cache": "BUNDLED",
+        "coord": [
+          5,
+          31,
+          31
+        ],
+        "layer": "lroc-wac-south-summer",
+        "nodata": 0,
+        "requestMs": 50.70000000298023,
+        "state": "ready"
+      },
+      {
+        "coord": [
+          5,
+          31,
+          33
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "bytes": 48689,
+        "cache": "BUNDLED",
+        "coord": [
+          5,
+          31,
+          33
+        ],
+        "layer": "lroc-wac-south-summer",
+        "nodata": 0,
+        "requestMs": 63.60000000149011,
+        "state": "ready"
+      },
+      {
+        "bytes": 63829,
+        "cache": "BUNDLED",
+        "coord": [
+          5,
+          32,
+          31
+        ],
+        "layer": "lroc-wac-south-summer",
+        "nodata": 0,
+        "requestMs": 202.5999999940395,
+        "state": "ready"
+      },
+      {
+        "coord": [
+          5,
+          32,
+          31
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "bytes": 46536,
+        "cache": "BUNDLED",
+        "coord": [
+          5,
+          30,
+          32
+        ],
+        "layer": "lroc-wac-south-summer",
+        "nodata": 0,
+        "requestMs": 212.89999999850988,
+        "state": "ready"
+      },
+      {
+        "coord": [
+          5,
+          30,
+          32
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "bytes": 45147,
+        "cache": "BUNDLED",
+        "coord": [
+          5,
+          32,
+          33
+        ],
+        "layer": "lroc-wac-south-summer",
+        "nodata": 0,
+        "requestMs": 222.5,
+        "state": "ready"
+      },
+      {
+        "coord": [
+          5,
+          32,
+          33
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          5,
+          30,
+          31
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "bytes": 51390,
+        "cache": "BUNDLED",
+        "coord": [
+          5,
+          30,
+          31
+        ],
+        "layer": "lroc-wac-south-summer",
+        "nodata": 0,
+        "requestMs": 231.39999999850988,
+        "state": "ready"
+      },
+      {
+        "bytes": 20248,
+        "cache": "BUNDLED",
+        "coord": [
+          5,
+          30,
+          33
+        ],
+        "layer": "lroc-wac-south-summer",
+        "nodata": 0,
+        "requestMs": 245.20000000298023,
+        "state": "ready"
+      },
+      {
+        "coord": [
+          5,
+          30,
+          33
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          4,
+          15,
+          16
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "bytes": 48808,
+        "cache": "BUNDLED",
+        "coord": [
+          4,
+          15,
+          16
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "nodata": 0,
+        "requestMs": 154.80000000447035,
+        "state": "ready"
+      },
+      {
+        "coord": [
+          4,
+          16,
+          16
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "bytes": 47520,
+        "cache": "BUNDLED",
+        "coord": [
+          4,
+          16,
+          16
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "nodata": 0,
+        "requestMs": 161.89999999850988,
+        "state": "ready"
+      },
+      {
+        "coord": [
+          4,
+          15,
+          15
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "bytes": 49026,
+        "cache": "BUNDLED",
+        "coord": [
+          4,
+          15,
+          15
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "nodata": 0,
+        "requestMs": 170.60000000149012,
+        "state": "ready"
+      },
+      {
+        "coord": [
+          4,
+          16,
+          15
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "bytes": 47865,
+        "cache": "BUNDLED",
+        "coord": [
+          4,
+          16,
+          15
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "nodata": 0,
+        "requestMs": 184.10000000149012,
+        "state": "ready"
+      },
+      {
+        "coord": [
+          3,
+          7,
+          8
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          3,
+          7,
+          8
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          3,
+          8,
+          8
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          3,
+          8,
+          8
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          3,
+          7,
+          7
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          3,
+          7,
+          7
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          3,
+          8,
+          7
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          3,
+          8,
+          7
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          2,
+          3,
+          4
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          2,
+          3,
+          4
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          2,
+          4,
+          4
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          2,
+          4,
+          4
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          2,
+          3,
+          3
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          2,
+          3,
+          3
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          2,
+          4,
+          3
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          2,
+          4,
+          3
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "bytes": 46593,
+        "cache": "BUNDLED",
+        "coord": [
+          1,
+          1,
+          2
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "nodata": 0.3732638888888889,
+        "requestMs": 70.70000000298023,
+        "state": "ready"
+      },
+      {
+        "bytes": 88904,
+        "cache": "BUNDLED",
+        "coord": [
+          1,
+          1,
+          2
+        ],
+        "layer": "lroc-wac-south-summer",
+        "nodata": 0,
+        "requestMs": 84.89999999850988,
+        "state": "ready"
+      },
+      {
+        "bytes": 45099,
+        "cache": "BUNDLED",
+        "coord": [
+          1,
+          2,
+          2
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "nodata": 0.3732638888888889,
+        "requestMs": 88.39999999850988,
+        "state": "ready"
+      },
+      {
+        "bytes": 91127,
+        "cache": "BUNDLED",
+        "coord": [
+          1,
+          2,
+          2
+        ],
+        "layer": "lroc-wac-south-summer",
+        "nodata": 0,
+        "requestMs": 96.69999999552964,
+        "state": "ready"
+      },
+      {
+        "bytes": 47692,
+        "cache": "BUNDLED",
+        "coord": [
+          1,
+          1,
+          1
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "nodata": 0.3732638888888889,
+        "requestMs": 108.29999999701975,
+        "state": "ready"
+      },
+      {
+        "bytes": 96558,
+        "cache": "BUNDLED",
+        "coord": [
+          1,
+          1,
+          1
+        ],
+        "layer": "lroc-wac-south-summer",
+        "nodata": 0,
+        "requestMs": 135.5,
+        "state": "ready"
+      },
+      {
+        "bytes": 48274,
+        "cache": "BUNDLED",
+        "coord": [
+          1,
+          2,
+          1
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "nodata": 0.3732638888888889,
+        "requestMs": 133.79999999701977,
+        "state": "ready"
+      },
+      {
+        "bytes": 92881,
+        "cache": "BUNDLED",
+        "coord": [
+          1,
+          2,
+          1
+        ],
+        "layer": "lroc-wac-south-summer",
+        "nodata": 0,
+        "requestMs": 142.5,
+        "state": "ready"
+      },
+      {
+        "coord": [
+          0,
+          0,
+          1
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          0,
+          0,
+          1
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          0,
+          1,
+          1
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          0,
+          1,
+          1
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          0,
+          0,
+          0
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          0,
+          0,
+          0
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          0,
+          1,
+          0
+        ],
+        "layer": "ldem-80s-80mpp-hill",
+        "state": "cancelled"
+      },
+      {
+        "coord": [
+          0,
+          1,
+          0
+        ],
+        "layer": "lroc-wac-south-summer",
+        "state": "cancelled"
+      }
+    ]
+  },
+  "view": "{\"center\":[-6000,-10000],\"resolution\":71.00591715976331,\"bounds\":[-31704.14201183432,-40106.508875739644,19704.14201183432,20106.508875739644],\"size\":[724,848]}"
+}

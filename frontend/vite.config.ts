@@ -2,19 +2,34 @@
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { fileURLToPath, URL } from 'node:url'
+import { execFileSync } from 'node:child_process'
 import { defineConfig } from 'vite'
 
 const backend = process.env.SELENORA_BACKEND_URL ?? 'http://127.0.0.1:8000'
 const devPort = Number(process.env.SELENORA_WEB_PORT ?? 5173)
+const worktree = fileURLToPath(new URL('..', import.meta.url))
+function git(...args: string[]) {
+  try { return execFileSync('git', ['-C', worktree, ...args], { encoding: 'utf8', timeout: 3000 }).trim() }
+  catch { return 'unknown' }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
+  define: { __SELENORA_BUILD__: JSON.stringify({ phase: '5F.2', worktree, commit: git('rev-parse', 'HEAD'), branch: git('branch', '--show-current') }) },
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+    // Avoid Invalid hook call / null useContext when Recharts prebundles against a
+    // second React copy (common with worktree + shared node_modules junctions).
+    dedupe: ['react', 'react-dom'],
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'recharts'],
   },
   server: {
     port: devPort,
+    // Fail loudly if another worktree/agent already owns the port (no silent steal).
+    strictPort: true,
     // Dev proxy: the browser talks to the Vite origin; no API keys ever reach the client.
     proxy: {
       '/api': { target: backend, changeOrigin: true },

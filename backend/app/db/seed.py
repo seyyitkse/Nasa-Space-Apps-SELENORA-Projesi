@@ -71,6 +71,32 @@ SEED_SITES: list[dict[str, object]] = [
         "description": "Large crater in the south polar region.",
         "coordinate_source": "Approximate feature center, IAU Gazetteer (rounded). Verify before use.",
     },
+    # Bussey et al. (2010) alternate illumination sites — separate from historical Point A/B.
+    # Phase 5C LOLA Site04 analysis shows seeded Point A sits below nearby rim terrain;
+    # these literature points are added as additional candidates only (A/B unchanged).
+    {
+        "id": "bussey-2010-point-c",
+        "name": "Bussey 2010 Point C — de Gerlache rim",
+        "latitude_deg": -88.71,
+        "longitude_deg": -68.7,
+        "description": "Literature illumination candidate on the de Gerlache crater rim "
+        "(Bussey et al. 2010). Not a replacement for Point A/B. Local Site01/04 LOLA "
+        "5 m DEM coverage is not expected; use GEOMETRIC analysis unless a covering DEM is added.",
+        "coordinate_source": "Bussey et al. (2010), Icarus 208, Point C (88.71°S, 68.7°W). "
+        "Kaguya-derived illumination study; verify before scientific use.",
+    },
+    {
+        "id": "bussey-2010-point-d",
+        "name": "Bussey 2010 Point D — Shackleton ridge (most lit in 2020 map)",
+        "latitude_deg": -88.74,
+        "longitude_deg": 124.5,
+        "description": "Literature site reported as the single most illuminated location "
+        "in the Bussey et al. (2010) 2020 annual average map (~86% of year). Separate "
+        "candidate only — Point A/B coordinates are preserved. Outside Site01/04 local "
+        "DEM footprints; TERRAIN mode will report no local coverage.",
+        "coordinate_source": "Bussey et al. (2010), Icarus 208 / abstract: 88.74°S, 124.5°E "
+        "(Point D / most-illuminated place near Shackleton). Verify before scientific use.",
+    },
 ]
 
 

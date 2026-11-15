@@ -73,11 +73,34 @@ def test_preview_rejects_oversized_window(client: TestClient) -> None:
             "layer_id": "lola-site04-5mpp-surf",
             "latitude_deg": -89.68,
             "longitude_deg": -166.0,
-            "half_extent_m": 200_000,
+            # Above Phase 5F polar-overview cap (400 km half-extent).
+            "half_extent_m": 500_000,
         },
     )
     assert r.status_code == 400
     assert r.json()["error"]["code"] == "MAP_SERVICE_ERROR"
+
+
+def test_preview_allows_polar_overview_window(client: TestClient) -> None:
+    """Coarse south-polar context: half-extent up to 400 km must be accepted."""
+    from app.services import terrain_data_service
+
+    if not terrain_data_service.list_dem_tiles():
+        pytest.skip("Local LOLA tiles missing")
+    r = client.get(
+        "/api/v1/maps/preview",
+        params={
+            "layer_id": "lola-site04-5mpp-surf",
+            "latitude_deg": -89.68,
+            "longitude_deg": -166.0,
+            "half_extent_m": 200_000,
+            "max_edge_px": 128,
+        },
+    )
+    assert r.status_code == 200, r.text
+    assert r.headers["content-type"].startswith("image/png")
+    left, bottom, right, top = (float(x) for x in r.headers["X-SELENORA-Bounds-M"].split(","))
+    assert (right - left) > 0 and (top - bottom) > 0
 
 
 def test_elevation_sample_local(client: TestClient) -> None:

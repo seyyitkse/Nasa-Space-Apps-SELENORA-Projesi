@@ -12,7 +12,13 @@ from dataclasses import dataclass
 from typing import Literal
 
 LayerRole = Literal["SCIENCE_VALIDATED_LOCAL", "MAP_VISUALIZATION_ONLY", "REFERENCE_DOC"]
-AccessMode = Literal["local_file", "vsicurl_window", "documentation_only"]
+AccessMode = Literal[
+    "local_file",
+    "vsicurl_window",
+    "documentation_only",
+    "wms_allowlisted",
+    "wmts_allowlisted",
+]
 
 
 @dataclass(frozen=True, slots=True)
@@ -160,6 +166,57 @@ LAYERS: tuple[NasaLayer, ...] = (
         accept_ranges=True,
     ),
     NasaLayer(
+        id="lroc-wac-south-summer",
+        title="LROC WAC South Pole Summer Mosaic (Lunaserv)",
+        provider="ASU LROC / Lunaserv",
+        product_page="https://data.lroc.im-ldi.com/lroc/view_rdr/WAC_ROI_SOUTH_SUMMER",
+        source_url="https://webmap.lroc.asu.edu/lunaserv/wms",
+        access_mode="wms_allowlisted",
+        role="MAP_VISUALIZATION_ONLY",
+        kind="imagery",
+        resolution_m=None,
+        units="unitless DN (visual mosaic)",
+        crs_summary=(
+            "Direct IAU2000:30120 WMS; lunar south polar stereo "
+            "(a=b=1737400 m, lon_0=0, k=1)"
+        ),
+        attribution=(
+            "LROC WAC South Pole Summer Mosaic (WAC_ROI_SOUTH_SUMMER) via ASU Lunaserv "
+            "(https://webmap.lroc.asu.edu/). Product: "
+            "https://data.lroc.im-ldi.com/lroc/view_rdr/WAC_ROI_SOUTH_SUMMER. "
+            "NASA/GSFC/Arizona State University. Static mosaic — not mission-date lighting."
+        ),
+        notes=(
+            "Phase 5E allow-listed WMS layer luna_wac_roi_south_summer "
+            "(official RDR WAC_ROI_SOUTH_SUMMER). "
+            "Use GET /maps/preview or /maps/imagery/sources. Not used for TERRAIN scoring. "
+            "Illumination is baked into the summer mosaic and does not change with analysis epochs."
+        ),
+        approx_bytes=None,
+        accept_ranges=None,
+    ),
+    NasaLayer(
+        id="moon-trek-wac-global",
+        title="NASA Moon Trek LRO WAC Global Mosaic (WMTS)",
+        provider="NASA Moon Trek",
+        product_page=MOON_TREK,
+        source_url=(
+            "https://trek.nasa.gov/tiles/Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02/"
+            "1.0.0/WMTSCapabilities.xml"
+        ),
+        access_mode="wmts_allowlisted",
+        role="REFERENCE_DOC",
+        kind="imagery",
+        resolution_m=None,
+        units=None,
+        crs_summary="EPSG:104903 geographic WMTS (EQ) — not polar-stereo aligned for Explorer",
+        attribution="NASA Moon Trek — LRO WAC Mosaic Global 303 ppd",
+        notes=(
+            "Capabilities verified; preview_enabled=false until polar alignment is proven. "
+            "See GET /maps/imagery/sources for alignment_status=REFERENCE_ONLY."
+        ),
+    ),
+    NasaLayer(
         id="moon-trek",
         title="NASA Moon Trek interactive portal",
         provider="NASA",
@@ -170,11 +227,11 @@ LAYERS: tuple[NasaLayer, ...] = (
         kind="imagery",
         resolution_m=None,
         units=None,
-        crs_summary="Portal-dependent (not embedded by SELENORA without a verified tile API contract)",
+        crs_summary="Portal UI — see moon-trek-wac-global for the verified WMTS capabilities URL",
         attribution="NASA Moon Trek — https://trek.nasa.gov/moon/",
         notes=(
-            "Useful for human exploration of LROC/LOLA layers. SELENORA does not proxy "
-            "Trek tiles until a documented WMTS/WMS endpoint and usage terms are wired."
+            "Human portal. Machine-readable EQ WMTS is catalogued as moon-trek-wac-global "
+            "(REFERENCE_ONLY). Prefer lroc-wac-south-summer for polar Explorer basemap previews."
         ),
     ),
     NasaLayer(
@@ -189,8 +246,11 @@ LAYERS: tuple[NasaLayer, ...] = (
         resolution_m=None,
         units=None,
         crs_summary="n/a — labels/links only (no fabricated polygons)",
-        attribution="NASA news release: candidate regions for Artemis III landing",
-        notes="See GET /api/v1/artemis/regions for curated region labels + official URLs.",
+        attribution="NASA news releases: 2022 thirteen regions + 2024 nine-region update",
+        notes=(
+            "See GET /api/v1/artemis/regions for historical_2022 vs current_2024_shortlist "
+            "classifications. Do not treat 2022 labels as the current Artemis III plan."
+        ),
     ),
 )
 

@@ -9,6 +9,11 @@ from app.core.config import Settings
 from app.main import create_app
 
 
+@pytest.fixture(autouse=True)
+def isolated_map_cache(tmp_path, monkeypatch):  # type: ignore[no-untyped-def]
+    monkeypatch.setenv("SELENORA_MAP_CACHE_DIR", str(tmp_path / "map_previews"))
+
+
 @pytest.fixture
 def settings(tmp_path) -> Settings:  # type: ignore[no-untyped-def]
     return Settings(

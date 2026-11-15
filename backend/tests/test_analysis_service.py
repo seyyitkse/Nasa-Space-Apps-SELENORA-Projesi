@@ -152,7 +152,7 @@ def test_compute_terrain_mode_two_lola_sites() -> None:
     assert result.horizon_model == "TERRAIN"
     # 12 km rays on 16×16 km tiles → honest partial label; no deterministic ranking.
     assert result.data_quality == "LOCAL_TERRAIN_PARTIAL"
-    assert "phase4.1" in result.algorithm_version
+    assert "phase6c-science-h1" in result.algorithm_version
     assert result.recommended_site_label is None
     assert any(p.source_id == "lro-lola" for p in result.provenance)
     for site in result.sites:
@@ -409,6 +409,7 @@ def test_live_two_site_analysis_end_to_end(client: TestClient) -> None:
 
 
 def test_cache_key_includes_data_source_contract() -> None:
+    weights = {"sun_visibility": 40.0, "earth_visibility": 40.0, "joint_visibility": 20.0}
     key = analysis_cache_key(
         sites=[(-89.68, -166.0), (-85.0, 0.0)],
         start_utc=datetime(2026, 12, 1, tzinfo=UTC),
@@ -417,6 +418,7 @@ def test_cache_key_includes_data_source_contract() -> None:
         horizon_model="GEOMETRIC",
         algorithm_version="0.3.0-phase3",
         data_source_version=DATA_SOURCE_CONTRACT,
+        weights=weights,
     )
     other = analysis_cache_key(
         sites=[(-89.68, -166.0), (-85.0, 0.0)],
@@ -426,5 +428,6 @@ def test_cache_key_includes_data_source_contract() -> None:
         horizon_model="GEOMETRIC",
         algorithm_version="0.3.0-phase3",
         data_source_version="synthetic-v1",
+        weights=weights,
     )
     assert key != other

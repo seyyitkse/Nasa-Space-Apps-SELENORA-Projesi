@@ -88,7 +88,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_origins=settings.cors_origins,
         allow_methods=["GET", "POST"],
         allow_headers=["Content-Type", "X-Request-ID", "Accept-Language"],
-        expose_headers=["X-Request-ID", "Server-Timing"],
+        expose_headers=[
+            "X-Request-ID",
+            "Server-Timing",
+            # Required so the SPA can place ImageStatic previews without a proxy.
+            "X-SELENORA-Bounds-M",
+            "X-SELENORA-Size-Px",
+            "X-SELENORA-Layer-Role",
+            "X-SELENORA-Attribution",
+            "X-SELENORA-CRS",
+            "X-SELENORA-Cache",
+            "X-SELENORA-Cache-Key",
+            "X-SELENORA-NoData",
+            "X-SELENORA-Resolution-M",
+        ],
         max_age=600,
     )
     app.add_middleware(RequestContextMiddleware)

@@ -1,8 +1,16 @@
 import type { Messages } from './en'
 import phase5a from './phase5a.tr'
+import phase5d from './phase5d.tr'
+import phase6a from './phase6a.tr'
+import phase6c1 from './phase6c1.tr'
+import phase7a from './phase7a.tr'
 
 const tr: Messages = {
   ...phase5a,
+  ...phase5d,
+  ...phase6a,
+  ...phase6c1,
+  ...phase7a,
   common: {
     appName: 'SELENORA',
     subtitle: 'Yapay Zekâ Destekli Ay Görevi İstihbaratı',
@@ -24,6 +32,8 @@ const tr: Messages = {
     requestId: 'İstek kimliği',
   },
   nav: {
+    moon: '3B Ay',
+    guided: 'Rehberli görev',
     simulator: 'Ufuk Simülatörü',
     windows: 'Görev Pencereleri',
     mission: 'Görev',
@@ -212,6 +222,10 @@ const tr: Messages = {
     runDemo: 'Sentetik önizlemeyi çalıştır',
     goPlanner: 'Planlayıcıda yapılandır',
     loading: 'Kayıtlı analiz yükleniyor…',
+    savedUnavailableTitle: 'Kayıtlı analiz artık kullanılamıyor',
+    savedUnavailableBody: 'Bu kayıtlı analiz kimliği sunucudan geri yüklenemedi. Yerine sentetik bir sonuç gösterilmedi.',
+    restoreLatest: 'Son tamamlanan analizi aç',
+    clearStale: 'Eski seçimi temizle',
     running: 'Analiz sürüyor',
     runningBody: 'Bilimsel motorun bitmesi bekleniyor. Bu sayfa otomatik yenilenir.',
     failed: 'Analiz başarısız oldu.',

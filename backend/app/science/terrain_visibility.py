@@ -119,8 +119,17 @@ def summarize_terrain_pair(
     *,
     times,
     analysis_end_utc,
-) -> tuple[vis.VisibilitySummary, BoolArray, BoolArray, BoolArray, dict]:
-    """Build a VisibilitySummary using terrain-adjusted Sun/Earth masks."""
+) -> tuple[vis.VisibilitySummary, BoolArray, BoolArray, BoolArray, BoolArray, BoolArray, dict]:
+    """Build a VisibilitySummary using terrain-adjusted Sun/Earth masks.
+
+    Returns
+    -------
+    summary, sun_vis, earth_vis, joint, sun_blocked, earth_blocked, meta
+
+    UNKNOWN samples are encoded as NaN so ``summarize`` excludes them from each
+    body's denominator. Blocked masks are returned explicitly for darkness /
+    communication-gap windows (UNKNOWN must never appear as darkness).
+    """
     sun_t = body_vs_terrain(sun_az, sun_el, profile)
     earth_t = body_vs_terrain(earth_az, earth_el, profile)
 
@@ -165,4 +174,4 @@ def summarize_terrain_pair(
         "sun_blocked_fraction": float(np.mean(sun_t.blocked)) if sun_t.blocked.size else 0.0,
         "earth_blocked_fraction": float(np.mean(earth_t.blocked)) if earth_t.blocked.size else 0.0,
     }
-    return summary, sun_vis, earth_vis, joint, meta
+    return summary, sun_vis, earth_vis, joint, sun_t.blocked, earth_t.blocked, meta

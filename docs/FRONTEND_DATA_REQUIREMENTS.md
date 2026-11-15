@@ -1,11 +1,11 @@
-# SELENORA — Frontend ↔ Backend Data Contract (Phase 5B)
+# SELENORA — Frontend ↔ Backend Data Contract (Phase 5C integrated)
 
-**Audience:** Claude (Frontend Phase 5A) + Cursor (Backend Phase 5B)  
-**Backend branch:** `feature/phase5b-nasa-data-services`  
+**Audience:** Integrated SPA + API (`feature/phase5c-integration`)  
+**Merged from:** Phase 5B NASA data services + Phase 5A frontend experience  
 **Preserved science:** Geometric `0.3.1-phase3.3` · Terrain `0.4.1-phase4.1-validation`  
 **Date:** 2026-11-14
 
-This document is the integration contract. Frontend should consume these APIs; backend owns schemas and scientific labels.
+This document is the authoritative integrated contract. Frontend consumes these APIs; backend owns schemas and scientific labels.
 
 ---
 
@@ -126,6 +126,54 @@ When `include_terrain_states=true` and DEM covers the site, each point may inclu
 
 ---
 
+## Phase 5E — authoritative epochs (R1 closed)
+
+### `GET /api/v1/analyses/{analysis_id}/epochs`
+
+Built from stored `visibility_timelines` (full Az/El). **No new Horizons request.**
+
+Top-level fields: `analysis_id`, `mission_name`, `horizon_model`, `data_quality`,
+`algorithm_version`, `start_utc`, `end_utc`, `time_step_minutes`, `sample_count_per_site`,
+`duration_semantics` (always `"[start_utc, end_utc)"`), `sites[]`, `provenance[]`, `limitations[]`.
+
+Per site: `label`, lon/lat, optional `dem_site_id`, `terrain_complete_coverage_fraction`,
+`true_north_grid_azimuth_deg`, `samples[]`.
+
+Per sample:
+
+| Field | Notes |
+|-------|--------|
+| `t` | UTC timestamp |
+| `sun_azimuth_deg` / `sun_elevation_deg` | Stored Horizons values (nullable) |
+| `earth_azimuth_deg` / `earth_elevation_deg` | Stored Horizons values (nullable) |
+| `sun_state` / `earth_state` | `VISIBLE` \| `BLOCKED` \| `UNKNOWN` |
+| `joint_state` | `VISIBLE` \| `NOT_VISIBLE` \| `UNKNOWN` |
+| `sun_terrain_horizon_deg` / `earth_terrain_horizon_deg` | TERRAIN only |
+| `sun_geometric_state` / `earth_geometric_state` | Always: el>0 → VISIBLE else BLOCKED (NaN→UNKNOWN) |
+| `hold_hours` | Sample-and-hold clamped to `[t, end)` |
+| `contributes_duration` | `false` when `t >= end_utc` (inclusive STOP contributes 0 h) |
+
+**Rules:** incomplete DEM coverage → `UNKNOWN` (never inferred clear sky). Prefer this endpoint over deriving states from darkness/communication windows.
+
+### Imagery (Phase 5E)
+
+- `GET /api/v1/maps/imagery/sources` — allow-listed Lunaserv / Moon Trek metadata + `alignment_status`
+- `GET /api/v1/maps/preview?layer_id=lroc-wac-south-summer&…` — polar-stereo-warped PNG when `preview_enabled`
+- `moon-trek-wac-global` is `REFERENCE_ONLY` (EQ WMTS; not Explorer basemap)
+
+### Mesh (Phase 5E schema)
+
+`GET /api/v1/maps/mesh` returns `grid.{nx,ny,n_cells}`, `extent_m`, `nodata_mask`,
+`reference_elevation_m`, `elevation_units`, `crs_proj4`, `warning`. No fabricated Z values.
+
+### Artemis (Phase 5E provenance)
+
+`GET /api/v1/artemis/regions` includes `historical_2022_regions` (13) and
+`current_2024_shortlist` (9) with `classification` + `source_date`. Combined `regions[]`
+carries the same fields. `polygon` / `geometry` always null.
+
+---
+
 ## Suggested Explorer 2.0 wiring
 
 1. Layer picker from `/maps/layers` with role badges.
@@ -148,7 +196,25 @@ Always surface layer `attribution` / response headers for LOLA/PGDA and Horizons
 - Frontend React edits (Claude Phase 5A owns UI).
 - Automatic multi-GB DEM downloads.
 - Enabling TERRAIN scoring from Product 90 without a new science validation phase.
+---
+---
 
+## Phase 5C integration verification (2026-11-14)
+
+Verified on `feature/phase5c-integration` (isolated worktree, DB copy `selenora.phase5c.db`, API `:8001`, SPA `:5175`):
+
+| Check | Result |
+|---|---|
+| CORS for SPA origin | `Access-Control-Allow-Origin: http://127.0.0.1:5175` |
+| `/maps/layers` roles + attribution | 8 layers; SCIENCE / VIZ / REFERENCE badges in Explorer |
+| `/maps/preview` PNG + `X-SELENORA-Bounds-M` | OK (hillshade overlay) |
+| `/maps/elevation` Site04 Point A | Z ≈ 1592.04 m |
+| `/terrain/horizon-profile` Point A | `LOCAL_TERRAIN_PARTIAL`, γ ≈ 194°, el@az86 ≈ 13.05° |
+| `/ephemeris/observer-series` | OK with `end_utc`; live Δ vs stored = 0.0000° on TERRAIN run |
+| `/artemis/regions` | 13 names; `geometry` always null |
+| TERRAIN analysis ranking | Refused under `LOCAL_TERRAIN_PARTIAL`; scores null / UNRANKED |
+| DeepSeek explain | Cached read OK (key server-side only) |
+---
 ---
 
 ## Phase 5A frontend consumption status (appended by the frontend, 2026-11-14)
@@ -203,3 +269,61 @@ low `max_edge_px`) would let the overview show context.
 
 **R4 — 3D.** `/maps/mesh` exists. The frontend has not built the optional viewer yet (P2). It will show the
 mesh `warning`, resolution and vertical exaggeration when implemented.
+---
+---
+
+## Phase 5D frontend requests for Cursor (appended 2026-11-14)
+
+Frontend branch: `feature/phase5d-immersive-ux` (from `94aaac3`). Capability detection is unchanged: a feature
+turns on only when its exact path appears in `/openapi.json`.
+
+### `GET /api/v1/maps/mesh` — consumed (verified; no change required)
+
+Verified behaviour that the 3D viewer relies on (please keep stable):
+- `x_m[cols]`, `y_m[rows]` absolute south-polar stereographic metres; `z_m[row][col]` with rows by ascending y.
+- Centre and corner cells equal `GET /maps/elevation` exactly (checked at Point A: 1592.04 m; corners 1198.28 m / 355.88 m).
+- Out-of-tile cells are `null` (never 0). Point B needs `layer_id=lola-site01-5mpp-surf` (the frontend picks the layer
+  from `/terrain/coverage.dem_site_id`).
+- Guards: `half_extent_m ≤ 5000`, `step_m ∈ [10, 500]`, ≤ 20 000 vertices. Presets used: 2 km/25 m, 4 km/50 m, 10 km/100 m.
+
+Nice-to-have: state the sampling method in the response (`"sampling": "nearest_pixel"`), and add `observer_z_m`
+plus `true_north_grid_azimuth_deg` so the client does not need two extra calls.
+
+### R1 (still P0) — authoritative per-epoch states for stored analyses
+
+`GET /api/v1/analyses/{analysis_id}/epochs` (shape unchanged from the Phase 5A request): per sample
+`sun_/earth_azimuth_deg`, `sun_/earth_elevation_deg`, `sun_/earth_terrain_horizon_deg`, `sun_/earth_state ∈
+VISIBLE | BLOCKED | BELOW_HORIZON | UNKNOWN`, no downsampling (or paginated).
+Why: Explorer Mode explains each moment in plain language. Without R1 the UI must say "visible or unknown" for some
+TERRAIN moments and fetch live `/ephemeris/observer-series` chunks to place the Sun in 3D. With R1 the 3D Sun
+direction and every timeline cell would come from the stored, reproducible analysis.
+
+### R2 (P1) — LROC photographic basemap
+
+The Explorer's Photo/Hillshade/Off control enables **Photo** automatically when `GET /api/v1/maps/layers` lists a
+layer with `kind: "imagery"` whose `role` is not `REFERENCE_DOC` and whose `access_mode` is not
+`documentation_only`. It is rendered through the existing preview contract:
+- `GET /api/v1/maps/preview?layer_id=<id>&left_m&bottom_m&right_m&top_m&max_edge_px` → `image/png`.
+- Required headers: `X-SELENORA-Bounds-M` (the client refuses to place an image without it),
+  `X-SELENORA-Attribution` (shown on the map), `X-SELENORA-Layer-Role`.
+- CRS: `+proj=stere +lat_0=-90 +lon_0=0 +k=1 +x_0=0 +y_0=0 +a=1737400 +b=1737400 +units=m` (reproject server-side;
+  LROC polar mosaics use a different sphere/ellipsoid convention, so please state the reprojection in `crs_summary`).
+- Suggested metadata: `resolution_m`, `product_page` (LROC/PDS URL), `notes` with acquisition/illumination caveats
+  (photos show illumination at image time, not at the analysis epoch).
+
+Until then the Photo option is disabled with the reason. No decorative image is substituted.
+
+---
+
+## Phase 5F consumption (2026-11-14)
+
+On `feature/phase5f-immersive-integration` (5E + 5D merge):
+
+| Route | Frontend use | Status |
+|---|---|---|
+| `GET /api/v1/analyses/{id}/epochs` | Simulator, Windows, Comparison, Guided lanes — authoritative VISIBLE/BLOCKED/UNKNOWN | ✅ consumed |
+| `GET /api/v1/maps/preview?layer_id=lroc-wac-south-summer` | Explorer Photo basemap (warped stereo PNG) | ✅ consumed |
+| `GET /api/v1/maps/imagery/sources` | Capability / documentation (allow-list metadata) | available |
+| `GET /api/v1/artemis/regions` | Explorer: 2024 shortlist + 2022 historical lists | ✅ consumed |
+
+Static LROC illumination disclaimer is shown whenever Photo is active. Live Horizons observer-series is skipped when `/epochs` supplies Az/El.

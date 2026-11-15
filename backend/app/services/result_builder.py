@@ -123,7 +123,9 @@ def build_site_result(
         analysis_end_utc=analysis_end_utc,
     )
     metrics = summary.as_metrics()
-    scorable = scoring.is_scorable(data_quality, summary.missing_fraction)
+    scorable = scoring.is_scorable(data_quality, summary.missing_fraction) and scoring.metrics_are_scorable(
+        metrics
+    )
     score: float | None = None
     contribs: list[Contribution] = []
     if scorable:

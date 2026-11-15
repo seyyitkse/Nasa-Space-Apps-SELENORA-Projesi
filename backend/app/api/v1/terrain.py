@@ -6,6 +6,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Query
 
+from app.core.errors import AzimuthUndefinedAtPoleError
 from app.core.errors import TerrainUnavailableError
 from app.schemas.common import ApiModel
 from app.services import terrain_data_service
@@ -93,6 +94,22 @@ def terrain_horizon_profile(
     n_azimuth: Annotated[int, Query(ge=8, le=360)] = 72,
     observer_height_m: Annotated[float, Query(ge=0, le=50)] = 2.0,
 ) -> dict[str, Any]:
+    # At the exact geographic poles, "local north" (and thus azimuth) is undefined.
+    # This endpoint is explicitly azimuth-based (true-north horizon bins), so we
+    # reject the scientifically undefined request rather than returning HTTP 500.
+    if abs(abs(float(latitude_deg)) - 90.0) < 1e-12:
+        raise AzimuthUndefinedAtPoleError(
+            "Local north/azimuth is undefined at the geographic poles; "
+            "use |latitude| < 90° (e.g. -89.999°) for terrain horizon-profile.",
+            details={
+                "latitude_deg": float(latitude_deg),
+                "longitude_deg": float(longitude_deg),
+                "message_tr": (
+                    "Coğrafi kutuplarda yerel kuzey/azimut bilimsel olarak tanımsızdır; "
+                    "ufuk profili için |enlem| < 90° (ör. -89.999°) kullanın."
+                ),
+            },
+        )
     try:
         profile, cov, meta = terrain_data_service.get_horizon_profile(
             latitude_deg,

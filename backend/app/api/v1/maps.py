@@ -7,7 +7,9 @@ from typing import Annotated
 from fastapi import APIRouter, Query, Response
 
 from app.schemas.common import ApiModel
-from app.services import nasa_layer_catalog, raster_preview_service
+from app.services import imagery_service, map_preview_service, nasa_layer_catalog, raster_preview_service
+from app.services import polar_tile_service
+from app.services.map_runtime import PROVENANCE
 from app.services.raster_preview_service import (
     LayerNotFoundError,
     LayerUnavailableError,
@@ -54,6 +56,52 @@ class ElevationSample(ApiModel):
     message: str
 
 
+class MeshExtent(ApiModel):
+    left: float
+    bottom: float
+    right: float
+    top: float
+
+
+class MeshGrid(ApiModel):
+    nx: int
+    ny: int
+    n_cells: int
+
+
+class MeshResponse(ApiModel):
+    layer_id: str
+    role: str
+    kind: str
+    crs_summary: str
+    crs_proj4: str
+    attribution: str
+    source_url: str | None = None
+    access_mode: str
+    origin_lonlat_deg: list[float]
+    origin_stereo_m: list[float]
+    extent_m: MeshExtent
+    grid: MeshGrid
+    x_m: list[float]
+    y_m: list[float]
+    z_m: list[list[float | None]]
+    nodata_mask: list[list[bool]]
+    nodata_fraction: float
+    elevation_units: str
+    reference_elevation_m: float | None
+    z_min_m: float | None
+    z_max_m: float | None
+    sampling_resolution_m: float
+    step_m: float
+    half_extent_m: float
+    warning: str
+
+
+class ImagerySourceList(ApiModel):
+    items: list[dict]
+    scientific_note: str
+
+
 def _layer_out(layer: nasa_layer_catalog.NasaLayer) -> LayerOut:
     return LayerOut(
         id=layer.id,
@@ -95,6 +143,22 @@ def get_map_layer(layer_id: str) -> LayerOut:
 
 
 @router.get(
+    "/imagery/sources",
+    response_model=ImagerySourceList,
+    summary="Allow-listed LROC / Moon Trek imagery sources (Phase 5E)",
+)
+def list_imagery_sources() -> ImagerySourceList:
+    return ImagerySourceList(
+        items=imagery_service.list_imagery_sources(),
+        scientific_note=(
+            "Only sources with alignment_status=AVAILABLE_NATIVE_STEREO and "
+            "preview_enabled=true may be requested via /maps/preview. "
+            "SELENORA never proxies arbitrary external URLs."
+        ),
+    )
+
+
+@router.get(
     "/preview",
     summary="Bounded PNG preview (never returns raw GeoTIFF)",
     responses={200: {"content": {"image/png": {}}}},
@@ -114,13 +178,9 @@ def map_preview(
     if None not in (left_m, bottom_m, right_m, top_m):
         bounds = (left_m, bottom_m, right_m, top_m)  # type: ignore[assignment]
     try:
-        png, meta = raster_preview_service.render_preview_png(
-            layer_id,
-            latitude_deg=latitude_deg,
-            longitude_deg=longitude_deg,
-            half_extent_m=half_extent_m,
-            bounds_m=bounds,
-            max_edge_px=max_edge_px,
+        png, meta = map_preview_service.render_preview(
+            layer_id, latitude_deg=latitude_deg, longitude_deg=longitude_deg,
+            half_extent_m=half_extent_m, bounds_m=bounds, max_edge_px=max_edge_px,
         )
     except (MapServiceError, LayerNotFoundError, LayerUnavailableError):
         raise
@@ -134,10 +194,40 @@ def map_preview(
         "X-SELENORA-Layer-Role": meta.role,
         "X-SELENORA-Bounds-M": ",".join(f"{v:.3f}" for v in meta.bounds_m),
         "X-SELENORA-Size-Px": f"{meta.width_px}x{meta.height_px}",
-        "X-SELENORA-Attribution": meta.attribution[:500],
+        "X-SELENORA-Attribution": meta.attribution[:500].encode("latin-1", "replace").decode("latin-1"),
+        "X-SELENORA-CRS": "IAU2000:30120",
+        "X-SELENORA-Cache": meta.cache_status,
+        "X-SELENORA-Cache-Key": meta.cache_key,
+        "ETag": f'"{meta.cache_key}"',
         "Cache-Control": "public, max-age=300",
     }
     return Response(content=png, media_type="image/png", headers=headers)
+
+
+@router.get("/tiles/{layer_id}/{z}/{x}/{y}.png", summary="Fixed south-polar visualization tile")
+def polar_tile(layer_id: str, z: int, x: int, y: int) -> Response:
+    try:
+        png, meta = polar_tile_service.render_tile(layer_id, z, x, y)
+    except (MapServiceError, LayerNotFoundError, LayerUnavailableError):
+        raise
+    except Exception as exc:
+        raise LayerUnavailableError(f"Polar tile unavailable: {type(exc).__name__}: {exc}") from exc
+    return Response(png, media_type="image/png", headers={
+        "X-SELENORA-Bounds-M": ",".join(str(v) for v in meta.bounds_m),
+        "X-SELENORA-CRS": "IAU2000:30120", "X-SELENORA-Cache": meta.cache_status,
+        "X-SELENORA-Cache-Key": meta.cache_key,
+        "X-SELENORA-NoData": str(meta.nodata_fraction),
+        "X-SELENORA-Resolution-M": str(meta.resolution_m),
+        # HTTP header values are latin-1. Full Unicode attribution remains in the
+        # source catalogue; a product's punctuation must never break its PNG.
+        "X-SELENORA-Attribution": meta.attribution.encode("latin-1", "replace").decode("latin-1"),
+        "ETag": f'"{meta.cache_key}"', "Cache-Control": "public, max-age=86400",
+    })
+
+
+@router.get("/runtime", summary="Map runtime provenance (no credentials)")
+def map_runtime() -> dict:
+    return PROVENANCE
 
 
 @router.get("/elevation", response_model=ElevationSample, summary="Sample a raster at lon/lat")
@@ -158,16 +248,20 @@ def map_elevation(
     return ElevationSample(**payload)
 
 
-@router.get("/mesh", summary="Downsampled XYZ mesh JSON for optional 3D preview")
+@router.get(
+    "/mesh",
+    response_model=MeshResponse,
+    summary="Downsampled XYZ mesh JSON for optional 3D preview (Phase 5E schema)",
+)
 def map_mesh(
     latitude_deg: Annotated[float, Query(ge=-90, le=90)],
     longitude_deg: Annotated[float, Query(ge=-180, le=180)],
     half_extent_m: Annotated[float, Query()] = 2_000.0,
     step_m: Annotated[float, Query()] = 50.0,
     layer_id: Annotated[str, Query()] = "lola-site04-5mpp-surf",
-) -> dict:
+) -> MeshResponse:
     try:
-        return raster_preview_service.build_mesh(
+        payload = raster_preview_service.build_mesh(
             latitude_deg=latitude_deg,
             longitude_deg=longitude_deg,
             half_extent_m=half_extent_m,
@@ -181,3 +275,4 @@ def map_mesh(
             f"Mesh build failed: {type(exc).__name__}: {exc}",
             details={"layer_id": layer_id},
         ) from exc
+    return MeshResponse.model_validate(payload)

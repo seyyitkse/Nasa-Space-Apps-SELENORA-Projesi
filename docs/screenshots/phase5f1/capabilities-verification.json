@@ -1,0 +1,30 @@
+{
+  "verified_date": "2026-11-14",
+  "capabilities_url": "https://webmap.lroc.asu.edu/lunaserv/wms?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetCapabilities",
+  "sha256": "a29385e5f42259f13d8ae7660bd6ca3f5f5e7036905056ebc4ad4067e41ca47a",
+  "wms_version": "1.1.1",
+  "getmap_formats": [
+    "image/png",
+    "image/tiff",
+    "image/jpeg",
+    "image/gif",
+    "image/pnm",
+    "image/vicar",
+    "application/x-cesium-terrain",
+    "image/tiff; mode=32bit"
+  ],
+  "selected_crs": "IAU2000:30120",
+  "crs_advertised_on_parent": true,
+  "layers": [
+    {
+      "name": "luna_nac_2m_south_pole",
+      "title": "LROC NAC 2 m South Pole Mosaic",
+      "inherits_parent_crs": true
+    },
+    {
+      "name": "luna_wac_roi_south_summer",
+      "title": "LROC WAC South Pole Summer Mosaic",
+      "inherits_parent_crs": true
+    }
+  ]
+}

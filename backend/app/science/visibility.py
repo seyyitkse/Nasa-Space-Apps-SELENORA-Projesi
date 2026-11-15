@@ -11,9 +11,12 @@ Conventions
   ``min(step, end - t)`` hours (0 if ``t >= end``). Therefore an inclusive
   Horizons STOP sample that lands exactly on ``end`` contributes **zero**
   duration and cannot inflate gap/visibility lengths past the analysis window.
-* Missing elevations (NaN) are **neither** visible nor invisible: they are
-  excluded from duration and percentage denominators and reported via
-  ``missing_fraction``.
+* Missing elevations (NaN) / UNKNOWN terrain samples are **neither** VISIBLE
+  nor BLOCKED: they are excluded from that body's percentage denominator and
+  never counted as darkness or communication gaps. When a body's valid
+  duration is zero, its percentage is ``None`` (unavailable), not 0%.
+* Sun and Earth percentages use **separate** validity masks and denominators.
+  Joint visibility uses the intersection of both-known samples only.
 * Coarse steps (e.g. 60–360 min) are estimates only — resolution is on the
   order of one step; do not claim second-precision event times.
 """
@@ -51,7 +54,7 @@ def valid_mask(elevation_deg: FloatArray) -> BoolArray:
 def classify_visibility(
     elevation_deg: FloatArray, horizon_deg: FloatArray | float = 0.0
 ) -> tuple[BoolArray, BoolArray, BoolArray]:
-    """Return ``(visible, invisible, valid)``; missing samples are in neither class."""
+    """Return ``(visible, blocked/invisible, valid)``; missing samples are in neither class."""
     elev = np.asarray(elevation_deg, dtype=float)
     valid = valid_mask(elev)
     above = visibility_mask(elev, horizon_deg)
@@ -132,20 +135,26 @@ def percent(mask: BoolArray, hold_hours: FloatArray | None = None) -> float:
     return float(h[m].sum() / total * 100.0)
 
 
-def time_weighted_percent(state: BoolArray, valid: BoolArray, hold_hours: FloatArray) -> float:
-    """``state`` hours / ``valid`` hours × 100 (missing samples excluded)."""
+def time_weighted_percent(
+    state: BoolArray, valid: BoolArray, hold_hours: FloatArray
+) -> float | None:
+    """``state`` hours / ``valid`` hours × 100.
+
+    Returns ``None`` when no scientifically valid duration exists (do not
+    fabricate 0% visibility from an empty denominator).
+    """
     h = np.asarray(hold_hours, dtype=float)
     denom = float(h[np.asarray(valid, dtype=bool)].sum())
     if denom <= 0:
-        return 0.0
+        return None
     return float(h[np.asarray(state, dtype=bool)].sum() / denom * 100.0)
 
 
 @dataclass(frozen=True, slots=True)
 class VisibilitySummary:
-    sun_visibility_pct: float
-    earth_visibility_pct: float
-    joint_visibility_pct: float
+    sun_visibility_pct: float | None
+    earth_visibility_pct: float | None
+    joint_visibility_pct: float | None
     longest_sunlight_hours: float
     longest_darkness_hours: float
     longest_earth_visibility_hours: float
@@ -154,11 +163,17 @@ class VisibilitySummary:
     missing_fraction: float
     covered_hours: float = 0.0
 
-    def as_metrics(self) -> dict[str, float]:
-        d = {k: round(getattr(self, k), 3) for k in self.__dataclass_fields__}
+    def as_metrics(self) -> dict[str, float | None]:
+        d = {k: getattr(self, k) for k in self.__dataclass_fields__}
         d.pop("missing_fraction")
         d.pop("covered_hours")
-        return d
+        out: dict[str, float | None] = {}
+        for k, v in d.items():
+            if v is None:
+                out[k] = None
+            else:
+                out[k] = round(float(v), 3)
+        return out
 
 
 def summarize(
@@ -171,6 +186,13 @@ def summarize(
     sun_horizon_deg: FloatArray | float = 0.0,
     earth_horizon_deg: FloatArray | float = 0.0,
 ) -> tuple[VisibilitySummary, BoolArray, BoolArray, BoolArray]:
+    """Summarise Sun/Earth visibility with separate validity denominators.
+
+    Returns ``(summary, sun_visible, earth_visible, joint_visible)``.
+    Returned visibility masks are body-local (not gated on the peer body).
+    Blocked/darkness metrics use each body's own valid samples only — UNKNOWN
+    / NaN is never treated as darkness.
+    """
     sun = np.asarray(sun_elevation_deg, dtype=float)
     earth = np.asarray(earth_elevation_deg, dtype=float)
     if sun.shape != earth.shape:
@@ -186,14 +208,14 @@ def summarize(
     else:
         hold = np.full(n, float(step_minutes) / 60.0)
 
-    sun_vis, sun_dark, sun_valid = classify_visibility(sun, sun_horizon_deg)
-    earth_vis, earth_dark, earth_valid = classify_visibility(earth, earth_horizon_deg)
-    valid = sun_valid & earth_valid
+    sun_vis, sun_blocked, sun_valid = classify_visibility(sun, sun_horizon_deg)
+    earth_vis, earth_blocked, earth_valid = classify_visibility(earth, earth_horizon_deg)
+    both_known = sun_valid & earth_valid
     # Joint requires both bodies measured and both above horizon.
-    joint = valid & sun_vis & earth_vis
+    joint = both_known & sun_vis & earth_vis
 
     # Missing if either body lacks a sample at that epoch.
-    missing_mask = ~(sun_valid & earth_valid)
+    missing_mask = ~both_known
     if n == 0:
         missing_fraction = 1.0
     elif float(hold.sum()) > 0:
@@ -201,21 +223,19 @@ def summarize(
     else:
         missing_fraction = float(missing_mask.mean())
 
-    covered = float(hold[valid].sum())
+    covered = float(hold[both_known].sum())
     summary = VisibilitySummary(
-        sun_visibility_pct=time_weighted_percent(sun_vis & valid, valid, hold),
-        earth_visibility_pct=time_weighted_percent(earth_vis & valid, valid, hold),
-        joint_visibility_pct=time_weighted_percent(joint, valid, hold),
-        longest_sunlight_hours=longest_run_hours(sun_vis & valid, hold_hours=hold, value=True),
-        longest_darkness_hours=longest_run_hours(sun_dark & valid, hold_hours=hold, value=True),
-        longest_earth_visibility_hours=longest_run_hours(
-            earth_vis & valid, hold_hours=hold, value=True
-        ),
+        sun_visibility_pct=time_weighted_percent(sun_vis, sun_valid, hold),
+        earth_visibility_pct=time_weighted_percent(earth_vis, earth_valid, hold),
+        joint_visibility_pct=time_weighted_percent(joint, both_known, hold),
+        longest_sunlight_hours=longest_run_hours(sun_vis, hold_hours=hold, value=True),
+        longest_darkness_hours=longest_run_hours(sun_blocked, hold_hours=hold, value=True),
+        longest_earth_visibility_hours=longest_run_hours(earth_vis, hold_hours=hold, value=True),
         longest_communication_gap_hours=longest_run_hours(
-            earth_dark & valid, hold_hours=hold, value=True
+            earth_blocked, hold_hours=hold, value=True
         ),
         longest_joint_visibility_hours=longest_run_hours(joint, hold_hours=hold, value=True),
         missing_fraction=missing_fraction,
         covered_hours=covered,
     )
-    return summary, sun_vis & valid, earth_vis & valid, joint
+    return summary, sun_vis, earth_vis, joint
