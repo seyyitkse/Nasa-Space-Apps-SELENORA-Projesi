@@ -10,6 +10,7 @@ from app.api.v1 import (
     globe,
     maps,
     sites,
+    solar,
     terrain,
 )
 
@@ -24,3 +25,4 @@ router.include_router(artemis.router)
 router.include_router(ephemeris.router)
 router.include_router(globe.router)
 router.include_router(events.router)
+router.include_router(solar.router)
