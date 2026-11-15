@@ -176,7 +176,7 @@ Directory: `docs/screenshots/phase7bc-integration/` (23 PNG files)
 
 | Item | Blocks main merge? | Notes |
 |------|--------------------|-------|
-| M3 exact lunar pole (−90°) → possible 500 | **No** for nominal south-polar sites | Carry-forward from Phase 7A report |
+| M3 exact lunar pole (−90°) | **No** | Verified fixed: `GET /api/v1/terrain/horizon-profile?latitude_deg=-90` → **422** `AZIMUTH_UNDEFINED_AT_POLE` (not 500); near-pole −89.9°/−166° → **200** with bins |
 | M5 MOON_ME vs Three.js axis docs | **No** | Unchanged; not re-proven wrong |
 | Production DB not yet migrated | **Intentional** | Apply `20261115_0002` only when operators choose; verified on isolated copy |
 | High-detail Moon GLB load timing | **No** | Standard model path works; High asset available via local junction, not in Git |
