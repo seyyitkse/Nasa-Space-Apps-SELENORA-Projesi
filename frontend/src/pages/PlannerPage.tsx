@@ -11,7 +11,8 @@ import { ErrorState } from '@/components/shared/States'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { FieldError, Input, Label, NativeSelect } from '@/components/ui/input'
+import { FieldError, Input, Label } from '@/components/ui/input'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useSites } from '@/hooks/useApi'
 import { formatCoord } from '@/lib/format'
 import { usePlannerInput } from '@/features/mission-planner/usePlannerInput'
@@ -87,24 +88,25 @@ export default function PlannerPage() {
   const samples = sampleCount(input)
   const apiErr = analysis.error instanceof ApiError ? analysis.error : null
 
-  const siteOptions = (
+  const siteItems = (
     <>
-      <option value="">{t('planner.selectSite')}</option>
-      <optgroup label={t('explorer.reference')}>
+      <SelectGroup>
+        <SelectLabel>{t('explorer.reference')}</SelectLabel>
         {sites?.items.map((s) => (
-          <option key={s.id} value={`reference:${s.id}`}>
+          <SelectItem key={s.id} value={`reference:${s.id}`} textValue={s.name}>
             {s.name}
-          </option>
+          </SelectItem>
         ))}
-      </optgroup>
+      </SelectGroup>
       {custom.length > 0 && (
-        <optgroup label={t('explorer.custom')}>
+        <SelectGroup>
+          <SelectLabel>{t('explorer.custom')}</SelectLabel>
           {custom.map((s) => (
-            <option key={s.id} value={`custom:${s.id}`}>
+            <SelectItem key={s.id} value={`custom:${s.id}`} textValue={s.name}>
               {s.name}
-            </option>
+            </SelectItem>
           ))}
-        </optgroup>
+        </SelectGroup>
       )}
     </>
   )
@@ -145,21 +147,29 @@ export default function PlannerPage() {
               <div className="grid gap-4 sm:grid-cols-2">
                 {(['siteA', 'siteB'] as const).map((slot) => {
                   const resolved = slot === 'siteA' ? input.siteA : input.siteB
+                  const value = encodeRef(draft[slot])
                   return (
                     <div key={slot}>
                       <Label htmlFor={`site-${slot}`} className="flex items-center gap-2">
                         <span className={slot === 'siteA' ? 'size-2 rounded-full bg-cyan' : 'size-2 rounded-full bg-violet'} aria-hidden />
                         {t(`planner.${slot}`)}
                       </Label>
-                      <NativeSelect
-                        id={`site-${slot}`}
-                        value={encodeRef(draft[slot])}
-                        aria-invalid={!!errors[slot]}
-                        aria-describedby={errors[slot] ? `site-${slot}-err` : undefined}
-                        onChange={(e) => update({ [slot]: decodeRef(e.target.value) })}
+                      <Select
+                        value={value || undefined}
+                        onValueChange={(v) => update({ [slot]: decodeRef(v) })}
                       >
-                        {siteOptions}
-                      </NativeSelect>
+                        <SelectTrigger
+                          id={`site-${slot}`}
+                          aria-invalid={!!errors[slot]}
+                          aria-describedby={errors[slot] ? `site-${slot}-err` : undefined}
+                          data-testid={`planner-${slot}-trigger`}
+                        >
+                          <SelectValue placeholder={t('planner.selectSite')} />
+                        </SelectTrigger>
+                        <SelectContent data-testid={`planner-${slot}-content`}>
+                          {siteItems}
+                        </SelectContent>
+                      </Select>
                       <p className="mt-1 h-4 font-mono text-[11px] text-fg-3">
                         {resolved ? formatCoord(resolved.latitude_deg, resolved.longitude_deg, 3) : ''}
                       </p>
@@ -207,31 +217,39 @@ export default function PlannerPage() {
                 <Label htmlFor="time-step" className="flex items-center gap-1.5">
                   <Clock4 className="size-3.5" aria-hidden /> {t('planner.resolution')}
                 </Label>
-                <NativeSelect
-                  id="time-step"
-                  value={draft.timeStepMinutes}
-                  onChange={(e) => update({ timeStepMinutes: Number(e.target.value) })}
+                <Select
+                  value={String(draft.timeStepMinutes)}
+                  onValueChange={(v) => update({ timeStepMinutes: Number(v) })}
                 >
-                  {TIME_STEPS.map((m) => (
-                    <option key={m} value={m}>
-                      {t('planner.minutes', { n: m })}
-                    </option>
-                  ))}
-                </NativeSelect>
+                  <SelectTrigger id="time-step" data-testid="planner-timestep-trigger">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIME_STEPS.map((m) => (
+                      <SelectItem key={m} value={String(m)}>
+                        {t('planner.minutes', { n: m })}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {samples !== null && (
                   <p className="mt-1.5 font-mono text-[11px] text-fg-3">{t('planner.samples', { n: samples })}</p>
                 )}
               </div>
               <div>
                 <Label htmlFor="horizon">{t('planner.horizonModel')}</Label>
-                <NativeSelect
-                  id="horizon"
+                <Select
                   value={draft.horizonModel}
-                  onChange={(e) => update({ horizonModel: e.target.value === 'TERRAIN' ? 'TERRAIN' : 'GEOMETRIC' })}
+                  onValueChange={(v) => update({ horizonModel: v === 'TERRAIN' ? 'TERRAIN' : 'GEOMETRIC' })}
                 >
-                  <option value="GEOMETRIC">{t('planner.horizonGeometric')}</option>
-                  <option value="TERRAIN">{t('planner.horizonTerrain')}</option>
-                </NativeSelect>
+                  <SelectTrigger id="horizon" data-testid="planner-horizon-trigger">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="GEOMETRIC">{t('planner.horizonGeometric')}</SelectItem>
+                    <SelectItem value="TERRAIN">{t('planner.horizonTerrain')}</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>

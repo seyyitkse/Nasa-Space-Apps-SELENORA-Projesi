@@ -7,6 +7,16 @@ import { cn } from '@/lib/utils'
 /** Accessible dark-theme select (Radix). Replaces native <select> option menus that ignore CSS. */
 export const Select = SelectPrimitive.Root
 export const SelectValue = SelectPrimitive.Value
+export const SelectGroup = SelectPrimitive.Group
+
+export function SelectLabel({ className, ...props }: React.ComponentProps<typeof SelectPrimitive.Label>) {
+  return (
+    <SelectPrimitive.Label
+      className={cn('px-2 py-1.5 text-[11px] font-medium tracking-wide text-fg-3 uppercase', className)}
+      {...props}
+    />
+  )
+}
 
 export function SelectTrigger({ className, children, ...props }: React.ComponentProps<typeof SelectPrimitive.Trigger>) {
   return (

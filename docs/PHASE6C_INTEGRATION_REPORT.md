@@ -87,9 +87,9 @@ Screenshots: `docs/screenshots/phase6c/phase6c-01-moon-point-a.png` … `phase6c
 | Suite | Result |
 |---|---|
 | Backend pytest | **170 passed, 1 skipped** |
-| Frontend Vitest | **127 passed** (20 files) |
+| Frontend Vitest | **131 passed** (21 files; +4 PlannerSiteSelect after hotfix) |
 | TypeScript (`tsc -b`) | **pass** |
-| Production build | **pass** (~808 ms Vite build) |
+| Production build | **pass** (~808 ms Vite build; re-verified after hotfix) |
 | oxlint | **0 errors**, **42 warnings** (5F.2 baseline ~37; no new errors; existing react-compiler/export warnings) |
 
 ### Production 3D-related chunks (approx.)
@@ -136,3 +136,23 @@ API smoke against isolated backend:
 2. Optional: browser matrix for mobile 375 + High quality offline fallback.
 3. Optional: consume `cartesian_me` in Three.js only after frame-alignment audit vs `latLonToModel`.
 4. Then begin Phase 7 design implementation **only** when product owner opens that gate.
+
+## 13. Hotfix — Planner A/B dark-theme select (post-6C)
+
+| | |
+|---|---|
+| Issue | Native `<select>` option popup ignored page CSS: white menu + light option text → unreadable research-site names. |
+| Fix | Mission Planner A/B (plus timestep / horizon) switched to existing Radix `@/components/ui/select`; `SelectGroup` / `SelectLabel` added; long names wrap; custom + reference groups preserved. |
+| Contracts | Unchanged: `missionStore`, URL `?site=`, `/api/v1/sites`, analysis request shape, `sameSite` validation. |
+| Tests | `frontend/src/pages/PlannerSiteSelect.test.tsx` (+4); jsdom pointer-capture polyfill in `test/setup.ts`. |
+| Screenshots | `docs/screenshots/phase6c/phase6c-hotfix-site-a-dropdown-tr.png`, `…-b-dropdown-tr.png`, `…-a-dropdown-en.png`, `…-a-dropdown-mobile-375.png`. |
+
+**Other NativeSelect leftovers (reported only; not rewritten in this hotfix):**
+
+| Location | Control | Risk |
+|---|---|---|
+| `AnalystPage.tsx` | analysis picker | Same OS popup theme risk |
+| `Terrain3DPanel.tsx` | extent preset | Same |
+| `TimeControls.tsx` | horizon sim time step | Same |
+
+Prefer Radix Select when those screens next get UI attention.
