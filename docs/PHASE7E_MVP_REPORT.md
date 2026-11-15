@@ -5,8 +5,8 @@
 | Branch | `feature/phase7e-mission-mvp` |
 | Worktree | `.worktrees/phase7e-mvp` |
 | Base | `6e283a0` — *Merge pull request #7 from seyyitkse/release/phase7bc-stable* (`origin/main`) |
-| HEAD | `bc5a072` — *feat(phase7e): add Lunar Missions layer on global 3D Moon* |
-| Commits | `c0a9a8d` (catalog API), `bc5a072` (UI layer) |
+| HEAD | `c003d3c` — docs + screenshot evidence (feature tip) |
+| Feature commits | `c0a9a8d` (catalog API), `bc5a072` (UI layer), `b7e4521`/`c003d3c` (docs) |
 | Date | 2026-11-15 |
 | Verdict | **READY** |
 
@@ -67,26 +67,29 @@ Authoritative sources (NSSDC, LROC Wagner et al. 2016) publish a **single** Mean
 
 ## 4. Quality gates
 
-| Gate | Result |
-|---|---|
-| Backend pytest | **PASS** — 269 passed, 17 skipped (no local LOLA GeoTIFFs in this worktree), 3 deselected |
-| Mission pytest subset | **PASS** — 29 passed |
-| Frontend vitest | **PASS** — 218 passed (32 files), including 4 lunar-missions tests |
-| `tsc -b` | **PASS** |
-| oxlint | **PASS** (0 errors; pre-existing warnings elsewhere) |
-| `vite build` | **PASS** |
-
-Logs under `docs/screenshots/phase7e-mvp/` (`pytest-missions.log`, `vitest-full.log`, `tsc.log`, `lint.log`, `build.log`).
+| Gate | Result | Log |
+|---|---|---|
+| Backend pytest (full) | **PASS** — 269 passed, 17 skipped (no local LOLA GeoTIFFs), 3 deselected, EXIT=0 | `pytest-full.log` |
+| Mission pytest subset | **PASS** — 29 passed | `pytest-missions.log` |
+| Frontend vitest | **PASS** — 218 passed (32 files), including 4 lunar-missions tests | `vitest-full.log` / `vitest-missions.log` |
+| `tsc -b` | **PASS** | `tsc.log` |
+| oxlint | **PASS** (0 errors; pre-existing warnings elsewhere) | `lint.log` |
+| `vite build` | **PASS** | `build.log` |
+| Browser verification | **PASS** | screenshots below |
 
 ## 5. Browser evidence
 
-Verified at `http://127.0.0.1:5185/moon` against backend `http://127.0.0.1:8025`.
+Verified at `http://127.0.0.1:5185/moon` against backend `http://127.0.0.1:8025` (both health-checked LISTENING; not restarted for closeout).
 
 | File | What it shows |
 |---|---|
-| `docs/screenshots/phase7e-mvp/01-missions-layer-apollo11.png` | Layer on; Apollo 11 pin + detail on Standard Moon |
+| `docs/screenshots/phase7e-mvp/01-missions-layer-on.png` | Layer ON; near-side mission pins + Apollo/CLPS filters |
+| `docs/screenshots/phase7e-mvp/01-missions-layer-apollo11.png` | Apollo 11 selected with detail + globe pin |
+| `docs/screenshots/phase7e-mvp/02-apollo11-detail.png` | Fly-to Apollo 11 site label on Standard Moon |
 | `docs/screenshots/phase7e-mvp/02-missions-clps-tr.png` | CLPS filter + Turkish UI (`Ay Görevleri`) |
+| `docs/screenshots/phase7e-mvp/03-tr-i18n.png` | Full TR chrome with missions layer |
 | `docs/screenshots/phase7e-mvp/03-missions-mobile-375.png` | 375px mobile Moon chrome |
+| `docs/screenshots/phase7e-mvp/04-mobile-375.png` | 375px mobile with Apollo 11 marker |
 | `docs/screenshots/phase7e-mvp/04-missions-panel-mobile-375.png` | 375px missions panel + filters |
 
 ## 6. What was done / limitations
