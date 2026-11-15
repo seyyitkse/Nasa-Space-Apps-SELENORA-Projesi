@@ -3,8 +3,16 @@
 **Branch:** `feature/phase7d-dem-mvp`  
 **Worktree:** `.worktrees/phase7d-mvp`  
 **Base:** `origin/main` @ `6e283a021d06490da9ded29a413a4fb36099d827`  
+**HEAD:** `ace0aa2f5664ed4d2977cb3b8b2aa2d86bc4aab8`  
 **Date:** 2026-11-15 (Türkiye)  
 **Verdict: READY**
+
+### Commits on this branch
+
+1. `c5235bf` — feat(phase7d): add multi-resolution Product 90 DEM mesh fallback  
+2. `44bfdac` — feat(phase7d): show remote DEM provenance in 3D terrain UI  
+3. `34b9c00` — docs(phase7d): add MVP readiness report and browser evidence  
+4. `ace0aa2` — chore(phase7d): remove runtime server logs from evidence
 
 ---
 
