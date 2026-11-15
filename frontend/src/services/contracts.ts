@@ -9,6 +9,7 @@
 import { useQuery } from '@tanstack/react-query'
 
 import { api } from '@/services/apiClient'
+import type { GlobeSiteCatalog } from '@/types/api'
 
 export const ROUTES = {
   terrainCatalog: '/api/v1/terrain/catalog', // Phase 4
@@ -21,6 +22,9 @@ export const ROUTES = {
   artemisRegions: '/api/v1/artemis/regions', // Phase 5B / 5E provenance
   analysisEpochs: '/api/v1/analyses/{analysis_id}/epochs', // Phase 5E R1
   imagerySources: '/api/v1/maps/imagery/sources', // Phase 5E allow-list
+  globeSites: '/api/v1/globe/sites', // Phase 6B markers for 3D Moon
+  mapTiles: '/api/v1/maps/tiles/{layer_id}/{z}/{x}/{y}.png', // Phase 5F.2 polar tiles
+  mapRuntime: '/api/v1/maps/runtime', // Phase 5F.2 tile/runtime provenance
 } as const
 
 export type RouteKey = keyof typeof ROUTES
@@ -444,6 +448,7 @@ export const contractApi = {
     api.get<EpochsResponse>(`/api/v1/analyses/${analysisId}/epochs`, { timeout: 60_000 }).then((r) => r.data),
   imagerySources: () =>
     api.get<{ items: ImagerySource[]; scientific_note: string }>(ROUTES.imagerySources).then((r) => r.data),
+  globeSites: () => api.get<GlobeSiteCatalog>(ROUTES.globeSites).then((r) => r.data),
 }
 
 export function useTerrainCatalog(enabled: boolean) {
@@ -518,6 +523,17 @@ export function useImagerySources(enabled: boolean) {
     queryFn: contractApi.imagerySources,
     enabled,
     staleTime: 30 * 60_000,
+    retry: 0,
+  })
+}
+
+/** Phase 6B/6C: 3D Moon research markers (keep /api/v1/sites for Mission Planner). */
+export function useGlobeSites(enabled = true) {
+  return useQuery({
+    queryKey: ['globe-sites'],
+    queryFn: contractApi.globeSites,
+    enabled,
+    staleTime: 5 * 60_000,
     retry: 0,
   })
 }

@@ -58,6 +58,41 @@ export interface LandingSiteList {
   disclaimer: string
 }
 
+/** Phase 6B globe marker — same seed IDs as LandingSite, plus ME Cartesian and LOLA flags. */
+export interface CartesianME {
+  x_m: number
+  y_m: number
+  z_m: number
+  radius_m: number
+  frame: string
+}
+
+export interface GlobeSiteMarker extends LandingSite {
+  longitude_normalized_deg: number
+  south_polar: boolean
+  local_lola_coverage: boolean
+  local_lola_tile: string | null
+  geometric_analysis_supported: boolean
+  cartesian_me: CartesianME
+  not_nasa_landing_recommendation: boolean
+}
+
+export interface GlobeSiteCatalog {
+  title: string
+  coordinate_frame: string
+  longitude_convention: string
+  sphere_radius_m: number
+  south_polar_threshold_deg: number
+  cartesian_convention: string
+  svs_glb_orientation_status: string
+  svs_glb_note: string
+  disclaimer: string
+  sites_disclaimer: string
+  related_endpoints: Record<string, string>
+  total: number
+  items: GlobeSiteMarker[]
+}
+
 export type IntegrationStatus = 'CLIENT_READY' | 'INTEGRATED' | 'PLANNED' | 'NOT_CONFIGURED'
 
 export interface DataSource {

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 
 import { Button } from '@/components/ui/button'
-import { useSites } from '@/hooks/useApi'
+import { useGlobeSites } from '@/hooks/useApi'
 
 import { MOON_ASSET } from './asset'
 import { webglAvailable } from './globeUtils'
@@ -22,7 +22,7 @@ export const MOON_POSTER = '/nasa/svs-14959/selenora-still-nearside.webp'
 export function MoonHero() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { data } = useSites()
+  const { data } = useGlobeSites()
   const [open, setOpen] = useState(false)
   const [webgl] = useState(() => (typeof document === 'undefined' ? false : webglAvailable()))
   const seq = useRef(0)

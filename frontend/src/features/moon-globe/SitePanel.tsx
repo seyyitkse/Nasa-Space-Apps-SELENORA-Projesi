@@ -6,7 +6,10 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { ArtemisRegionMeta } from '@/services/contracts'
-import type { LandingSite } from '@/types/api'
+import type { GlobeSiteMarker, LandingSite } from '@/types/api'
+
+/** SitePanel accepts Planner LandingSite or Phase 6B GlobeSiteMarker (compatible fields). */
+type MoonSite = LandingSite | GlobeSiteMarker
 
 import { MOON_ASSET } from './asset'
 import { fmtLat, fmtLon } from './globeUtils'
@@ -20,7 +23,7 @@ export function SiteList({
   selectedId,
   onSelect,
 }: {
-  sites: LandingSite[]
+  sites: MoonSite[]
   slotOf: (id: string) => 'A' | 'B' | null
   coverage: (id: string) => Coverage
   selectedId: string | null
@@ -75,7 +78,7 @@ export function SiteCard({
   onOpenTerrain,
   onFly,
 }: {
-  site: LandingSite
+  site: MoonSite
   slot: 'A' | 'B' | null
   coverage: Coverage
   onAssign: (slot: 'siteA' | 'siteB') => void
@@ -84,6 +87,7 @@ export function SiteCard({
 }) {
   const { t } = useTranslation()
   const approximate = site.coordinate_status.startsWith('APPROXIMATE')
+  const lolaTile = 'local_lola_tile' in site ? site.local_lola_tile : null
   return (
     <section className="space-y-3" aria-labelledby="moon-site-title" data-testid="moon-site-card">
       <div>
@@ -109,7 +113,20 @@ export function SiteCard({
         <div>
           <dt className="text-fg-3">{t('moon.dataAvailability')}</dt>
           <dd className="mt-1 space-y-1">
-            <Avail icon={Mountain} ok={coverage === 'covered' ? true : coverage === 'not-covered' ? false : null} label={t('moon.availLola')} detail={coverage === 'covered' ? t('moon.availLolaYes') : coverage === 'not-covered' ? t('moon.availLolaNo') : t('moon.availUnknown')} />
+            <Avail
+              icon={Mountain}
+              ok={coverage === 'covered' ? true : coverage === 'not-covered' ? false : null}
+              label={t('moon.availLola')}
+              detail={
+                coverage === 'covered'
+                  ? lolaTile
+                    ? `${t('moon.availLolaYes')} (${lolaTile})`
+                    : t('moon.availLolaYes')
+                  : coverage === 'not-covered'
+                    ? t('moon.availLolaNo')
+                    : t('moon.availUnknown')
+              }
+            />
             <Avail icon={SunMoon} ok label={t('moon.availHorizons')} detail={t('moon.availHorizonsDetail')} />
             <Avail icon={Globe2} ok label={t('moon.availGlobe')} detail={t('moon.availGlobeDetail', { km: MOON_ASSET.kmPerTexelSouthPole })} />
           </dd>
@@ -137,7 +154,7 @@ export function SiteCard({
           </Link>
         </Button>
         <Button asChild size="sm" variant="ghost" className="justify-start">
-          <Link to="/planner">
+          <Link to={`/planner?site=${encodeURIComponent(site.id)}`}>
             <Rocket /> {t('moon.openPlanner')} <ArrowRight className="ml-auto" />
           </Link>
         </Button>

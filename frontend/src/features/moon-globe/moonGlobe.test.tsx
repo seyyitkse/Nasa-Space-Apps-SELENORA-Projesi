@@ -25,6 +25,13 @@ const sites = {
       description: '',
       coordinate_source: 'Approximate; after Bussey et al. (2010)',
       coordinate_status: 'APPROXIMATE_REFERENCE',
+      longitude_normalized_deg: -166,
+      south_polar: true,
+      local_lola_coverage: true,
+      local_lola_tile: 'Site04',
+      geometric_analysis_supported: true,
+      cartesian_me: { x_m: 0, y_m: 0, z_m: -1_737_400, radius_m: 1_737_400, frame: 'MOON_ME_SPHERE_SCIENTIFIC' },
+      not_nasa_landing_recommendation: true,
     },
     {
       id: 'malapert-massif',
@@ -35,23 +42,59 @@ const sites = {
       description: '',
       coordinate_source: 'Approximate location (rounded)',
       coordinate_status: 'APPROXIMATE_REFERENCE',
+      longitude_normalized_deg: 2.9,
+      south_polar: true,
+      local_lola_coverage: false,
+      local_lola_tile: null,
+      geometric_analysis_supported: true,
+      cartesian_me: { x_m: 0, y_m: 0, z_m: -1_737_400, radius_m: 1_737_400, frame: 'MOON_ME_SPHERE_SCIENTIFIC' },
+      not_nasa_landing_recommendation: true,
     },
   ],
   total: 2,
-  coordinate_frame: '',
-  longitude_convention: '',
+  title: 'SELENORA globe sites',
+  coordinate_frame: 'MOON_ME',
+  longitude_convention: 'east-positive',
+  sphere_radius_m: 1_737_400,
+  south_polar_threshold_deg: -80,
+  cartesian_convention: 'lonlat_to_cartesian',
+  svs_glb_orientation_status: 'GEOMETRY_AXES_MATCH_MOON_ME_UV_CAVEATS',
+  svs_glb_note: '',
   disclaimer: 'Reference coordinates are approximate.',
+  sites_disclaimer: 'Reference coordinates are approximate.',
+  related_endpoints: { sites: '/api/v1/sites' },
 }
 
 function mockApi() {
-  vi.spyOn(api, 'get').mockImplementation((url: string, cfg?: { params?: unknown }): Promise<unknown> => {
+  vi.spyOn(api, 'get').mockImplementation((url: string): Promise<unknown> => {
     if (url === '/health') return Promise.resolve({ data: { status: 'ok', components: [] } })
-    if (url === '/api/v1/sites') return Promise.resolve({ data: sites })
+    if (url === '/api/v1/globe/sites') return Promise.resolve({ data: sites })
+    // Planner and other pages still use /sites; keep a thin LandingSite-shaped reply.
+    if (url === '/api/v1/sites')
+      return Promise.resolve({
+        data: {
+          items: sites.items.map(({ longitude_normalized_deg: _n, south_polar: _s, local_lola_coverage: _c, local_lola_tile: _t, geometric_analysis_supported: _g, cartesian_me: _m, not_nasa_landing_recommendation: _r, ...rest }) => rest),
+          total: sites.total,
+          coordinate_frame: sites.coordinate_frame,
+          longitude_convention: sites.longitude_convention,
+          disclaimer: sites.disclaimer,
+        },
+      })
     if (url === '/api/v1/data-sources') return Promise.resolve({ data: { items: [] } })
     if (url === '/api/v1/analyses') return Promise.resolve({ data: [] })
-    if (url === '/openapi.json') return Promise.resolve({ data: { paths: {} } })
-    if (url === '/api/v1/terrain/coverage')
-      return Promise.resolve({ data: { covered: (cfg?.params as { latitude_deg?: number } | undefined)?.latitude_deg === -89.68, latitude_deg: 0, longitude_deg: 0 } })
+    if (url === '/openapi.json')
+      return Promise.resolve({
+        data: {
+          paths: {
+            '/api/v1/globe/sites': {},
+            '/api/v1/terrain/catalog': {},
+            '/api/v1/artemis/regions': {},
+          },
+        },
+      })
+    if (url === '/api/v1/terrain/catalog') return Promise.resolve({ data: { available: false, dataset_version: '', citation: '', tiles: [] } })
+    if (url === '/api/v1/artemis/regions')
+      return Promise.resolve({ data: { title: '', disclaimer: '', geometry: null, geometry_status: '', official_sources: [], regions: [] } })
     return Promise.reject(new Error(`unexpected ${url}`))
   })
 }
@@ -119,15 +162,17 @@ describe('3D Moon page without WebGL', () => {
     expect(within(card).getByRole('button', { name: 'Site B ✓' })).toHaveAttribute('aria-pressed', 'true')
 
     expect(within(card).getByRole('link', { name: /Open in Lunar Explorer/ })).toHaveAttribute('href', '/explorer?site=malapert-massif')
+    expect(within(card).getByRole('link', { name: /Open Mission Planner/ })).toHaveAttribute('href', '/planner?site=malapert-massif')
     await user.click(within(card).getByRole('link', { name: /Open Mission Planner/ }))
     expect(router.state.location.pathname).toBe('/planner')
   })
 
-  it('reports LOLA 5 m coverage from the backend for covered sites', async () => {
+  it('reports LOLA 5 m coverage from globe/sites for covered sites', async () => {
     mockApi()
     renderAt('/moon?site=shackleton-rim-a')
     const card = await screen.findByTestId('moon-site-card')
     await waitFor(() => expect(within(card).getByText(/covered: terrain horizon and local 3D view available/)).toBeInTheDocument())
+    expect(within(card).getByText(/Site04/)).toBeInTheDocument()
     expect(within(card).getByRole('button', { name: /Open local LOLA 3D terrain/ })).toBeEnabled()
   })
 

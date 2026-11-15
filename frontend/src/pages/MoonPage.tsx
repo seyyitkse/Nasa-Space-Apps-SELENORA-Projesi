@@ -1,4 +1,3 @@
-import { useQueries } from '@tanstack/react-query'
 import { Check, ChevronRight } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -6,7 +5,7 @@ import { Link, useSearchParams } from 'react-router'
 
 import { Card } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/misc'
-import { useSites } from '@/hooks/useApi'
+import { useGlobeSites } from '@/hooks/useApi'
 import { cn } from '@/lib/utils'
 import { HIGH_MODEL_ID, MOON_MODELS } from '@/features/moon-globe/asset'
 import { MoonExplorer } from '@/features/moon-globe/MoonExplorer'
@@ -14,14 +13,14 @@ import type { CameraCommand, CameraIntent, GlobeSite } from '@/features/moon-glo
 import { type Coverage, NasaRegions, SiteCard, SiteList } from '@/features/moon-globe/SitePanel'
 import { Terrain3DPanel } from '@/features/terrain3d/Terrain3DPanel'
 import { useArtemisRegions, useCapabilities, useTerrainCatalog } from '@/services/contracts'
-import { selenoraApi } from '@/services/selenoraApi'
 import { useMissionStore } from '@/stores/missionStore'
 
 type Step = 0 | 1 | 2 | 3 | 4 | 5
 
 export default function MoonPage() {
   const { t } = useTranslation()
-  const { data, isPending, error } = useSites()
+  // Phase 6C: 3D Moon markers come from /api/v1/globe/sites (Planner keeps /api/v1/sites).
+  const { data, isPending, error } = useGlobeSites()
   const sites = useMemo(() => data?.items ?? [], [data])
   const draft = useMissionStore((s) => s.draft)
   const assignSite = useMissionStore((s) => s.assignSite)
@@ -53,19 +52,15 @@ export default function MoonPage() {
     send({ kind: 'site', lat: selected.latitude_deg, lon: selected.longitude_deg })
   }, [selected, send])
 
-  const coverageQ = useQueries({
-    queries: sites.map((s) => ({
-      queryKey: ['terrain-coverage', s.latitude_deg, s.longitude_deg],
-      queryFn: () => selenoraApi.terrainCoverage(s.latitude_deg, s.longitude_deg),
-      staleTime: 10 * 60_000,
-      retry: 0,
-    })),
-  })
-  const coverage = (id: string): Coverage => {
-    const q = coverageQ[sites.findIndex((s) => s.id === id)]
-    if (!q?.data) return 'unknown'
-    return q.data.covered ? 'covered' : 'not-covered'
-  }
+  // Prefer Phase 6B local_lola_* flags over N+1 /terrain/coverage round-trips.
+  const coverage = useCallback(
+    (id: string): Coverage => {
+      const s = sites.find((x) => x.id === id)
+      if (!s) return 'unknown'
+      return s.local_lola_coverage ? 'covered' : 'not-covered'
+    },
+    [sites],
+  )
   const slotOf = useCallback(
     (id: string): 'A' | 'B' | null =>
       draft.siteA?.kind === 'reference' && draft.siteA.id === id ? 'A' : draft.siteB?.kind === 'reference' && draft.siteB.id === id ? 'B' : null,
@@ -113,6 +108,7 @@ export default function MoonPage() {
 
   const regions = artemis.data?.current_2024_shortlist ?? artemis.data?.regions ?? []
   const regionSource = artemis.data?.official_sources.find((s) => s.id === 'nasa-regions-2024')?.url
+  const disclaimer = data?.sites_disclaimer || data?.disclaimer
 
   return (
     <div className="space-y-5">
@@ -190,7 +186,7 @@ export default function MoonPage() {
             ) : (
               <SiteList sites={sites} slotOf={slotOf} coverage={coverage} selectedId={selectedId} onSelect={select} />
             )}
-            {data?.disclaimer && <p className="mt-2 text-[10.5px] leading-snug text-fg-3">{data.disclaimer}</p>}
+            {disclaimer && <p className="mt-2 text-[10.5px] leading-snug text-fg-3">{disclaimer}</p>}
           </div>
           <NasaRegions regions={regions} sourceUrl={regionSource} />
         </Card>
