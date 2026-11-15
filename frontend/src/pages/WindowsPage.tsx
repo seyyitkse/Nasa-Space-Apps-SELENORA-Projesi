@@ -17,6 +17,7 @@ import { AnalysisPicker } from '@/features/analysis-data/AnalysisPicker'
 import type { LaneBody } from '@/features/analysis-data/stateStyle'
 import { useWorkspaceAnalysis } from '@/features/analysis-data/useWorkspaceAnalysis'
 import { buildHeatmap, dayStartMs } from '@/features/mission-windows/heatmap'
+import { OperationalEventsPanel } from '@/features/operational-events/OperationalEventsPanel'
 import { formatHours, formatUtc } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
@@ -84,6 +85,7 @@ export default function WindowsPage() {
   const ws = useWorkspaceAnalysis()
   const siteIndex = useWorkspaceStore((s) => s.siteIndex)
   const setCursor = useWorkspaceStore((s) => s.setCursor)
+  const cursorT = useWorkspaceStore((s) => s.cursorT)
   const [body, setBody] = useState<LaneBody>('joint')
   const [fromDay, setFromDay] = useState('')
   const [toDay, setToDay] = useState('')
@@ -233,6 +235,8 @@ export default function WindowsPage() {
                 {ws.timeline?.downsampled && <p className="mt-2 text-[11px] text-fg-3">{t('comparison.downsampled', { n: ws.timeline.step_minutes })}</p>}
               </CardContent>
             </Card>
+
+            <OperationalEventsPanel analysisId={result.id} siteIndex={idx} cursorMs={cursorT} startUtc={result.start_utc} endUtc={result.end_utc} />
 
             <div className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-3">
               <IntervalList title={t('windows.joint')} items={site.joint_windows} tone="violet" from={from} to={to} onPick={pick} />

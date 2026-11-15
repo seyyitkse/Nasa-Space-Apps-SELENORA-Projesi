@@ -2,11 +2,13 @@ import type { Messages } from './en'
 import phase5a from './phase5a.tr'
 import phase5d from './phase5d.tr'
 import phase6a from './phase6a.tr'
+import phase7a from './phase7a.tr'
 
 const tr: Messages = {
   ...phase5a,
   ...phase5d,
   ...phase6a,
+  ...phase7a,
   common: {
     appName: 'SELENORA',
     subtitle: 'Yapay Zekâ Destekli Ay Görevi İstihbaratı',
