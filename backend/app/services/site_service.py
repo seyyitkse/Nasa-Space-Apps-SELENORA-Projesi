@@ -7,11 +7,15 @@ from app.core.errors import NotFoundError
 from app.models.site import LandingSite
 from app.schemas.site import LandingSiteList, LandingSiteOut
 
-COORDINATE_FRAME = "Lunar body-fixed, planetocentric latitude (IAU Moon; ME/PA frame to be confirmed per data product)"
+COORDINATE_FRAME = (
+    "Lunar body-fixed MOON_ME sphere: planetocentric latitude; "
+    "Mean-Earth / Polar Axis convention (LRO/LGCWG); "
+    "compatible with JPL Horizons GEODETIC SITE_COORD on coord@301"
+)
 LONGITUDE_CONVENTION = "East-positive, -180..180 degrees"
 DISCLAIMER = (
     "Reference coordinates are approximate and intended for demonstration. "
-    "They are not official Artemis candidate-region definitions."
+    "They are not official Artemis candidate-region definitions or NASA landing recommendations."
 )
 
 
