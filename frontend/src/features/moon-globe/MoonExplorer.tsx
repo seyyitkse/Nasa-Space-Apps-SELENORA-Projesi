@@ -11,7 +11,7 @@ import { HIGH_MODEL_ID, MOON_ASSET, MOON_MODELS, MoonAssetError } from './asset'
 import { defaultQuality, fmtLat, fmtLon, highModelId, highSupported, loadMoonBuffer, maxAnisotropy, maxTextureSize, webglAvailable } from './globeUtils'
 import { LANDMARKS } from './landmarks'
 import type { LoadedMoon, MoonQuality, ReliefMode } from './loadMoon'
-import type { CameraCommand, CameraIntent, CameraState, DraftPick, GlobeSite } from './MoonScene'
+import type { CameraCommand, CameraIntent, CameraState, DraftPick, GlobeSite, MissionGlobeMarker } from './MoonScene'
 import { StaticMoonFallback } from './StaticMoonFallback'
 import type { ViewPreset } from './orientation'
 
@@ -38,6 +38,10 @@ export interface MoonExplorerProps {
   onOpenLocalTerrain?: () => void
   /** LOLA 5 m tile footprints to outline on the globe. */
   tiles?: { site_id: string; bounds_m: [number, number, number, number] }[]
+  /** Phase 7E optional lunar-mission overlays (verified coordinates only). */
+  missions?: MissionGlobeMarker[]
+  selectedMissionId?: string | null
+  onSelectMission?: (id: string) => void
   className?: string
 }
 
@@ -54,6 +58,9 @@ export function MoonExplorer({
   draftPick = null,
   onOpenLocalTerrain,
   tiles,
+  missions = [],
+  selectedMissionId = null,
+  onSelectMission,
   className,
 }: MoonExplorerProps) {
   const { t } = useTranslation()
@@ -208,6 +215,9 @@ export function MoonExplorer({
               onSurfacePick={onSurfacePick}
               draftPick={draftPick}
               landmarks={landmarks ? LANDMARKS : []}
+              missions={missions}
+              selectedMissionId={selectedMissionId}
+              onSelectMission={onSelectMission}
               showGraticule={grid}
               command={command}
               reducedMotion={reduce}
