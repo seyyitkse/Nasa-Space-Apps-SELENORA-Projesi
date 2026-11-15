@@ -1,0 +1,8 @@
+{
+    "openapi_has_mesh":  true,
+    "openapi_has_solar":  true,
+    "openapi_has_events":  true,
+    "openapi_has_missions":  true,
+    "openapi_has_scenarios":  true,
+    "sites":  8
+}
