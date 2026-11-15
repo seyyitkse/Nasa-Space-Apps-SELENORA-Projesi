@@ -77,7 +77,14 @@ class MeshResponse(ApiModel):
     crs_proj4: str
     attribution: str
     source_url: str | None = None
+    product_page: str | None = None
     access_mode: str
+    coverage_tier: str | None = None
+    native_resolution_m: float | None = None
+    dem_site_id: str | None = None
+    dem_file: str | None = None
+    surface_z_m: float | None = None
+    coverage_message: str | None = None
     origin_lonlat_deg: list[float]
     origin_stereo_m: list[float]
     extent_m: MeshExtent
@@ -258,7 +265,7 @@ def map_mesh(
     longitude_deg: Annotated[float, Query(ge=-180, le=180)],
     half_extent_m: Annotated[float, Query()] = 2_000.0,
     step_m: Annotated[float, Query()] = 50.0,
-    layer_id: Annotated[str, Query()] = "lola-site04-5mpp-surf",
+    layer_id: Annotated[str, Query()] = "auto",
 ) -> MeshResponse:
     try:
         payload = raster_preview_service.build_mesh(

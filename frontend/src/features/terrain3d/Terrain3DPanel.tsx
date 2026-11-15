@@ -16,7 +16,7 @@ import { type HorizonProfile, nearestBin, type ObserverPoint, useCapabilities, u
 import { selenoraApi } from '@/services/selenoraApi'
 
 import { STATE_TONE } from '../analysis-data/stateStyle'
-import { gridBearingDeg, MESH_PRESETS, meshLayerForTile, OBSERVER_HEIGHT_M, rayProfile, trueNorthGridAzimuthDeg } from './mesh'
+import { gridBearingDeg, MESH_PRESETS, meshLayerForRequest, meshSourceLabel, OBSERVER_HEIGHT_M, rayProfile, trueNorthGridAzimuthDeg } from './mesh'
 import type { BodyDir } from './TerrainScene'
 
 const TerrainScene = lazy(() => import('./TerrainScene'))
@@ -58,16 +58,22 @@ export function Terrain3DPanel({ latitude, longitude, siteLabel, sample, profile
     staleTime: 10 * 60_000,
     retry: 0,
   })
-  const layerId = meshLayerForTile(coverage.data?.dem_site_id)
+  // Phase 7D: local 5 m when covered; otherwise backend auto-selects Product 90 elevation COG.
+  const layerId = meshLayerForRequest(coverage.data?.dem_site_id)
   const p = MESH_PRESETS[preset]!
   const mesh = useMapMesh(
-    open && coverage.data?.covered && layerId ? { lat: latitude, lon: longitude, halfExtentM: p.halfExtentM, stepM: p.stepM, layerId } : null,
+    open && coverage.data ? { lat: latitude, lon: longitude, halfExtentM: p.halfExtentM, stepM: p.stepM, layerId } : null,
     caps.has('mapMesh'),
   )
 
   const gamma = trueNorthGridAzimuthDeg(longitude)
-  const surfaceZ = coverage.data?.surface_z_m ?? null
+  const surfaceZ = mesh.data?.surface_z_m ?? coverage.data?.surface_z_m ?? null
   const eyeZ = surfaceZ !== null ? surfaceZ + OBSERVER_HEIGHT_M : null
+  const meshUnavailable =
+    Boolean(coverage.data) &&
+    !mesh.isPending &&
+    Boolean(mesh.error) &&
+    !coverage.data?.covered
 
   // Memoised: a new array each render would re-mount the 3D labels.
   const bodies: BodyDir[] = useMemo(() => {
@@ -111,7 +117,7 @@ export function Terrain3DPanel({ latitude, longitude, siteLabel, sample, profile
     )
   if (coverage.isPending) return <Skeleton className="h-[420px]" />
   if (coverage.error) return <ErrorState error={coverage.error} compact />
-  if (!coverage.data.covered || !layerId)
+  if (meshUnavailable)
     return (
       <div role="note" className="flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/[0.06] p-4 text-[12.5px] text-fg-2">
         <Mountain className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />
@@ -194,8 +200,14 @@ export function Terrain3DPanel({ latitude, longitude, siteLabel, sample, profile
               <dl className="mt-3 grid grid-cols-[1fr_auto] gap-x-2 gap-y-1 font-mono text-[10.5px]">
                 <dt className="text-fg-3">{t('terrain3d.resolution')}</dt>
                 <dd className="text-right text-fg">{mesh.data.step_m} m</dd>
+                <dt className="text-fg-3">{t('terrain3d.nativeRes')}</dt>
+                <dd className="text-right text-fg">
+                  {mesh.data.native_resolution_m != null ? `${mesh.data.native_resolution_m} m` : '—'}
+                </dd>
                 <dt className="text-fg-3">{t('terrain3d.source')}</dt>
-                <dd className="text-right text-fg">LOLA 5 m · {coverage.data.dem_site_id}</dd>
+                <dd className="text-right text-fg">{meshSourceLabel(mesh.data)}</dd>
+                <dt className="text-fg-3">{t('terrain3d.tier')}</dt>
+                <dd className="text-right text-fg">{mesh.data.coverage_tier ?? '—'}</dd>
                 <dt className="text-fg-3">{t('terrain3d.extentShort')}</dt>
                 <dd className="text-right text-fg">{(mesh.data.half_extent_m * 2) / 1000} km</dd>
                 <dt className="text-fg-3">{t('terrain3d.noData')}</dt>
@@ -203,7 +215,9 @@ export function Terrain3DPanel({ latitude, longitude, siteLabel, sample, profile
                 <dt className="text-fg-3">γ</dt>
                 <dd className="text-right text-fg">{gamma.toFixed(1)}°</dd>
               </dl>
-              <p className="mt-2 text-[10.5px] leading-relaxed text-fg-3">{t('terrain3d.heightRef')}</p>
+              <p className="mt-2 text-[10.5px] leading-relaxed text-fg-3">
+                {mesh.data.coverage_tier === 'REMOTE_PGDA90' ? t('terrain3d.heightRefRemote') : t('terrain3d.heightRef')}
+              </p>
             </div>
           )}
 
