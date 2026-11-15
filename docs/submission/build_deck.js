@@ -109,9 +109,9 @@ function tag(s, text, x, y, w, color = C.cyan) {
   }
   tag(s, 'TEAM SELENORA', M + 7.6, 6.02, 4.3, C.cyan);
   s.addText([
-    { text: 'Ahmet Seyyit KÖSE', options: { bold: true, color: C.text } },
+    { text: 'Ahmet Seyyit KOSE', options: { bold: true, color: C.text } },
     { text: '   Team Leader', options: { color: C.muted, breakLine: true } },
-    { text: 'Nursena ÇAMKÖMÜRÜ', options: { bold: true, color: C.text } },
+    { text: 'Nursena CAMKOMURU', options: { bold: true, color: C.text } },
     { text: '   Team Member', options: { color: C.muted } },
   ], { x: M + 7.6, y: 6.28, w: 4.4, h: 0.6, fontFace: F.body, fontSize: 14, margin: 0, isTextBox: true, valign: 'top' });
   s.addNotes('SELENORA turns NASA mission data into transparent, time-dependent lunar landing-site decision support. The image is a live capture of our own 3D Moon (NASA SVS 14959 LRO model) with the Apollo/CLPS history layer enabled.');
@@ -449,9 +449,9 @@ function tag(s, text, x, y, w, color = C.cyan) {
   s.addShape(pres.shapes.LINE, { x: qx + 0.3, y: 5.32, w: qw - 0.6, h: 0, line: { color: C.lineSoft, width: 0.75 } });
   tag(s, 'TEAM SELENORA', qx + 0.3, 5.48, qw - 0.6, C.cyan);
   s.addText([
-    { text: 'Ahmet Seyyit KÖSE', options: { bold: true, color: C.text, breakLine: true } },
+    { text: 'Ahmet Seyyit KOSE', options: { bold: true, color: C.text, breakLine: true } },
     { text: 'Team Leader', options: { color: C.muted, fontSize: 10.5, breakLine: true } },
-    { text: 'Nursena ÇAMKÖMÜRÜ', options: { bold: true, color: C.text, breakLine: true } },
+    { text: 'Nursena CAMKOMURU', options: { bold: true, color: C.text, breakLine: true } },
     { text: 'Team Member', options: { color: C.muted, fontSize: 10.5 } },
   ], { x: qx + 0.3, y: 5.76, w: qw - 0.6, h: 1.05, fontFace: F.body, fontSize: 13, margin: 0, isTextBox: true, valign: 'top' });
   footer(s, 'Independent Space Apps project — not affiliated with or endorsed by NASA. NASA data and imagery credited to sources.');
