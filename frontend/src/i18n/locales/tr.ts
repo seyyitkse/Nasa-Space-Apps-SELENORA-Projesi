@@ -6,6 +6,7 @@ import phase6c1 from './phase6c1.tr'
 import phase7a from './phase7a.tr'
 import phase7b from './phase7b.tr'
 import phase7c from './phase7c.tr'
+import phase7e from './phase7e.tr'
 
 const tr: Messages = {
   ...phase5a,
@@ -15,6 +16,7 @@ const tr: Messages = {
   ...phase7a,
   ...phase7b,
   ...phase7c,
+  ...phase7e,
   common: {
     appName: 'SELENORA',
     subtitle: 'Yapay Zekâ Destekli Ay Görevi İstihbaratı',

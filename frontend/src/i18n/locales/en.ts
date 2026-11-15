@@ -5,6 +5,7 @@ import phase6c1 from './phase6c1.en'
 import phase7a from './phase7a.en'
 import phase7b from './phase7b.en'
 import phase7c from './phase7c.en'
+import phase7e from './phase7e.en'
 const en = {
   ...phase5a,
   ...phase5d,
@@ -13,6 +14,7 @@ const en = {
   ...phase7a,
   ...phase7b,
   ...phase7c,
+  ...phase7e,
   common: {
     appName: 'SELENORA',
     subtitle: 'AI-Powered Lunar Mission Intelligence',

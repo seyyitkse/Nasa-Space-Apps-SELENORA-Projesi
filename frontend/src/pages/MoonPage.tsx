@@ -10,6 +10,12 @@ import { FieldError, Input, Label } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/misc'
 import { useGlobeSites } from '@/hooks/useApi'
 import { cn } from '@/lib/utils'
+import { MissionPanel } from '@/features/lunar-missions/MissionPanel'
+import {
+  missionToGlobeMarker,
+  type MissionGlobeMarker,
+  type MissionItem,
+} from '@/features/lunar-missions/types'
 import { HIGH_MODEL_ID, MOON_MODELS } from '@/features/moon-globe/asset'
 import { customAsLandingSite } from '@/features/moon-globe/customSiteAdapter'
 import { MoonExplorer } from '@/features/moon-globe/MoonExplorer'
@@ -55,6 +61,12 @@ export default function MoonPage() {
   const [nameError, setNameError] = useState<'empty' | 'duplicate' | 'coords' | null>(null)
   const [savedFlash, setSavedFlash] = useState<string | null>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
+
+  // Phase 7E — optional Lunar Missions layer (global 3D Moon only).
+  const [missionsLayer, setMissionsLayer] = useState(false)
+  const [selectedMissionId, setSelectedMissionId] = useState<string | null>(null)
+  const [missionMarkers, setMissionMarkers] = useState<MissionGlobeMarker[]>([])
+  const [missionItems, setMissionItems] = useState<MissionItem[]>([])
 
   const seq = useRef(0)
   const [command, setCommand] = useState<CameraCommand | null>(null)
@@ -219,6 +231,29 @@ export default function MoonPage() {
     requestAnimationFrame(() => terrainRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }, [selected])
 
+  const selectMission = useCallback(
+    (mission: MissionItem) => {
+      setSelectedMissionId(mission.id)
+      const marker = missionToGlobeMarker(mission)
+      if (marker) send({ kind: 'site', lat: marker.lat, lon: marker.lon })
+    },
+    [send],
+  )
+
+  const selectMissionById = useCallback(
+    (id: string) => {
+      const mission = missionItems.find((m) => m.id === id)
+      if (mission) selectMission(mission)
+      else setSelectedMissionId(id)
+    },
+    [missionItems, selectMission],
+  )
+
+  const onMissionMarkersChange = useCallback((markers: MissionGlobeMarker[], items: MissionItem[]) => {
+    setMissionMarkers(markers)
+    setMissionItems(items)
+  }, [])
+
   const step: Step = terrainOpen ? 4 : selected ? 3 : atSouth ? 2 : 1
   const steps = [
     { label: t('moon.journey.control'), to: '/' },
@@ -306,10 +341,27 @@ export default function MoonPage() {
           onCommand={send}
           onOpenLocalTerrain={selected ? openTerrain : undefined}
           tiles={tiles}
+          missions={missionMarkers}
+          selectedMissionId={selectedMissionId}
+          onSelectMission={selectMissionById}
           className="h-[min(60vh,560px)] min-h-[340px] lg:h-[min(72vh,640px)]"
         />
 
         <Card className="space-y-4 p-4">
+          <MissionPanel
+            enabled={missionsLayer}
+            selectedId={selectedMissionId}
+            onSelect={selectMission}
+            onToggleLayer={(on) => {
+              setMissionsLayer(on)
+              if (!on) {
+                setMissionMarkers([])
+                setSelectedMissionId(null)
+              }
+            }}
+            onMarkersChange={onMissionMarkersChange}
+          />
+          <div className="border-t border-line" />
           {draftPick ? (
             <section className="space-y-3" aria-labelledby="moon-create-title" data-testid="moon-create-dialog">
               <div>
