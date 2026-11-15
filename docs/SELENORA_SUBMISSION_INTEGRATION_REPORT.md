@@ -114,4 +114,4 @@ Custom-point creation remains on Moon page; research-site list unchanged beside 
 
 ## Final Git SHA
 
-See branch tip after this commit (`git rev-parse HEAD` on `release/selenora-submission-2026`).
+`2d51a90954482765fa959404d16813c61400d766`
