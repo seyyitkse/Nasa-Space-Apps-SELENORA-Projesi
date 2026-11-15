@@ -108,5 +108,5 @@ Also: custom-point creation control remains on Moon page; research-site list unc
 
 ## Final Git SHA
 
-`c7cad1967e04a54f08892996d950068a4c62fead`
+`b1c9982cb7bb825f52a505a4c8b8b008ea6c3d72`
 
