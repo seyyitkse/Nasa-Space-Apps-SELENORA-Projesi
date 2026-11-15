@@ -114,4 +114,4 @@ Custom-point creation remains on Moon page; research-site list unchanged beside 
 
 ## Final Git SHA
 
-`2d51a90954482765fa959404d16813c61400d766`
+`123c125b973579f6c1f9daa57f94f1e8f0d6d679`
