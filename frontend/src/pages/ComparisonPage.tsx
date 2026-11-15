@@ -132,6 +132,9 @@ function ComparisonDashboard({
     [result, timeline, epochsQ.data],
   )
 
+  // Phase 7B is a primary comparison result. Keep it visible in Explorer mode
+  // while retaining the full scientific-detail placement for Scientist mode.
+  const solarPanel = <SolarPotentialPanel analysisId={result.id} synthetic={isSynthetic} />
   const details = (
     <>
 
@@ -162,7 +165,7 @@ function ComparisonDashboard({
 
       <ConfidencePanel result={result} sites={epochSites} />
 
-      <SolarPotentialPanel analysisId={result.id} synthetic={isSynthetic} />
+      {scientist && solarPanel}
 
       <div className="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Section title={t('comparison.elevationTitle')} description={timeline.downsampled ? t('comparison.downsampled', { n: timeline.step_minutes }) : undefined}>
@@ -268,6 +271,7 @@ function ComparisonDashboard({
       {isSynthetic && <SyntheticBanner />}
       <RecommendationBanner result={result} />
       {!scientist && <PlainSummary result={result} />}
+      {!scientist && solarPanel}
       {scientist ? details : <Advanced title={t('mode.scientificDetails')}>{details}</Advanced>}
     </div>
   )
