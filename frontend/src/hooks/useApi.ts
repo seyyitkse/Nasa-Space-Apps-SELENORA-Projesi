@@ -56,6 +56,21 @@ export function useTimeline(id: string | undefined, enabled = true) {
   })
 }
 
+export function useScenarioComparison(id: string | undefined) {
+  return useQuery({
+    queryKey: queryKeys.scenarioComparison(id ?? ''),
+    queryFn: () => selenoraApi.getScenarioComparison(id!),
+    enabled: Boolean(id),
+  })
+}
+
+export function useScenarioComparisons() {
+  return useQuery({
+    queryKey: queryKeys.scenarioComparisons,
+    queryFn: selenoraApi.scenarioComparisons,
+  })
+}
+
 export function useExplanation(id: string | undefined, language?: 'en' | 'tr') {
   return useQuery({
     queryKey: queryKeys.explanation(id ?? '', language),
