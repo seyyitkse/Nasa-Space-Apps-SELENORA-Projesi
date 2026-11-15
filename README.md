@@ -102,7 +102,7 @@ Compares horizontal, fixed, azimuth-tracking and dual-axis illumination geometry
 ### Alternative Mission Dates (Phase 7C)
 One stable site across independent UTC windows (e.g. December 2026 vs January 2027), each with its own ephemeris and provenance.
 
-![Date Scenarios results comparing December 2026 and January 2027 for Shackleton Rim Point A](docs/assets/readme/08-date-scenarios-results.jpg)
+![Date Scenarios results comparing December 2026 and January 2027 for Shackleton Rim Point A](docs/assets/readme/08-date-scenarios-results.png)
 
 ### Guided Mission, AI Analyst & Reports
 | Capability | What it does |
@@ -306,11 +306,14 @@ Broader DEM horizon science, expanded catalogs, and deployment packaging may con
 
 ## Team, Credits & AI Disclosure
 
-- **Project:** SELENORA  
+- **Project / Team:** SELENORA  
 - **Challenge:** NASA Space Apps Challenge 2026 — Lunar Landing Site Navigator  
 - **Repository:** [seyyitkse/Nasa-Space-Apps-SELENORA-Projesi](https://github.com/seyyitkse/Nasa-Space-Apps-SELENORA-Projesi)
 
-Add the official Space Apps team roster on the competition submission form. This README does not invent individual member names.
+| Role | Name |
+| --- | --- |
+| Team Leader | Ahmet Seyyit KÖSE |
+| Team Member | Nursena ÇAMKÖMÜRÜ |
 
 **AI-assisted development:** Implementation, review and documentation used AI coding tools (including Cursor, Claude, Codex and ZCode workflows). Scientific computations use deterministic code and verified NASA/JPL inputs — not fabricated model outputs. The optional DeepSeek layer only explains stored evidence packages.
 

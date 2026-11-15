@@ -1,8 +1,15 @@
 SELENORA
 =======
 
+Team SELENORA (NASA Space Apps Challenge 2026)
+- Team Leader: Ahmet Seyyit KÖSE
+- Team Member: Nursena ÇAMKÖMÜRÜ
+
 SELENORA original software and project documentation in this repository are
 licensed under the Apache License, Version 2.0. See the LICENSE file.
+Individual authorship of specific commits is recorded in Git history; listing
+team membership here does not assert exclusive ownership of every third-party
+or AI-assisted contribution.
 
 SPDX-License-Identifier: Apache-2.0
 
