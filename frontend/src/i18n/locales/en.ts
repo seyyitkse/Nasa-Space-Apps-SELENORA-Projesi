@@ -3,12 +3,16 @@ import phase5d from './phase5d.en'
 import phase6a from './phase6a.en'
 import phase6c1 from './phase6c1.en'
 import phase7a from './phase7a.en'
+import phase7b from './phase7b.en'
+import phase7c from './phase7c.en'
 const en = {
   ...phase5a,
   ...phase5d,
   ...phase6a,
   ...phase6c1,
   ...phase7a,
+  ...phase7b,
+  ...phase7c,
   common: {
     appName: 'SELENORA',
     subtitle: 'AI-Powered Lunar Mission Intelligence',
@@ -40,6 +44,7 @@ const en = {
     explorer: 'Lunar Explorer',
     planner: 'Mission Planner',
     comparison: 'Site Comparison',
+    scenarios: 'Date Scenarios',
     analyst: 'AI Mission Analyst',
     reports: 'Mission Reports',
     collapse: 'Collapse sidebar',

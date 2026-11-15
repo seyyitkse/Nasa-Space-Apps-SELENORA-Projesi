@@ -14,6 +14,7 @@ const MoonPage = lazy(() => import('@/pages/MoonPage'))
 const WindowsPage = lazy(() => import('@/pages/WindowsPage'))
 const AnalystPage = lazy(() => import('@/pages/AnalystPage'))
 const ReportsPage = lazy(() => import('@/pages/ReportsPage'))
+const DateScenariosPage = lazy(() => import('@/pages/DateScenariosPage'))
 const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'))
 
 export const routes: RouteObject[] = [
@@ -29,6 +30,8 @@ export const routes: RouteObject[] = [
       { path: 'windows', element: <WindowsPage /> },
       { path: 'comparison', element: <ComparisonPage /> },
       { path: 'comparison/:analysisId', element: <ComparisonPage /> },
+      { path: 'scenarios', element: <DateScenariosPage /> },
+      { path: 'scenarios/:comparisonId', element: <DateScenariosPage /> },
       { path: 'analyst', element: <AnalystPage /> },
       { path: 'reports', element: <ReportsPage /> },
       { path: 'reports/:analysisId', element: <ReportsPage /> },

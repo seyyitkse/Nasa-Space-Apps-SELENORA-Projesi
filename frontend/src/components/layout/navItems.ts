@@ -1,6 +1,7 @@
 import {
   BrainCircuit,
   CalendarRange,
+  CalendarClock,
   Compass,
   FileText,
   GitCompareArrows,
@@ -16,7 +17,7 @@ import type { UiMode } from '@/stores/modeStore'
 
 export interface NavItem {
   to: string
-  key: 'overview' | 'moon' | 'guided' | 'explorer' | 'simulator' | 'planner' | 'comparison' | 'windows' | 'analyst' | 'reports'
+  key: 'overview' | 'moon' | 'guided' | 'explorer' | 'simulator' | 'planner' | 'comparison' | 'scenarios' | 'windows' | 'analyst' | 'reports'
   icon: LucideIcon
   group: 'mission' | 'intelligence'
   /** Modes in which the item appears in the sidebar (all routes stay reachable by URL). */
@@ -33,6 +34,7 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/simulator', key: 'simulator', icon: SunMoon, group: 'mission', modes: BOTH },
   { to: '/planner', key: 'planner', icon: Rocket, group: 'mission', modes: ['scientist'] },
   { to: '/comparison', key: 'comparison', icon: GitCompareArrows, group: 'intelligence', modes: BOTH },
+  { to: '/scenarios', key: 'scenarios', icon: CalendarClock, group: 'intelligence', modes: BOTH },
   { to: '/windows', key: 'windows', icon: CalendarRange, group: 'intelligence', modes: ['scientist'] },
   { to: '/analyst', key: 'analyst', icon: BrainCircuit, group: 'intelligence', modes: BOTH },
   { to: '/reports', key: 'reports', icon: FileText, group: 'intelligence', modes: ['scientist'] },

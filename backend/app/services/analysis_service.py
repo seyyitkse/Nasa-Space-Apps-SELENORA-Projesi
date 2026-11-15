@@ -186,6 +186,33 @@ async def _fetch_site_bodies(
     return dict(pairs)
 
 
+async def fetch_site_ephemerides(
+    client: HorizonsClient,
+    *,
+    latitude_deg: float,
+    longitude_deg: float,
+    start_utc: datetime,
+    end_utc: datetime,
+    step_minutes: int,
+    semaphore: asyncio.Semaphore,
+) -> dict[TargetBody, EphemerisResult]:
+    """Public bounded fetch primitive shared by analyses and Phase 7C.
+
+    Callers provide one shared semaphore so a multi-scenario request cannot
+    multiply the upstream JPL concurrency beyond ``HORIZONS_CONCURRENCY``.
+    """
+
+    return await _fetch_site_bodies(
+        client,
+        latitude_deg=latitude_deg,
+        longitude_deg=longitude_deg,
+        start_utc=start_utc,
+        end_utc=end_utc,
+        step_minutes=step_minutes,
+        semaphore=semaphore,
+    )
+
+
 def _quality_for_missing(missing_fraction: float, horizon_model: str) -> str:
     if missing_fraction > MISSING_FRACTION_PARTIAL:
         return "PARTIAL"
@@ -732,7 +759,7 @@ async def create_analysis(
         site_ephems: list[dict[TargetBody, EphemerisResult]] = []
         # Bounded parallelism across sites; each site fetches Sun+Earth concurrently.
         async def site_job(site: Any) -> dict[TargetBody, EphemerisResult]:
-            return await _fetch_site_bodies(
+            return await fetch_site_ephemerides(
                 client,
                 latitude_deg=site.latitude_deg,
                 longitude_deg=site.longitude_deg,
