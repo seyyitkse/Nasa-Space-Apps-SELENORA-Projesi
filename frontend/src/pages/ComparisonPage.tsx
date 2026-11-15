@@ -1,7 +1,7 @@
-import { FlaskConical, GitCompareArrows, Loader2, Moon, Radio, RefreshCw, Satellite, Sun } from 'lucide-react'
+import { AlertTriangle, FlaskConical, GitCompareArrows, Loader2, Moon, Radio, RefreshCw, Satellite, Sun } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router'
+import { Link, useParams, useSearchParams } from 'react-router'
 
 import { DataQualityBadge } from '@/components/shared/badges'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -29,8 +29,9 @@ import { Advanced } from '@/components/shared/Explain'
 import { PlainSummary } from '@/features/guided/PlainSummary'
 import { useIsScientist } from '@/stores/modeStore'
 import { useWorkspaceStore } from '@/stores/workspaceStore'
-import { useAnalysis, useTimeline } from '@/hooks/useApi'
+import { useAnalyses, useAnalysis, useTimeline } from '@/hooks/useApi'
 import { useAnalysisEpochs, useCapabilities } from '@/services/contracts'
+import { ApiError } from '@/services/apiClient'
 import { useMissionStore } from '@/stores/missionStore'
 import type { AnalysisCreate, AnalysisResult, DemoAnalysisResponse, TimelineResponse } from '@/types/api'
 
@@ -269,11 +270,58 @@ function ComparisonDashboard({
   )
 }
 
+function StaleAnalysisState({ id }: { id: string }) {
+  const { t } = useTranslation()
+  const analyses = useAnalyses()
+  const setAnalysis = useWorkspaceStore((s) => s.setAnalysis)
+  const latest = analyses.data?.find((a) => a.status === 'COMPLETED' && a.id !== id)
+  return (
+    <PageTransition>
+      <PageHeader title={t('comparison.title')} />
+      <Card role="alert" data-testid="stale-analysis" className="border-warning/30 bg-warning/[0.05]">
+        <CardContent className="space-y-4 pt-5">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 size-5 shrink-0 text-warning" aria-hidden />
+            <div>
+              <h2 className="font-display text-lg font-semibold">{t('comparison.savedUnavailableTitle')}</h2>
+              <p className="mt-1 text-sm leading-relaxed text-fg-2">{t('comparison.savedUnavailableBody')}</p>
+              <code className="mt-2 block break-all text-[11px] text-fg-3">{id}</code>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {latest && (
+              <Button asChild variant="primary">
+                <Link to={`/comparison/${latest.id}`} onClick={() => setAnalysis(latest.id)}>
+                  {t('comparison.restoreLatest')}
+                </Link>
+              </Button>
+            )}
+            <Button asChild variant="secondary">
+              <Link to="/comparison?source=demo" onClick={() => setAnalysis(null)}>
+                {t('comparison.clearStale')}
+              </Link>
+            </Button>
+            <Button asChild variant="ghost">
+              <Link to="/planner">{t('comparison.goPlanner')}</Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </PageTransition>
+  )
+}
+
 function StoredAnalysisView({ id }: { id: string }) {
   const { t } = useTranslation()
   const analysis = useAnalysis(id)
+  const activeId = useWorkspaceStore((s) => s.analysisId)
+  const setAnalysis = useWorkspaceStore((s) => s.setAnalysis)
   const completed = analysis.data?.status === 'COMPLETED'
   const timeline = useTimeline(id, completed)
+
+  useEffect(() => {
+    if (completed && id !== activeId) setAnalysis(id)
+  }, [activeId, completed, id, setAnalysis])
 
   if (analysis.isPending) {
     return (
@@ -288,6 +336,9 @@ function StoredAnalysisView({ id }: { id: string }) {
   }
 
   if (analysis.error) {
+    if (analysis.error instanceof ApiError && analysis.error.status === 404) {
+      return <StaleAnalysisState id={id} />
+    }
     return (
       <PageTransition>
         <PageHeader title={t('comparison.title')} />
@@ -453,6 +504,10 @@ function DemoComparisonView() {
 
 export default function ComparisonPage() {
   const { analysisId } = useParams<{ analysisId?: string }>()
+  const [searchParams] = useSearchParams()
+  const activeAnalysisId = useWorkspaceStore((s) => s.analysisId)
+  const explicitDemo = searchParams.get('source') === 'demo'
   if (analysisId) return <StoredAnalysisView id={analysisId} />
+  if (!explicitDemo && activeAnalysisId) return <StoredAnalysisView id={activeAnalysisId} />
   return <DemoComparisonView />
 }

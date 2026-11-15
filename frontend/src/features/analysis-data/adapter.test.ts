@@ -116,9 +116,9 @@ describe('analysis adapter', () => {
   })
 
   it('maps authoritative VISIBLE/BLOCKED/UNKNOWN without inventing clear sky', () => {
-    expect(mapAuthoritativeBody('BLOCKED', 1.5, false)).toBe('BLOCKED')
-    expect(mapAuthoritativeBody('BLOCKED', -1, true)).toBe('BELOW_HORIZON')
-    expect(mapAuthoritativeBody('UNKNOWN', 2, false)).toBe('UNKNOWN')
+    expect(mapAuthoritativeBody('BLOCKED', false)).toBe('BLOCKED')
+    expect(mapAuthoritativeBody('BLOCKED', true)).toBe('BELOW_HORIZON')
+    expect(mapAuthoritativeBody('UNKNOWN', false)).toBe('UNKNOWN')
     const authSite: AuthoritativeSiteEpochs = {
       label: 'A',
       latitude_deg: -89.68,
@@ -212,6 +212,42 @@ describe('analysis adapter', () => {
     }
     const resolved = resolveSiteEpochs({ horizon_model: 'TERRAIN', end_utc: hour(4) }, s, points, auth)
     expect(resolved[0]!.sun).toBe('UNKNOWN')
+    expect(resolved[0]!.authoritative).toBe(true)
+  })
+
+  it('uses authoritative /epochs horizon metadata for GEOMETRIC below-horizon states', () => {
+    const auth: EpochsResponse = {
+      analysis_id: 'geometric-analysis',
+      mission_name: 'Geometric fixture',
+      horizon_model: 'GEOMETRIC',
+      data_quality: 'EPHEMERIS_ONLY',
+      algorithm_version: '1',
+      start_utc: hour(0),
+      end_utc: hour(1),
+      time_step_minutes: 60,
+      sample_count_per_site: 1,
+      duration_semantics: '[start_utc, end_utc)',
+      sites: [{
+        label: 'A', latitude_deg: -89.68, longitude_deg: -166,
+        samples: [{
+          t: hour(0),
+          sun_azimuth_deg: 10, sun_elevation_deg: -2,
+          earth_azimuth_deg: 20, earth_elevation_deg: null,
+          // The backend contract uses BLOCKED for the geometric <= 0° source state.
+          sun_state: 'BLOCKED', earth_state: 'UNKNOWN', joint_state: 'NOT_VISIBLE',
+          sun_geometric_state: 'BLOCKED', earth_geometric_state: 'UNKNOWN',
+          hold_hours: 1, contributes_duration: true,
+        }],
+      }],
+      provenance: [], limitations: [],
+    }
+    const resolved = resolveSiteEpochs(
+      { horizon_model: 'GEOMETRIC', end_utc: hour(1) }, site(), points, auth,
+    )
+    expect(resolved[0]!.sun).toBe('BELOW_HORIZON')
+    expect(resolved[0]!.earth).toBe('UNKNOWN')
+    expect(resolved[0]!.sunGeometric).toBe('BELOW_HORIZON')
+    expect(resolved[0]!.sunTerrainHorizonDeg).toBeNull()
     expect(resolved[0]!.authoritative).toBe(true)
   })
 

@@ -29,6 +29,7 @@ import { WeightsEditor } from '@/features/mission-planner/WeightsEditor'
 import { ApiError } from '@/services/apiClient'
 import { selenoraApi } from '@/services/selenoraApi'
 import { type SiteRef, useMissionStore } from '@/stores/missionStore'
+import { useWorkspaceStore } from '@/stores/workspaceStore'
 
 function encodeRef(ref: SiteRef | null) {
   return ref ? `${ref.kind}:${ref.id}` : ''
@@ -46,6 +47,8 @@ export default function PlannerPage() {
   const draft = useMissionStore((s) => s.draft)
   const update = useMissionStore((s) => s.updateDraft)
   const reset = useMissionStore((s) => s.resetDraft)
+  const setDemo = useMissionStore((s) => s.setDemo)
+  const setWorkspaceAnalysis = useWorkspaceStore((s) => s.setAnalysis)
   const custom = useMissionStore((s) => s.customSites)
   const { data: sites } = useSites()
   const input = usePlannerInput()
@@ -57,6 +60,8 @@ export default function PlannerPage() {
     onSuccess: (status) => {
       void queryClient.invalidateQueries({ queryKey: ['analyses'] })
       if (status.status === 'COMPLETED' || status.status === 'PENDING' || status.status === 'RUNNING') {
+        setDemo(null)
+        setWorkspaceAnalysis(status.id)
         void navigate(`/comparison/${status.id}`)
       }
     },
@@ -76,6 +81,7 @@ export default function PlannerPage() {
     e.preventDefault()
     runIfValid(() => {
       demo.reset()
+      setDemo(null)
       analysis.mutate(toAnalysisRequest(input))
     })
   }
@@ -118,7 +124,7 @@ export default function PlannerPage() {
         title={t('planner.title')}
         description={t('planner.description')}
         actions={
-          <Button variant="ghost" size="sm" onClick={() => { reset(); setTouched(false); analysis.reset(); demo.reset() }}>
+          <Button variant="ghost" size="sm" onClick={() => { reset(); setTouched(false); analysis.reset(); demo.reset(); setDemo(null) }}>
             <RotateCcw /> {t('common.reset')}
           </Button>
         }
@@ -319,7 +325,7 @@ export default function PlannerPage() {
                     </div>
                     <p className="mt-1 text-xs text-fg-2">{t('quality.syntheticWarning')}</p>
                     <Button asChild size="sm" variant="secondary" className="mt-3">
-                      <Link to="/comparison">
+                      <Link to="/comparison?source=demo">
                         {t('planner.openComparison')} <ArrowRight />
                       </Link>
                     </Button>

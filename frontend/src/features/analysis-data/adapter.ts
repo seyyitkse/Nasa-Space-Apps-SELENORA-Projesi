@@ -8,7 +8,7 @@
  *   (may produce UNRESOLVED when the API cannot confirm clear sky).
  */
 import type { AuthoritativeEpochSample, AuthoritativeSiteEpochs, EpochsResponse } from '@/services/contracts'
-import type { AnalysisResult, Interval, SiteResult, TimelinePoint } from '@/types/api'
+import type { AnalysisResult, HorizonModel, Interval, SiteResult, TimelinePoint } from '@/types/api'
 
 export type BodyState = 'VISIBLE' | 'BELOW_HORIZON' | 'BLOCKED' | 'UNKNOWN' | 'UNRESOLVED'
 export type Body = 'sun' | 'earth'
@@ -110,22 +110,27 @@ function emptyExtras(): Pick<
  */
 export function mapAuthoritativeBody(
   state: 'VISIBLE' | 'BLOCKED' | 'UNKNOWN',
-  elevation: number | null | undefined,
   asGeometric: boolean,
 ): BodyState {
   if (state === 'VISIBLE' || state === 'UNKNOWN') return state
-  if (asGeometric && (elevation === null || elevation === undefined || elevation <= 0)) return 'BELOW_HORIZON'
-  return 'BLOCKED'
+  return asGeometric ? 'BELOW_HORIZON' : 'BLOCKED'
 }
 
-export function epochsFromAuthoritativeSite(site: AuthoritativeSiteEpochs, endUtc?: string): EpochState[] {
+export function epochsFromAuthoritativeSite(
+  site: AuthoritativeSiteEpochs,
+  endUtc?: string,
+  horizonModel: HorizonModel = 'TERRAIN',
+): EpochState[] {
   const endMs = endUtc ? Date.parse(endUtc) : Infinity
   return site.samples
     .filter((s) => s.contributes_duration && Date.parse(s.t) < endMs)
-    .map((s) => authoritativeSampleToEpoch(s))
+    .map((s) => authoritativeSampleToEpoch(s, horizonModel))
 }
 
-export function authoritativeSampleToEpoch(s: AuthoritativeEpochSample): EpochState {
+export function authoritativeSampleToEpoch(
+  s: AuthoritativeEpochSample,
+  horizonModel: HorizonModel = 'TERRAIN',
+): EpochState {
   const sunGeoSrc = s.sun_geometric_state ?? (s.sun_elevation_deg != null && s.sun_elevation_deg > 0 ? 'VISIBLE' : s.sun_elevation_deg == null ? 'UNKNOWN' : 'BLOCKED')
   const earthGeoSrc =
     s.earth_geometric_state ??
@@ -137,10 +142,12 @@ export function authoritativeSampleToEpoch(s: AuthoritativeEpochSample): EpochSt
     earthElevation: s.earth_elevation_deg,
     sunAzimuth: s.sun_azimuth_deg,
     earthAzimuth: s.earth_azimuth_deg,
-    sun: mapAuthoritativeBody(s.sun_state, s.sun_elevation_deg, false),
-    earth: mapAuthoritativeBody(s.earth_state, s.earth_elevation_deg, false),
-    sunGeometric: mapAuthoritativeBody(sunGeoSrc, s.sun_elevation_deg, true),
-    earthGeometric: mapAuthoritativeBody(earthGeoSrc, s.earth_elevation_deg, true),
+    // Backend GEOMETRIC uses BLOCKED for the <= 0° source state. In the UI
+    // that is explicitly BELOW_HORIZON; only TERRAIN analyses may show BLOCKED.
+    sun: mapAuthoritativeBody(s.sun_state, horizonModel === 'GEOMETRIC'),
+    earth: mapAuthoritativeBody(s.earth_state, horizonModel === 'GEOMETRIC'),
+    sunGeometric: mapAuthoritativeBody(sunGeoSrc, true),
+    earthGeometric: mapAuthoritativeBody(earthGeoSrc, true),
     joint: s.joint_state,
     sunTerrainHorizonDeg: s.sun_terrain_horizon_deg ?? null,
     earthTerrainHorizonDeg: s.earth_terrain_horizon_deg ?? null,
@@ -159,7 +166,15 @@ export function resolveSiteEpochs(
 ): EpochState[] {
   const authSite = authoritative?.sites.find((s) => s.label === site.label)
   if (authSite && authSite.samples.length > 0) {
-    return epochsFromAuthoritativeSite(authSite, result.end_utc ?? authoritative?.end_utc)
+    const horizonModel: HorizonModel =
+      (authoritative?.horizon_model ?? result.horizon_model) === 'GEOMETRIC'
+        ? 'GEOMETRIC'
+        : 'TERRAIN'
+    return epochsFromAuthoritativeSite(
+      authSite,
+      result.end_utc ?? authoritative?.end_utc,
+      horizonModel,
+    )
   }
   return timelinePoints ? buildEpochs(result, site, timelinePoints) : []
 }
