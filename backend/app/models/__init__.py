@@ -4,6 +4,7 @@ from app.models.analysis import (
     CachedResult,
     DataProvenance,
     MissionAnalysis,
+    ScenarioComparison,
     VisibilityTimeline,
 )
 from app.models.site import LandingSite
@@ -15,5 +16,6 @@ __all__ = [
     "DataProvenance",
     "LandingSite",
     "MissionAnalysis",
+    "ScenarioComparison",
     "VisibilityTimeline",
 ]

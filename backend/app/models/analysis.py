@@ -112,3 +112,32 @@ class CachedResult(Base):
     payload: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class ScenarioComparison(Base):
+    """Persisted same-site, different-date comparison (Phase 7C).
+
+    Scenario evidence is stored independently from ``MissionAnalysis`` so the
+    existing two-distinct-site ``/analyses`` contract remains unchanged.
+    """
+
+    __tablename__ = "scenario_comparisons"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    name: Mapped[str] = mapped_column(String(160))
+    status: Mapped[str] = mapped_column(String(24))
+    site_id: Mapped[str] = mapped_column(String(96))
+    site_label: Mapped[str] = mapped_column(String(160))
+    latitude_deg: Mapped[float] = mapped_column(Float)
+    longitude_deg: Mapped[float] = mapped_column(Float)
+    landing_site_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    time_step_minutes: Mapped[int] = mapped_column(Integer)
+    horizon_model: Mapped[str] = mapped_column(String(24))
+    weights: Mapped[dict] = mapped_column(JSON)
+    scenario_count: Mapped[int] = mapped_column(Integer)
+    cache_key: Mapped[str] = mapped_column(String(64), index=True)
+    request_json: Mapped[dict] = mapped_column(JSON)
+    result_json: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
