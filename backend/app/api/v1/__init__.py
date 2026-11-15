@@ -9,6 +9,7 @@ from app.api.v1 import (
     events,
     globe,
     maps,
+    missions,
     scenarios,
     sites,
     solar,
@@ -28,3 +29,4 @@ router.include_router(globe.router)
 router.include_router(events.router)
 router.include_router(solar.router)
 router.include_router(scenarios.router)
+router.include_router(missions.router)

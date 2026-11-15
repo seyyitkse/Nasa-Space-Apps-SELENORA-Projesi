@@ -1,0 +1,13 @@
+{
+    "coverage_tier":  "REMOTE_PGDA90",
+    "native_resolution_m":  40.0,
+    "surface_z_m":  -1421.306640625,
+    "nodata_fraction":  0.0,
+    "layer_id":  "ldem-80s-40mpp",
+    "product_page":  "https://pgda.gsfc.nasa.gov/products/90",
+    "source":  null,
+    "source_label":  null,
+    "vertex_count":  null,
+    "nrows":  null,
+    "ncols":  null
+}

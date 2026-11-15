@@ -1,0 +1,28 @@
+{
+    "point":  {
+                  "latitude_deg":  -88.5,
+                  "name":  "Phase7D Outside 5m",
+                  "longitude_deg":  0
+              },
+    "local_5m_covered":  false,
+    "mesh":  {
+                 "coverage_tier":  "REMOTE_PGDA90",
+                 "product_page":  "https://pgda.gsfc.nasa.gov/products/90",
+                 "layer_id":  "ldem-80s-80mpp",
+                 "native_resolution_m":  80.0,
+                 "nodata_fraction":  0.0,
+                 "surface_z_m":  -1416.93115234375,
+                 "source_url":  "https://pgda.gsfc.nasa.gov/data/LOLA_20mpp/LDEM_80S_80MPP_ADJ.TIF"
+             },
+    "screenshots":  [
+                        "docs/screenshots/phase7d-mvp/phase7d-01-custom-point-remote-dem.png",
+                        "docs/screenshots/phase7d-mvp/phase7d-02-provenance-remote-pgda90.png"
+                    ],
+    "verified_ui":  {
+                        "nodata_cells":  0,
+                        "source":  "LOLA 40 m · PGDA 90",
+                        "surface_site_m":  -1421.3,
+                        "native_dem":  "40 m",
+                        "coverage_tier":  "REMOTE_PGDA90"
+                    }
+}

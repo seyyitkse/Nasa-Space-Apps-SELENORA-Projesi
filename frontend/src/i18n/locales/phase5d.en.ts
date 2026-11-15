@@ -215,7 +215,7 @@ const phase5dEn = {
     noEndpoint: 'The server does not provide /maps/mesh, so no 3D terrain is shown.',
     webglMissing: 'Your browser has no WebGL, so the 3D view cannot be shown. All 2D results remain available.',
     notCovered:
-      '{{site}} lies outside the local NASA LOLA 5 m tiles. SELENORA does not create artificial terrain, so no 3D view is shown for this site.',
+      '{{site}} has no verified NASA DEM elevation for 3D preview (local 5 m tiles and remote Product 90 COGs unavailable or failed). SELENORA does not invent terrain heights.',
     extent: 'Area',
     extentOption: '{{km}} × {{km}} km · {{step}} m mesh',
     exaggeration: 'Vertical exaggeration',
@@ -229,11 +229,15 @@ const phase5dEn = {
     heightScale: 'Height (LOLA surface)',
     observerZ: 'site {{z}} m',
     resolution: 'Mesh spacing',
+    nativeRes: 'Native DEM',
     source: 'Source',
+    tier: 'Coverage tier',
     extentShort: 'Extent',
     noData: 'No-data cells',
     heightRef:
-      'Point samples of the 5 m DEM. Shown relative to the observer’s eye (+2 m) with the Moon’s curvature removed, the same reference the server uses for horizons.',
+      'Point samples of the local 5 m DEM. Shown relative to the observer’s eye (+2 m) with the Moon’s curvature removed, the same reference the server uses for horizons.',
+    heightRefRemote:
+      'Point samples of a verified NASA PGDA Product 90 LOLA elevation COG (map visualization). Not used for operational TERRAIN horizon scoring. Heights are never invented from hillshade or photography.',
     sunTitle: 'Sun at this moment',
     directionNote:
       'The line points to the Sun’s direction from NASA/JPL Horizons (azimuth converted from true north to the map grid). It is a visual indicator: no shadows or illumination are simulated.',

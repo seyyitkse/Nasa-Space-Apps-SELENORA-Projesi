@@ -1,0 +1,28 @@
+{
+    "tip_pre_docs":  "0480fda264035c03d113c087d75215ca812bc67a",
+    "verdict":  "READY",
+    "pytest":  {
+                   "deselected":  4,
+                   "exit":  0,
+                   "skipped":  1,
+                   "passed":  292
+               },
+    "phase7de_subset":  {
+                            "exit":  0,
+                            "passed":  36
+                        },
+    "base":  "6e283a021d06490da9ded29a413a4fb36099d827",
+    "seven_e_included":  true,
+    "tsc_exit":  0,
+    "phase7d_live":  {
+                         "exit":  0,
+                         "passed":  1
+                     },
+    "build_exit":  0,
+    "vitest":  {
+                   "exit":  0,
+                   "files":  32,
+                   "passed":  219
+               },
+    "lint_exit":  0
+}

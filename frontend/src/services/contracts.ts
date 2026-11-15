@@ -247,7 +247,14 @@ export interface MeshResponse {
   crs_proj4?: string
   attribution: string
   source_url?: string | null
+  product_page?: string | null
   access_mode?: string
+  coverage_tier?: 'LOCAL_5MPP' | 'REMOTE_PGDA90' | string | null
+  native_resolution_m?: number | null
+  dem_site_id?: string | null
+  dem_file?: string | null
+  surface_z_m?: number | null
+  coverage_message?: string | null
   origin_lonlat_deg?: [number, number]
   origin_stereo_m: [number, number]
   extent_m?: { left: number; bottom: number; right: number; top: number }

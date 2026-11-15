@@ -12,11 +12,18 @@ import * as THREE from 'three'
 import type { OrbitControls as OrbitControlsImpl } from 'three-stdlib'
 
 import { xyToLonLat } from '@/features/lunar-explorer/projection'
+import {
+  MISSION_COLORS,
+  outcomeVisual,
+  type MissionGlobeMarker,
+} from '@/features/lunar-missions/types'
 
 import { MOON_ASSET } from './asset'
 import type { LoadedMoon } from './loadMoon'
 import { easeInOut, graticule, latLonToModel, modelToLatLon, presetPose, sitePose, slerp, type Vec3, type ViewPreset } from './orientation'
 import { PICK_DRAG_THRESHOLD_PX, worldPointToLatLon } from './pickHelpers'
+
+export type { MissionGlobeMarker }
 
 export interface GlobeSite {
   id: string
@@ -67,6 +74,10 @@ interface Props {
   /** Temporary marker while naming a new custom point. */
   draftPick?: DraftPick | null
   landmarks: GlobeLandmark[]
+  /** Optional Phase 7E lunar-mission overlays (verified coords only). */
+  missions?: MissionGlobeMarker[]
+  selectedMissionId?: string | null
+  onSelectMission?: (id: string) => void
   showGraticule: boolean
   command: CameraCommand | null
   reducedMotion: boolean
@@ -266,6 +277,68 @@ function MoonMesh({
 
 const UP = new THREE.Vector3(0, 1, 0)
 
+/** Mission overlay: solid head = actual landing; hollow ring = planned/failed target region. */
+function MissionPin({
+  mission,
+  selected,
+  onSelect,
+  visible,
+  radius,
+}: {
+  mission: MissionGlobeMarker
+  selected: boolean
+  onSelect: (id: string) => void
+  visible: boolean
+  radius: number
+}) {
+  const [hover, setHover] = useState(false)
+  const group = useRef<THREE.Group>(null)
+  const camera = useThree((s) => s.camera)
+  const base = useMemo(() => latLonToModel(mission.lat, mission.lon, R * radius), [mission.lat, mission.lon, radius])
+  const quat = useMemo(() => new THREE.Quaternion().setFromUnitVectors(UP, new THREE.Vector3(...base).normalize()), [base])
+  const color = MISSION_COLORS[outcomeVisual(mission.landing_outcome)]
+  const region = mission.marker_kind === 'PLANNED_TARGET_REGION'
+  const k = selected ? 1.4 : 1
+  useFrame(() => {
+    if (!group.current) return
+    const d = camera.position.distanceTo(group.current.position)
+    group.current.scale.setScalar(d * 0.016 * k)
+  })
+  return (
+    <group ref={group} position={base} quaternion={quat}>
+      <Line points={[[0, 0, 0], [0, 1, 0]]} color={color} lineWidth={selected ? 2.2 : 1.4} dashed={region} dashSize={0.12} gapSize={0.08} />
+      <mesh
+        position={[0, 1, 0]}
+        onClick={(e) => {
+          e.stopPropagation()
+          onSelect(mission.id)
+        }}
+        onPointerOver={(e) => {
+          e.stopPropagation()
+          setHover(true)
+          document.body.style.cursor = 'pointer'
+        }}
+        onPointerOut={() => {
+          setHover(false)
+          document.body.style.cursor = ''
+        }}
+      >
+        {region ? <ringGeometry args={[0.22, 0.38, 24]} /> : <sphereGeometry args={[0.3, 16, 16]} />}
+        <meshBasicMaterial color={selected ? '#ffffff' : color} side={region ? THREE.DoubleSide : undefined} />
+      </mesh>
+      <Html position={[0, 1, 0]} center zIndexRange={[22, 0]}>
+        <span
+          className="pointer-events-none -translate-y-5 rounded-md border border-line-strong bg-bg/90 px-2 py-0.5 font-mono text-[10.5px] whitespace-nowrap shadow"
+          style={{ color, display: (selected || hover) && visible ? undefined : 'none' }}
+          data-testid={`mission-pin-label-${mission.id}`}
+        >
+          {mission.name}
+        </span>
+      </Html>
+    </group>
+  )
+}
+
 /** A pin of constant on-screen size: a stem along the local vertical plus a head. */
 function Pin({ site, selected, onSelect, visible, radius }: { site: GlobeSite; selected: boolean; onSelect: (id: string) => void; visible: boolean; radius: number }) {
   const [hover, setHover] = useState(false)
@@ -415,6 +488,9 @@ export default function MoonScene(props: Props) {
     onSurfacePick,
     draftPick = null,
     landmarks,
+    missions = [],
+    selectedMissionId = null,
+    onSelectMission,
     showGraticule,
     command,
     reducedMotion,
@@ -482,7 +558,7 @@ export default function MoonScene(props: Props) {
       {moon.lit && <ReliefLight />}
       <AdaptiveFov />
       <Bench moon={moon} />
-      <InvalidateOn deps={[showGraticule, sites, selectedId, landmarks, footprints, draftPick, pickMode]} />
+      <InvalidateOn deps={[showGraticule, sites, selectedId, landmarks, footprints, draftPick, pickMode, missions, selectedMissionId]} />
       {showGraticule && (
         <group>
           {grid.lines.map((l, i) => (
@@ -508,6 +584,16 @@ export default function MoonScene(props: Props) {
       ))}
       {sites.map((s) => (
         <Pin key={s.id} site={s} selected={s.id === selectedId} onSelect={onSelect} visible={facing(s.lat, s.lon)} radius={pinRadii.get(s.id) ?? moon.surfaceMax} />
+      ))}
+      {missions.map((m) => (
+        <MissionPin
+          key={`mission-${m.id}`}
+          mission={m}
+          selected={m.id === selectedMissionId}
+          onSelect={(id) => onSelectMission?.(id)}
+          visible={facing(m.lat, m.lon)}
+          radius={moon.lit ? moon.surfaceRadiusAt(m.lat, m.lon) * 1.0005 : moon.surfaceMax}
+        />
       ))}
       {draftSite && <Pin site={draftSite} selected onSelect={() => undefined} visible={facing(draftSite.lat, draftSite.lon)} radius={draftRadius} />}
       <CameraRig
