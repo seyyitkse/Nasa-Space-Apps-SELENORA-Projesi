@@ -1,0 +1,199 @@
+{
+ "id": "74c673f9-8da7-4984-97f4-d48329792164",
+ "name": "South-pole seasonal comparison",
+ "status": "COMPLETED",
+ "cache_status": "STORED",
+ "site": {
+  "site_id": "shackleton-rim-a",
+  "label": "Shackleton Rim â€” Point A",
+  "latitude_deg": -89.68,
+  "longitude_deg": -166.0,
+  "landing_site_id": "shackleton-rim-a"
+ },
+ "time_step_minutes": 60,
+ "horizon_model": "GEOMETRIC",
+ "weights": {
+  "sun_visibility": 40.0,
+  "earth_visibility": 40.0,
+  "joint_visibility": 20.0
+ },
+ "window_duration_hours": 336.0,
+ "scenarios": [
+  {
+   "scenario_id": "dec-2026",
+   "label": "December 2026",
+   "start_utc": "2026-12-01T00:00:00Z",
+   "end_utc": "2026-12-15T00:00:00Z",
+   "sample_count": 337,
+   "data_quality": "EPHEMERIS_GEOMETRIC",
+   "algorithm_version": "0.3.1-phase3.3",
+   "site": {
+    "label": "Shackleton Rim â€” Point A",
+    "latitude_deg": -89.68,
+    "longitude_deg": -166.0,
+    "landing_site_id": "shackleton-rim-a",
+    "metrics": {
+     "sun_visibility_pct": 100.0,
+     "earth_visibility_pct": 0.0,
+     "joint_visibility_pct": 0.0,
+     "longest_sunlight_hours": 336.0,
+     "longest_darkness_hours": 0.0,
+     "longest_earth_visibility_hours": 0.0,
+     "longest_communication_gap_hours": 336.0,
+     "longest_joint_visibility_hours": 0.0
+    },
+    "score": 40.0,
+    "rank": 2,
+    "contributions": [
+     {
+      "metric": "sun_visibility",
+      "weight_pct": 40.0,
+      "value_pct": 100.0,
+      "contribution": 40.0
+     },
+     {
+      "metric": "earth_visibility",
+      "weight_pct": 40.0,
+      "value_pct": 0.0,
+      "contribution": 0.0
+     },
+     {
+      "metric": "joint_visibility",
+      "weight_pct": 20.0,
+      "value_pct": 0.0,
+      "contribution": 0.0
+     }
+    ],
+    "darkness_windows": [],
+    "communication_gaps": [
+     {
+      "start_utc": "2026-12-01T00:00:00Z",
+      "end_utc": "2026-12-15T00:00:00Z",
+      "duration_hours": 336.0
+     }
+    ],
+    "joint_windows": [],
+    "terrain": null,
+    "geometric_comparison": null
+   },
+   "assumptions": [
+    "Elevations are apparent azimuth/elevation from NASA/JPL Horizons (QUANTITIES=4) for a topocentric observer on the Moon (coord@301).",
+    "Geometric (smooth-sphere) horizon at 0Â° elevation; LOLA terrain shadowing is not modelled.",
+    "Airless observer â€” Horizons applies no atmospheric refraction.",
+    "Sun visibility is evaluated at the solar disc centre (~0.27Â° angular radius not modelled).",
+    "Earth above the geometric horizon is Direct-to-Earth visibility *potential* only â€” not a link budget, antenna mask, or DSN schedule.",
+    "Durations use sample-and-hold over [start_utc, end_utc): each sample at t covers min(step, end - t); a Horizons STOP sample exactly at end contributes 0 h.",
+    "Visibility percentages are time-weighted over samples with both Sun and Earth data."
+   ],
+   "limitations": [
+    "Results are NOT a NASA-endorsed landing-safety or flight-operations score.",
+    "Without LOLA topography, local ridges can hide the Sun or Earth even when geometric elevation is positive.",
+    "Hourly or multi-hour samples are coarse estimates (Â±1 step); not second-precision event times.",
+    "Ties in score produce no single recommendation.",
+    "Partial ephemeris coverage downgrades data quality and refuses ranking when missing samples exceed 5%.",
+    "Missing ephemeris samples are excluded from duration/percentage denominators (neither counted as visible nor invisible)."
+   ],
+   "provenance": [
+    {
+     "source_id": "jpl-horizons",
+     "description": "NASA/JPL Horizons observer table (Sun COMMAND=10, Earth COMMAND=399) at lunar GEODETIC sites (coord@301). API signature version(s): 1.2. Frame/ephemeris identifiers are taken from the live response header when present.",
+     "retrieved_at": "2026-11-15T11:50:03.659303Z",
+     "version": "1.2"
+    }
+   ]
+  },
+  {
+   "scenario_id": "jan-2027",
+   "label": "January 2027",
+   "start_utc": "2027-01-01T00:00:00Z",
+   "end_utc": "2027-01-15T00:00:00Z",
+   "sample_count": 337,
+   "data_quality": "EPHEMERIS_GEOMETRIC",
+   "algorithm_version": "0.3.1-phase3.3",
+   "site": {
+    "label": "Shackleton Rim â€” Point A",
+    "latitude_deg": -89.68,
+    "longitude_deg": -166.0,
+    "landing_site_id": "shackleton-rim-a",
+    "metrics": {
+     "sun_visibility_pct": 100.0,
+     "earth_visibility_pct": 27.679,
+     "joint_visibility_pct": 27.679,
+     "longest_sunlight_hours": 336.0,
+     "longest_darkness_hours": 0.0,
+     "longest_earth_visibility_hours": 93.0,
+     "longest_communication_gap_hours": 243.0,
+     "longest_joint_visibility_hours": 93.0
+    },
+    "score": 56.608,
+    "rank": 1,
+    "contributions": [
+     {
+      "metric": "sun_visibility",
+      "weight_pct": 40.0,
+      "value_pct": 100.0,
+      "contribution": 40.0
+     },
+     {
+      "metric": "earth_visibility",
+      "weight_pct": 40.0,
+      "value_pct": 27.679,
+      "contribution": 11.072
+     },
+     {
+      "metric": "joint_visibility",
+      "weight_pct": 20.0,
+      "value_pct": 27.679,
+      "contribution": 5.536
+     }
+    ],
+    "darkness_windows": [],
+    "communication_gaps": [
+     {
+      "start_utc": "2027-01-01T00:00:00Z",
+      "end_utc": "2027-01-11T03:00:00Z",
+      "duration_hours": 243.0
+     }
+    ],
+    "joint_windows": [
+     {
+      "start_utc": "2027-01-11T03:00:00Z",
+      "end_utc": "2027-01-15T00:00:00Z",
+      "duration_hours": 93.0
+     }
+    ],
+    "terrain": null,
+    "geometric_comparison": null
+   },
+   "assumptions": [
+    "Elevations are apparent azimuth/elevation from NASA/JPL Horizons (QUANTITIES=4) for a topocentric observer on the Moon (coord@301).",
+    "Geometric (smooth-sphere) horizon at 0Â° elevation; LOLA terrain shadowing is not modelled.",
+    "Airless observer â€” Horizons applies no atmospheric refraction.",
+    "Sun visibility is evaluated at the solar disc centre (~0.27Â° angular radius not modelled).",
+    "Earth above the geometric horizon is Direct-to-Earth visibility *potential* only â€” not a link budget, antenna mask, or DSN schedule.",
+    "Durations use sample-and-hold over [start_utc, end_utc): each sample at t covers min(step, end - t); a Horizons STOP sample exactly at end contributes 0 h.",
+    "Visibility percentages are time-weighted over samples with both Sun and Earth data."
+   ],
+   "limitations": [
+    "Results are NOT a NASA-endorsed landing-safety or flight-operations score.",
+    "Without LOLA topography, local ridges can hide the Sun or Earth even when geometric elevation is positive.",
+    "Hourly or multi-hour samples are coarse estimates (Â±1 step); not second-precision event times.",
+    "Ties in score produce no single recommendation.",
+    "Partial ephemeris coverage downgrades data quality and refuses ranking when missing samples exceed 5%.",
+    "Missing ephemeris samples are excluded from duration/percentage denominators (neither counted as visible nor invisible)."
+   ],
+   "provenance": [
+    {
+     "source_id": "jpl-horizons",
+     "description": "NASA/JPL Horizons observer table (Sun COMMAND=10, Earth COMMAND=399) at lunar GEODETIC sites (coord@301). API signature version(s): 1.2. Frame/ephemeris identifiers are taken from the live response header when present.",
+     "retrieved_at": "2026-11-15T11:50:05.500351Z",
+     "version": "1.2"
+    }
+   ]
+  }
+ ],
+ "recommended_scenario_id": "jan-2027",
+ "recommendation_available": true,
+ "recommendation_note": "Deterministic planning recommendation from the configured visibility weights; not a NASA safety or landing recommendation.",
+ "created_at": "2026-11-15T11:50:02.765991"
+}

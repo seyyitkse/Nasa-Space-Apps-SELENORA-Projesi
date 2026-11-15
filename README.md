@@ -73,15 +73,15 @@ Step through stored epochs for Sun/Earth against the geometric 0° horizon or a 
 
 **Critical limit:** remote DEM fallback supports **3D visualization and provenance only**. It does **not** extend the validated TERRAIN horizon / scoring engine. Outside local 5 m tiles, horizon requests remain `TERRAIN_UNAVAILABLE` rather than inventing a clear sky.
 
-**Full Horizon Simulator** — EN · Scientist mode · local NASA LOLA Product 78 mesh (4 × 4 km · 50 m) with live Sun/Earth direction indicators:
+**Full Horizon Simulator** — EN · Scientist mode · Shackleton–de Gerlache Ridge Point B on local NASA LOLA Product 78 Site01 (4 × 4 km mesh · 50 m) with live Sun/Earth direction indicators:
 
 ![Full Horizon Simulator: 3D LOLA terrain mesh with Sun and Earth direction indicators](docs/assets/readme/04-horizon-simulator-terrain.png)
 
 [Open full-resolution Horizon Simulator screenshot](docs/assets/readme/04-horizon-simulator-terrain.png)
 
-**Scientific evidence close-up** — readable HEIGHT (LOLA surface), Sun VISIBLE/BLOCKED status, mesh provenance and Barker et al. citation:
+**Scientific evidence close-up** — HEIGHT (LOLA surface), mesh provenance, server Sun status (here `TERRAIN-BLOCKED`: terrain 9.31° vs Sun 1.41°) and the Barker et al. citation:
 
-![Horizon Simulator scientific evidence close-up: HEIGHT, Sun status and LOLA provenance](docs/assets/readme/04b-horizon-scientific-evidence.png)
+<img src="docs/assets/readme/04b-horizon-scientific-evidence.png" width="300" alt="Horizon Simulator scientific evidence close-up: HEIGHT, Sun status and LOLA provenance">
 
 [Open full-resolution scientific evidence close-up](docs/assets/readme/04b-horizon-scientific-evidence.png)
 
@@ -102,12 +102,12 @@ Sunlight, Earth visibility, joint visibility, longest darkness and communication
 ### Mission Windows & Operational Events (Phase 7A)
 Hourly visibility heatmaps and operational events from sampled epochs. Cells may be visible, not visible, unknown, or empty.
 
-![Mission Windows hourly visibility heatmap for Shackleton Rim Point A](docs/assets/readme/07-mission-windows.png)
+![Mission Windows hourly joint-visibility heatmap for Shackleton Rim Point A, 1–29 December 2026](docs/assets/readme/07-mission-windows.png)
 
 ### Relative Solar Potential (Phase 7B)
 Compares horizontal, fixed, azimuth-tracking and dual-axis illumination geometry. **Not** watts or kWh. Near-ties within 0.5 percentage points are not distinguishable.
 
-![Relative solar potential panel with geometric-horizon disclaimer](docs/assets/readme/09-relative-solar-potential.jpg)
+![Relative solar potential for horizontal, fixed, azimuth-tracking and dual-axis panels, with geometric-horizon disclaimer](docs/assets/readme/09-relative-solar-potential.png)
 
 ### Alternative Mission Dates (Phase 7C)
 One stable site across independent UTC windows (e.g. December 2026 vs January 2027), each with its own ephemeris and provenance.
