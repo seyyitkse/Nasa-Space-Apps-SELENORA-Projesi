@@ -1,0 +1,64 @@
+SELENORA
+=======
+
+SELENORA original software and project documentation in this repository are
+licensed under the Apache License, Version 2.0. See the LICENSE file.
+
+SPDX-License-Identifier: Apache-2.0
+
+This NOTICE file is for informational attribution. It does not modify the
+Apache License, Version 2.0.
+
+---------------------------------------------------------------------------
+Third-party scientific data, imagery and models (NOT relicensed by SELENORA)
+---------------------------------------------------------------------------
+
+The following materials remain under their original NASA / institutional terms
+of use and are not redistributed as Apache-2.0 works by this project. SELENORA
+code may download, reference or display them at runtime; large binaries and
+rasters are generally gitignored and obtained by the user from official sources.
+
+1. NASA / JPL Horizons
+   - Solar System Dynamics ephemerides and observer tables
+   - https://ssd.jpl.nasa.gov/horizons/
+   - https://ssd-api.jpl.nasa.gov/doc/horizons.html
+
+2. NASA LOLA / LRO topography (PGDA)
+   - Product 78 — High-Resolution LOLA Topography for Lunar South Pole Sites
+     https://pgda.gsfc.nasa.gov/products/78
+   - Product 90 — A New View of the Lunar South Pole from LOLA
+     https://pgda.gsfc.nasa.gov/products/90
+   - Barker et al., 2021, Planetary and Space Science 203, 105119
+     https://doi.org/10.1016/j.pss.2020.105119
+
+3. NASA / GSFC / Arizona State University — LROC WAC
+   - South Pole Summer Mosaic (WAC_ROI_SOUTH_SUMMER) and related LROC products
+   - https://data.lroc.im-ldi.com/lroc/view_rdr/WAC_ROI_SOUTH_SUMMER
+
+4. NASA GSFC Scientific Visualization Studio
+   - SVS 14959 Moon GLB models (LRO-based)
+   - https://svs.gsfc.nasa.gov/14959/
+
+5. Lunar mission coordinate references used in the optional history catalog
+   - NASA NSSDC lunar landing sites
+     https://nssdc.gsfc.nasa.gov/planetary/lunar/lunar_sites.html
+   - LROC mission site imagery / Wagner et al. 2016 references cited in-catalog
+   - NASA CLPS delivery pages and IAU Gazetteer feature centroids for
+     planned/failed target regions (not exact unpublished landing ellipses)
+
+---------------------------------------------------------------------------
+Open-source dependencies
+---------------------------------------------------------------------------
+
+SELENORA also depends on third-party open-source libraries (for example FastAPI,
+React, Three.js / React Three Fiber, OpenLayers, NumPy, SQLAlchemy, rasterio).
+Those packages remain under their own licenses as published by their authors.
+See backend/pyproject.toml and frontend/package.json / package-lock.json.
+
+---------------------------------------------------------------------------
+AI services
+---------------------------------------------------------------------------
+
+Optional user-facing explanations may call the DeepSeek API when an operator
+supplies a local API key. DeepSeek terms and the key itself are outside this
+repository; keys must never be committed.
