@@ -1,4 +1,4 @@
-# SELENORA Submission Integration Report
+﻿# SELENORA Submission Integration Report
 
 | | |
 |---|---|
@@ -104,3 +104,9 @@ Also: custom-point creation control remains on Moon page; research-site list unc
 ## Verdict
 
 **READY** for NASA Space Apps final submission as the tested 7D+7E release candidate on `release/selenora-submission-2026`.
+
+
+## Final Git SHA
+
+`c7cad1967e04a54f08892996d950068a4c62fead`
+
