@@ -25,7 +25,7 @@
 
 README and NOTICE updated with Team SELENORA:
 
-- Team Leader: Ahmet Seyyit KÖSE  
-- Team Member: Nursena ÇAMKÖMÜRÜ  
+- Team Leader: Ahmet Seyyit KOSE  
+- Team Member: Nursena CAMKOMURU  
 
 Apache-2.0 `LICENSE` unchanged. NASA attributions preserved in `NOTICE`.

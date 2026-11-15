@@ -1,0 +1,4 @@
+Browser CDP/automation captures repeatedly returned only the sidebar.
+Assets below are from a verified live EN + Scientist Horizon Simulator
+session with local NASA LOLA Product 78 mesh and real HEIGHT/SUN/provenance values.
+Source file: Ekran_g_r_nt_s__2026-11-15_125222-665184a0-6093-42cf-8e1e-1920fb355c48.png
