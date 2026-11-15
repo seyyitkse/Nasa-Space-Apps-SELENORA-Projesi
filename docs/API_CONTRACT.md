@@ -126,3 +126,63 @@ between stored samples** — never as exact timestamps. GEOMETRIC analyses expos
 TERRAIN analyses expose geometric and terrain tracks side by side. `UNKNOWN` is preserved and no
 rise/set is confirmed across UNKNOWN samples. Full contract and semantics:
 `docs/PHASE7A_IMPLEMENTATION_REPORT.md` §3–§4.
+
+## Phase 7C — same site, alternative mission dates
+
+### `POST /api/v1/scenarios` → `ScenarioComparisonResult`
+
+Runs 2–10 independent JPL Horizons windows for one stable site identity. This
+endpoint is additive: `POST /api/v1/analyses` still requires 2–10 geographically
+distinct sites.
+
+```text
+ScenarioComparisonCreate {
+  name: str (2..160)
+  site: {
+    site_id: str,                  # stable reference/custom identity
+    label: str,
+    latitude_deg, longitude_deg,
+    landing_site_id?: str|null
+  }
+  scenarios: ScenarioWindow[2..10]
+  time_step_minutes: int 10..1440
+  horizon_model: "GEOMETRIC" | "TERRAIN"
+  weights: DecisionWeights
+}
+ScenarioWindow {
+  scenario_id: str,
+  label: str,
+  start_utc, end_utc: datetime(tz)
+}
+```
+
+Rules:
+
+- All timestamps are normalised to UTC and every window must have equal duration.
+- Duplicate IDs, labels and date ranges are rejected.
+- Each window is at most 30 days; the whole request is capped at 30,000 sampled epochs.
+- The site coordinates and identity are shared by construction; each date receives
+  an independent Sun and Earth Horizons request and independent provenance.
+- Cache identity includes site identity/coordinates, every UTC range, resolution,
+  horizon model, current algorithm/data-source versions and H2 decision weights.
+- A date change can never hit ephemeris cached for another date.
+- `UNKNOWN` remains unavailable evidence; it is not counted as darkness or visibility.
+- If any scenario is `PARTIAL` or `LOCAL_TERRAIN_PARTIAL`, cross-scenario ranks and
+  recommendation are suppressed. Existing H1 null metrics remain null.
+- No synthetic fallback is used. Horizons failures remain 502 errors and the failed
+  comparison is retained for audit.
+
+The response contains the stable site, shared settings and `scenarios[]`. Every
+scenario contains its exact UTC range, sample count, `data_quality`, algorithm
+version, `SiteResult`, assumptions, limitations and provenance. The optional
+`recommended_scenario_id` is produced only by the existing deterministic weighted
+visibility score over comparable evidence; it is not a NASA safety recommendation.
+
+### `GET /api/v1/scenarios` → `ScenarioComparisonStatus[]`
+
+Lists persisted comparison runs, including failed runs and their error messages.
+
+### `GET /api/v1/scenarios/{comparison_id}` → `ScenarioComparisonResult`
+
+Restores a completed comparison. `cache_status=STORED` distinguishes restoration
+from a `MISS` calculation or an identical-request `HIT`.

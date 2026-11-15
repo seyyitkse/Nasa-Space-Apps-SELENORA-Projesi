@@ -10,6 +10,9 @@ import type {
   GlobeSiteCatalog,
   HealthResponse,
   LandingSiteList,
+  ScenarioComparisonCreate,
+  ScenarioComparisonResult,
+  ScenarioComparisonStatus,
   TerrainCoverage,
   TimelineResponse,
 } from '@/types/api'
@@ -34,6 +37,14 @@ export const selenoraApi = {
     api.get<AnalysisResult>(`/api/v1/analyses/${id}`).then((r) => r.data),
   getTimeline: (id: string) =>
     api.get<TimelineResponse>(`/api/v1/analyses/${id}/timeline`).then((r) => r.data),
+  scenarioComparisons: () =>
+    api.get<ScenarioComparisonStatus[]>('/api/v1/scenarios').then((r) => r.data),
+  createScenarioComparison: (body: ScenarioComparisonCreate) =>
+    api
+      .post<ScenarioComparisonResult>('/api/v1/scenarios', body, { timeout: 180_000 })
+      .then((r) => r.data),
+  getScenarioComparison: (id: string) =>
+    api.get<ScenarioComparisonResult>(`/api/v1/scenarios/${id}`).then((r) => r.data),
   explainAnalysis: (id: string, body: ExplainRequest) =>
     api
       .post<ExplainResponse>(`/api/v1/analyses/${id}/explain`, body, { timeout: 120_000 })
@@ -59,5 +70,7 @@ export const queryKeys = {
   analyses: ['analyses'] as const,
   analysis: (id: string) => ['analysis', id] as const,
   timeline: (id: string) => ['timeline', id] as const,
+  scenarioComparisons: ['scenario-comparisons'] as const,
+  scenarioComparison: (id: string) => ['scenario-comparison', id] as const,
   explanation: (id: string, language?: string) => ['explanation', id, language ?? 'any'] as const,
 }

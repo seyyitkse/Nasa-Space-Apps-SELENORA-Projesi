@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ArrowRight, CalendarRange, CheckCircle2, Clock4, FlaskConical, Loader2, MapPin, Play, RotateCcw } from 'lucide-react'
+import { ArrowRight, CalendarClock, CalendarRange, CheckCircle2, Clock4, FlaskConical, Loader2, MapPin, Play, RotateCcw } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { type FormEvent, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -124,9 +124,12 @@ export default function PlannerPage() {
         title={t('planner.title')}
         description={t('planner.description')}
         actions={
-          <Button variant="ghost" size="sm" onClick={() => { reset(); setTouched(false); analysis.reset(); demo.reset(); setDemo(null) }}>
-            <RotateCcw /> {t('common.reset')}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild variant="outline" size="sm"><Link to="/scenarios"><CalendarClock />{t('scenarios.openFromPlanner')}</Link></Button>
+            <Button variant="ghost" size="sm" onClick={() => { reset(); setTouched(false); analysis.reset(); demo.reset(); setDemo(null) }}>
+              <RotateCcw /> {t('common.reset')}
+            </Button>
+          </div>
         }
       />
       <form onSubmit={onSubmit} noValidate className="grid grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">

@@ -237,6 +237,72 @@ export interface AnalysisStatus {
   data_quality: DataQuality
 }
 
+export interface ScenarioSiteInput {
+  site_id: string
+  label: string
+  latitude_deg: number
+  longitude_deg: number
+  landing_site_id?: string | null
+}
+
+export interface ScenarioWindowInput {
+  scenario_id: string
+  label: string
+  start_utc: string
+  end_utc: string
+}
+
+export interface ScenarioComparisonCreate {
+  name: string
+  site: ScenarioSiteInput
+  scenarios: ScenarioWindowInput[]
+  time_step_minutes: number
+  horizon_model: HorizonModel
+  weights: DecisionWeights
+}
+
+export interface ScenarioEvidence {
+  scenario_id: string
+  label: string
+  start_utc: string
+  end_utc: string
+  sample_count: number
+  data_quality: DataQuality
+  algorithm_version: string
+  site: SiteResult
+  assumptions: string[]
+  limitations: string[]
+  provenance: Provenance[]
+}
+
+export interface ScenarioComparisonResult {
+  id: string
+  name: string
+  status: 'COMPLETED'
+  cache_status: 'MISS' | 'HIT' | 'STORED'
+  site: ScenarioSiteInput
+  time_step_minutes: number
+  horizon_model: HorizonModel
+  weights: DecisionWeights
+  window_duration_hours: number
+  scenarios: ScenarioEvidence[]
+  recommended_scenario_id: string | null
+  recommendation_available: boolean
+  recommendation_note: string
+  created_at: string
+}
+
+export interface ScenarioComparisonStatus {
+  id: string
+  name: string
+  status: 'RUNNING' | 'COMPLETED' | 'FAILED'
+  site_id: string
+  scenario_count: number
+  horizon_model: HorizonModel
+  created_at: string
+  error_message: string | null
+}
+
 export interface AnalysisResult {
   id: string
   mission_name: string
