@@ -34,6 +34,9 @@ SOLAR_CONTRACT_VERSION = "7b.1"
 DEFAULT_FIXED_TILT_DEG = 90.0
 DEFAULT_TRACKING_TILT_DEG = 90.0
 POLE_EPSILON_DEG = 1e-9
+# Differences below this threshold are smaller than the useful resolution of
+# the sampled/optimised model and must not become a user-facing site lead.
+COMPARISON_MINIMUM_GAP_PCT = 0.5
 ALL_PANELS: tuple[sp.PanelKind, ...] = (
     sp.PanelKind.HORIZONTAL,
     sp.PanelKind.FIXED,
@@ -266,7 +269,10 @@ def _comparison(
     ]
     if len(ranges) < 2 or any(r is None for r in ranges):
         return SiteComparison(panel=kind.value, horizon=horizon, status="UNAVAILABLE")  # type: ignore[arg-type]
-    leader = sp.compare_bounds(ranges)
+    leader = sp.compare_bounds(
+        ranges,
+        minimum_gap=COMPARISON_MINIMUM_GAP_PCT / 100.0,
+    )
     return SiteComparison(
         panel=kind.value,
         horizon=horizon,  # type: ignore[arg-type]
@@ -373,8 +379,10 @@ def solar_from_epochs(
         "Temporal sampling: the Sun's azimuth moves about 0.5° per hour at the lunar "
         "poles and the state is held constant between samples, so changes shorter than "
         f"the {epochs.time_step_minutes}-minute step are not resolved.",
-        "Sites are comparable only within this analysis (same window and step). Ranges "
-        "that overlap do not support a ranking.",
+        "Sites are comparable only within this analysis (same window and step). A site "
+        "is reported as leading only when its minimum exceeds every other site's maximum "
+        f"by more than {COMPARISON_MINIMUM_GAP_PCT} percentage points; overlapping or "
+        "closer values do not support a ranking.",
         "A range (minimum to maximum) is not a probability distribution; no value inside "
         "it is more likely than another.",
     ]

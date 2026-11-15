@@ -330,16 +330,28 @@ def optimise_fixed_azimuth(
     return float(grid[int(np.argmax(np.round(score, 12)))])
 
 
-def compare_bounds(bounds: list[tuple[float, float] | None]) -> int | None:
+def compare_bounds(
+    bounds: list[tuple[float, float] | None],
+    *,
+    minimum_gap: float = DETERMINED_TOLERANCE,
+) -> int | None:
     """Index of the entry whose lower bound exceeds every other upper bound.
 
-    ``None`` when any entry is unavailable or the ranges overlap: overlapping
-    ranges do not support a ranking.
+    ``None`` when any entry is unavailable, the ranges overlap, or the
+    separation is no larger than ``minimum_gap``.  The gap lets callers
+    avoid presenting numerically different but scientifically indistinguishable
+    values as a site recommendation.
     """
+    if minimum_gap < 0:
+        raise ValueError("minimum_gap must be non-negative")
     if len(bounds) < 2 or any(b is None for b in bounds):
         return None
     known = [b for b in bounds if b is not None]
     for i, (lower, _upper) in enumerate(known):
-        if all(lower > other[1] + DETERMINED_TOLERANCE for j, other in enumerate(known) if j != i):
+        if all(
+            lower > other[1] + minimum_gap
+            for j, other in enumerate(known)
+            if j != i
+        ):
             return i
     return None

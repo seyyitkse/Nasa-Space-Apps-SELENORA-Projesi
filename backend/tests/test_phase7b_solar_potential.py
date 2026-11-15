@@ -356,6 +356,23 @@ def test_compare_bounds_only_ranks_disjoint_ranges() -> None:
     assert sp.compare_bounds([(0.4, 0.4), (0.4, 0.4)]) is None  # tie
     assert sp.compare_bounds([(0.5, 0.6), None]) is None
     assert sp.compare_bounds([(0.5, 0.6)]) is None
+    assert sp.compare_bounds([(0.337, 0.337), (0.335, 0.335)]) == 0
+    assert (
+        sp.compare_bounds(
+            [(0.337, 0.337), (0.335, 0.335)],
+            minimum_gap=0.005,
+        )
+        is None
+    )
+    assert (
+        sp.compare_bounds(
+            [(0.345, 0.345), (0.335, 0.335)],
+            minimum_gap=0.005,
+        )
+        == 0
+    )
+    with pytest.raises(ValueError):
+        sp.compare_bounds([(0.1, 0.2), (0.3, 0.4)], minimum_gap=-1.0)
 
 
 # ------------------------------------------------- service on the /epochs shape
@@ -530,6 +547,22 @@ def test_site_comparison_needs_disjoint_ranges() -> None:
     # Geometrically identical sites tie: still no leader.
     geo = next(c for c in out.comparisons if c.panel == "DUAL_AXIS" and c.horizon == "GEOMETRIC")
     assert geo.status == "NOT_DISTINGUISHABLE"
+
+    # A sub-resolution lead must not become a user-facing recommendation.
+    close_a = [(10.0, 3.0, "VISIBLE", None)] * 1000
+    close_b = (
+        [(10.0, 3.0, "VISIBLE", None)] * 997
+        + [(10.0, -3.0, "BLOCKED", None)] * 3
+    )
+    out = solar_service.solar_from_epochs(
+        _epochs(
+            "GEOMETRIC",
+            [_site("a", close_a), _site("b", close_b, lon=5.0)],
+        )
+    )
+    dual = next(c for c in out.comparisons if c.panel == "DUAL_AXIS")
+    assert dual.status == "NOT_DISTINGUISHABLE"  # 100 % vs 99.7 %
+    assert any("0.5 percentage points" in note for note in out.limitations)
 
 
 def test_fixed_panel_is_unavailable_exactly_at_the_pole() -> None:
