@@ -114,4 +114,4 @@ Custom-point creation remains on Moon page; research-site list unchanged beside 
 
 ## Final Git SHA
 
-`123c125b973579f6c1f9daa57f94f1e8f0d6d679`
+`3508ca47667a7886781e75580e2774fdf8153eec` (authoritative remote: `origin/release/selenora-submission-2026`)
